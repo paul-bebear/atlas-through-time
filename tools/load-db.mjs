@@ -23,7 +23,8 @@ async function loadEnv() {
     const txt = await readFile(new URL(".env", root), "utf8");
     for (const line of txt.split("\n")) {
       const m = /^\s*([A-Z_]+)\s*=\s*(.*)\s*$/.exec(line);
-      if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+      // Tolerate accidental wrapping: quotes or <…> placeholder brackets.
+      if (m) env[m[1]] = m[2].trim().replace(/^[<"']+|[>"']+$/g, "").trim();
     }
   } catch { /* env may come from the shell */ }
   return env;
