@@ -12,7 +12,11 @@ import { createEvents } from "./events.js";
 import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
+import { createSearch } from "./search.js";
+import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
+
+const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
 const state = { year: 1900, wars: [], lastSig: null };
 
@@ -158,6 +162,35 @@ async function boot() {
       timeline.setMarkers(f.stages.map(s => ({ year: s.year, label: s.label })));
     },
     onJumpYear: y => timeline.setYear(y)
+  });
+
+  // Guided country story: search a country → fly there → step its narrative.
+  const story = createStory({
+    wars,
+    formations,
+    onBeat: (bt, country, beats) => {
+      const names = [country.name, ...(country.aliases || [])];
+      timeline.setYear(bt.year);
+      globe.setHighlights([{ names, side: "A" }]);
+      setContext("📖 " + country.name);
+      timeline.setSpan(beats[0].year, beats[beats.length - 1].year, country.name);
+      timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
+      card.openEntry(country, bt.year,
+        activeWarsFor(bt.year).filter(w => names.some(n => belligerent(w, n))));
+    },
+    onExit: () => {
+      globe.setHighlights([]);
+      timeline.clearOverlays();
+      setContext(DEFAULT_CONTEXT, false);
+    }
+  });
+
+  createSearch({
+    catalog: card.catalog,
+    onPick: entry => {
+      if (entry.lat != null) globe.flyTo(entry.lat, entry.lng, 1.2);
+      story.start(entry);
+    }
   });
 }
 

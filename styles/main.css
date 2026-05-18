@@ -204,3 +204,46 @@ input[type=range]::-webkit-slider-thumb {
   white-space: nowrap; }
 #ticks span:first-child { transform: none; }
 #ticks span:last-child { transform: translateX(-100%); }
+
+/* Country search */
+#search { position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 12; width: min(360px, 80vw); }
+#searchInput { width: 100%; box-sizing: border-box; padding: 10px 14px;
+  font-size: 13px; color: var(--text); background: var(--panel);
+  border: 1px solid var(--border); border-radius: 10px; outline: none;
+  backdrop-filter: blur(8px); }
+#searchInput:focus { border-color: rgba(93,169,255,0.6); }
+#searchResults { margin-top: 6px; background: rgba(10,18,30,0.97);
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  backdrop-filter: blur(10px); }
+#searchResults:empty { display: none; }
+#searchResults .sr { padding: 9px 14px; font-size: 13px; cursor: pointer; }
+#searchResults .sr:hover, #searchResults .sr.on { background: rgba(93,169,255,0.18); }
+#searchResults .sr small { color: var(--muted); margin-left: 6px; }
+
+/* Guided story bar */
+#storyBar { position: absolute; left: 50%; bottom: 132px; transform: translateX(-50%);
+  z-index: 10; width: min(680px, 94vw);
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(14,24,38,0.95); border: 1px solid rgba(93,169,255,0.35);
+  border-radius: 14px; padding: 10px 14px; backdrop-filter: blur(10px);
+  box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+#storyBar button { background: rgba(255,255,255,0.08); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  width: 34px; height: 34px; font-size: 14px; cursor: pointer; flex: none; }
+#storyBar button:hover:not(:disabled) { background: rgba(255,255,255,0.18); }
+#storyBar button:disabled { opacity: .35; cursor: default; }
+#storyBar .sb-main { flex: 1; min-width: 0; }
+#storyBar .sb-title { font-size: 14px; font-weight: 700; }
+#storyBar .sb-title .sb-count { color: var(--muted); font-weight: 600; margin-left: 8px;
+  font-size: 12px; }
+#storyBar .sb-label { font-size: 12px; color: var(--accent);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+#storyBar .sb-kind { display: inline-block; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 99px; padding: 1px 7px; margin-right: 7px; }
+#storyBar .sb-exit { width: 30px; }
+
+/* Flag in country card */
+#infoCard .cc-flag { height: 16px; width: auto; border-radius: 2px;
+  vertical-align: middle; margin-left: 8px; border: 1px solid var(--border); }

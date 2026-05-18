@@ -1,28 +1,27 @@
-// Info card: shows either a clicked country or a clicked event.
-// Event descriptions are fetched live from the Wikipedia REST API
-// (no key, CORS-enabled): /api/rest_v1/page/summary/{title}
+// Info card: a clicked/searched country or a clicked event.
+// Country profiles resolve by selected year (period-aware). Event
+// descriptions are fetched live from the Wikipedia REST API.
 
 import { featureName } from "./data.js";
 
 const WIKI = "https://en.wikipedia.org/api/rest_v1/page/summary/";
+const FLAG = "https://flagcdn.com/w80/";
 
 export function createInfoCard({ countries }) {
   const card = document.getElementById("infoCard");
   const close = () => { card.hidden = true; };
 
-  // Build alias -> country entry index once.
-  const byAlias = new Map();
   const data = (countries && countries.countries) || {};
+  const byAlias = new Map();
   for (const [key, c] of Object.entries(data)) {
-    const names = new Set([key, c.name, ...(c.aliases || [])].filter(Boolean));
-    for (const n of names) byAlias.set(String(n).toLowerCase(), c);
+    for (const n of new Set([key, c.name, ...(c.aliases || [])].filter(Boolean)))
+      byAlias.set(String(n).toLowerCase(), c);
   }
-
+  const catalog = Object.entries(data).map(([key, c]) => ({ key, entry: c }));
+  const resolve = name => byAlias.get(String(name || "").toLowerCase()) || null;
   const eraFor = (c, year) =>
     (c.eras || []).find(e => year >= e.from && year <= (e.to ?? 9999)) || null;
 
-  // Lazy, cached Wikipedia thumbnail for a major city (kept light: one small
-  // image, fetched on open, cached across the session).
   const thumbCache = new Map();
   let openSeq = 0;
 
@@ -37,19 +36,16 @@ export function createInfoCard({ countries }) {
     return url;
   }
 
-  function shell(title, sub, body) {
+  function shell(titleHtml, sub, body) {
     card.hidden = false;
     card.innerHTML = `<span class="cc-close">×</span>
-      <h2>${title}</h2><div class="cc-sub">${sub}</div>${body}`;
+      <h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`;
     card.querySelector(".cc-close").onclick = close;
   }
 
-  function openCountry(feature, year, activeWars) {
-    const name = featureName(feature);
-    const c = byAlias.get(name.toLowerCase()) || null;
+  // Core renderer shared by click + search/story paths.
+  function renderCountry(c, fallbackName, year, activeWars, props = {}) {
     const era = c ? eraFor(c, year) : null;
-    const props = feature.properties || {};
-
     const rows = [];
     if (era) {
       if (era.government) rows.push(["Government", era.government]);
@@ -64,7 +60,8 @@ export function createInfoCard({ countries }) {
       .map(w => `<div class="cc-row"><span class="k">Active war</span><span class="v">${w.name}</span></div>`)
       .join("");
 
-    const title = c ? c.name : name;
+    const name = c ? c.name : fallbackName;
+    const flag = c?.iso ? `<img class="cc-flag" src="${FLAG}${c.iso}.png" alt="">` : "";
     const eraTxt = era
       ? `${yr(era.from)} – ${era.to >= 9999 ? "present" : yr(era.to)}`
       : `as shown in ${yr(year)}`;
@@ -76,7 +73,7 @@ export function createInfoCard({ countries }) {
       : "";
 
     const myseq = ++openSeq;
-    shell(title, eraTxt,
+    shell(`${name}${flag}`, eraTxt,
       `<div class="cc-imgwrap"></div>`
       + rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + wars
@@ -92,6 +89,15 @@ export function createInfoCard({ countries }) {
         if (wrap) wrap.innerHTML = `<img class="cc-thumb" src="${src}" alt="">`;
       });
     }
+  }
+
+  function openCountry(feature, year, activeWars) {
+    const name = featureName(feature);
+    renderCountry(resolve(name), name, year, activeWars, feature.properties || {});
+  }
+
+  function openEntry(entry, year, activeWars) {
+    renderCountry(entry, entry.name, year, activeWars, {});
   }
 
   async function openEvent(ev) {
@@ -113,7 +119,7 @@ export function createInfoCard({ countries }) {
     }
   }
 
-  return { openCountry, openEvent, close };
+  return { openCountry, openEntry, openEvent, close, catalog };
 }
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }
