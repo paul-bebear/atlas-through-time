@@ -9,3 +9,6 @@ data/cshapes.min.geojson
 .DS_Store
 *.log
 node_modules
+
+# secrets
+.env
