@@ -10,6 +10,17 @@ export function createInfoCard({ countries }) {
   const card = document.getElementById("infoCard");
   const close = () => { card.hidden = true; };
 
+  // Build alias -> country entry index once.
+  const byAlias = new Map();
+  const data = (countries && countries.countries) || {};
+  for (const [key, c] of Object.entries(data)) {
+    const names = new Set([key, c.name, ...(c.aliases || [])].filter(Boolean));
+    for (const n of names) byAlias.set(String(n).toLowerCase(), c);
+  }
+
+  const eraFor = (c, year) =>
+    (c.eras || []).find(e => year >= e.from && year <= (e.to ?? 9999)) || null;
+
   function shell(title, sub, body) {
     card.hidden = false;
     card.innerHTML = `<span class="cc-close">×</span>
@@ -19,24 +30,35 @@ export function createInfoCard({ countries }) {
 
   function openCountry(feature, year, activeWars) {
     const name = featureName(feature);
-    const info = countries[name.toLowerCase()] || null;
+    const c = byAlias.get(name.toLowerCase()) || null;
+    const era = c ? eraFor(c, year) : null;
     const props = feature.properties || {};
+
     const rows = [];
-    if (info) {
-      if (info.capital) rows.push(["Capital", info.capital]);
-      if (info.population) rows.push(["Population", info.population]);
-      if (info.leader) rows.push(["Leader", info.leader]);
+    if (era) {
+      if (era.government) rows.push(["Government", era.government]);
+      if (era.capital) rows.push(["Capital", era.capital]);
+      if (era.leader) rows.push(["Leader", era.leader]);
+      if (era.population) rows.push(["Population", era.population]);
     } else if (props.SUBJECTO) {
       rows.push(["Part of / subject to", props.SUBJECTO]);
     }
+
     const wars = (activeWars || [])
       .map(w => `<div class="cc-row"><span class="k">Active war</span><span class="v">${w.name}</span></div>`)
       .join("");
-    shell(name, `As shown in ${yr(year)}`,
+
+    const title = c ? c.name : name;
+    const eraTxt = era
+      ? `${yr(era.from)} – ${era.to >= 9999 ? "present" : yr(era.to)}`
+      : `as shown in ${yr(year)}`;
+
+    shell(title, eraTxt,
       rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + wars
-      + (info?.note ? `<div class="cc-note">${info.note}</div>` : "")
-      + (!info ? `<div class="cc-note">No curated profile yet — showing raw map data. We'll deepen this.</div>` : ""));
+      + (era?.note ? `<div class="cc-note">${era.note}</div>` : "")
+      + (c && !era ? `<div class="cc-note">No profile for ${yr(year)} yet — ${c.name} is curated for other periods.</div>` : "")
+      + (!c ? `<div class="cc-note">No curated profile yet — showing raw map data. We'll deepen this.</div>` : ""));
   }
 
   async function openEvent(ev) {

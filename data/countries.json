@@ -1,45 +1,100 @@
 {
-  "_note": "Starter dataset. Keyed by lowercased country name. Period-agnostic for now; later we key facts by year range.",
-  "france": {
-    "name": "France",
-    "population": "68 million (2024)",
-    "leader": "President Emmanuel Macron",
-    "capital": "Paris",
-    "note": "One of the oldest unified states in Europe. Fought England for control of mainland territory across the medieval and early-modern periods."
-  },
-  "england": {
-    "name": "England",
-    "population": "~57 million (England, 2024)",
-    "leader": "Monarch Charles III (UK); Prime Minister leads government",
-    "capital": "London",
-    "note": "An island kingdom that long sought and held continental footholds in France before consolidating as part of the United Kingdom."
-  },
-  "united kingdom": {
-    "name": "United Kingdom",
-    "population": "69 million (2024)",
-    "leader": "Monarch Charles III; PM leads government",
-    "capital": "London",
-    "note": "Union of England, Scotland, Wales and Northern Ireland; former center of the largest empire in history."
-  },
-  "germany": {
-    "name": "Germany",
-    "population": "84 million (2024)",
-    "leader": "Chancellor (head of government)",
-    "capital": "Berlin",
-    "note": "Unified in 1871; its borders shifted dramatically across both World Wars."
-  },
-  "russia": {
-    "name": "Russia",
-    "population": "144 million (2024)",
-    "leader": "President Vladimir Putin",
-    "capital": "Moscow",
-    "note": "Largest country on Earth by area; successor state to the Russian Empire and Soviet Union."
-  },
-  "united states": {
-    "name": "United States",
-    "population": "335 million (2024)",
-    "leader": "President (head of state and government)",
-    "capital": "Washington, D.C.",
-    "note": "Expanded across North America through the 19th century via purchase, treaty and annexation."
+  "_schema": "Period-aware country facts. Each country has eras [{from,to,capital,government,leader,population,note}]. 'to': 9999 = present. Maps 1:1 to a future Postgres table country_facts(country_id, from_year, to_year, capital, government, leader, population, note) so 'monarchies in 1800' / 'fascist states 1925-2025' become WHERE queries. 'aliases' lets historical map names resolve to one country.",
+  "countries": {
+    "france": {
+      "name": "France",
+      "aliases": ["france", "kingdom of france", "french republic", "french empire", "first french empire", "francia", "west francia"],
+      "eras": [
+        { "from": 987, "to": 1791, "capital": "Paris", "government": "Feudal then absolute monarchy", "leader": "Capet / Valois / Bourbon dynasties", "note": "Royal domain expanded for centuries until the great fiefs were absorbed into the crown." },
+        { "from": 1792, "to": 1804, "capital": "Paris", "government": "Republic (First Republic)", "leader": "National Convention / Directory", "note": "Monarchy abolished during the French Revolution." },
+        { "from": 1804, "to": 1815, "capital": "Paris", "government": "Empire", "leader": "Napoleon I", "population": "~30 million", "note": "The First French Empire dominated continental Europe." },
+        { "from": 1870, "to": 1940, "capital": "Paris", "government": "Republic (Third Republic)", "population": "~40 million", "note": "Colonial empire at its height." },
+        { "from": 1958, "to": 9999, "capital": "Paris", "government": "Semi-presidential republic", "leader": "President Emmanuel Macron (2024)", "population": "68 million (2024)", "note": "Fifth Republic; founding member of the EU." }
+      ]
+    },
+    "united kingdom": {
+      "name": "United Kingdom",
+      "aliases": ["united kingdom", "great britain", "england", "kingdom of england", "english empire", "british empire", "uk"],
+      "eras": [
+        { "from": 927, "to": 1648, "capital": "London", "government": "Monarchy", "leader": "English monarchs", "note": "Kingdom of England; long contested continental territory with France." },
+        { "from": 1707, "to": 1900, "capital": "London", "government": "Constitutional monarchy", "leader": "British monarch; PM leads government", "population": "~38 million (1900)", "note": "Centre of the largest empire in history." },
+        { "from": 1901, "to": 9999, "capital": "London", "government": "Constitutional monarchy", "leader": "Monarch Charles III; PM leads government", "population": "69 million (2024)", "note": "Union of England, Scotland, Wales and Northern Ireland." }
+      ]
+    },
+    "germany": {
+      "name": "Germany",
+      "aliases": ["germany", "german empire", "nazi germany", "german reich", "west germany", "east germany", "prussia", "kingdom of prussia"],
+      "eras": [
+        { "from": 1871, "to": 1918, "capital": "Berlin", "government": "Constitutional monarchy (Empire)", "leader": "Kaiser Wilhelm II", "population": "~65 million (1914)", "note": "Unified under Prussia in 1871." },
+        { "from": 1919, "to": 1933, "capital": "Berlin", "government": "Republic (Weimar)", "note": "Democratic republic after WWI; collapsed amid crisis." },
+        { "from": 1933, "to": 1945, "capital": "Berlin", "government": "Fascist (Nazi) dictatorship", "leader": "Adolf Hitler", "note": "Totalitarian one-party state; instigated WWII and the Holocaust." },
+        { "from": 1990, "to": 9999, "capital": "Berlin", "government": "Federal parliamentary republic", "leader": "Chancellor leads government", "population": "84 million (2024)", "note": "Reunified in 1990; EU's largest economy." }
+      ]
+    },
+    "italy": {
+      "name": "Italy",
+      "aliases": ["italy", "kingdom of italy", "italian republic", "roman empire", "roman republic", "rome"],
+      "eras": [
+        { "from": -509, "to": -27, "capital": "Rome", "government": "Roman Republic", "note": "City-state expanding to control the Mediterranean." },
+        { "from": -27, "to": 476, "capital": "Rome", "government": "Empire", "leader": "Roman emperors", "note": "The Roman Empire at its height spanned three continents." },
+        { "from": 1861, "to": 1922, "capital": "Rome", "government": "Constitutional monarchy", "leader": "House of Savoy", "note": "Unified Kingdom of Italy." },
+        { "from": 1922, "to": 1943, "capital": "Rome", "government": "Fascist dictatorship", "leader": "Benito Mussolini", "note": "First fascist state; Axis power in WWII." },
+        { "from": 1946, "to": 9999, "capital": "Rome", "government": "Parliamentary republic", "population": "59 million (2024)", "note": "Founding member of the EU." }
+      ]
+    },
+    "russia": {
+      "name": "Russia",
+      "aliases": ["russia", "russian empire", "russian federation", "soviet union", "ussr", "muscovy", "grand duchy of moscow", "tsardom of russia"],
+      "eras": [
+        { "from": 1547, "to": 1721, "capital": "Moscow", "government": "Tsardom (absolute monarchy)", "leader": "Tsars (Rurik / Romanov)", "note": "Expanded across Siberia." },
+        { "from": 1721, "to": 1917, "capital": "St Petersburg", "government": "Absolute monarchy (Empire)", "leader": "Romanov emperors", "population": "~125 million (1900)", "note": "One of the great powers of Europe." },
+        { "from": 1922, "to": 1991, "capital": "Moscow", "government": "One-party socialist state", "leader": "Communist Party leadership", "population": "~290 million (1989)", "note": "The Soviet Union; superpower during the Cold War." },
+        { "from": 1991, "to": 9999, "capital": "Moscow", "government": "Federal semi-presidential republic", "leader": "President Vladimir Putin", "population": "144 million (2024)", "note": "Largest country on Earth by area." }
+      ]
+    },
+    "united states": {
+      "name": "United States",
+      "aliases": ["united states", "united states of america", "usa", "us"],
+      "eras": [
+        { "from": 1776, "to": 1860, "capital": "Washington, D.C. (from 1800)", "government": "Federal republic", "population": "~31 million (1860)", "note": "Thirteen colonies expanding across North America." },
+        { "from": 1861, "to": 1865, "capital": "Washington, D.C.", "government": "Federal republic (Civil War)", "leader": "President Abraham Lincoln", "note": "Union vs Confederacy over slavery and secession." },
+        { "from": 1866, "to": 9999, "capital": "Washington, D.C.", "government": "Federal presidential republic", "leader": "President (head of state & government)", "population": "335 million (2024)", "note": "Transcontinental power; global superpower from the 20th century." }
+      ]
+    },
+    "china": {
+      "name": "China",
+      "aliases": ["china", "qing", "qing empire", "qing dynasty", "ming", "ming dynasty", "han", "han dynasty", "tang", "republic of china", "people's republic of china"],
+      "eras": [
+        { "from": -221, "to": 1911, "capital": "Xi'an / Beijing (varied)", "government": "Imperial dynasty", "leader": "Emperors (Qin → Qing)", "note": "Cycles of unification, fragmentation and reunification under successive dynasties." },
+        { "from": 1912, "to": 1949, "capital": "Nanjing / Beijing", "government": "Republic (then civil war)", "leader": "Kuomintang", "note": "Republic of China; warlord era and civil war." },
+        { "from": 1949, "to": 9999, "capital": "Beijing", "government": "One-party socialist state", "leader": "Communist Party leadership", "population": "1.41 billion (2024)", "note": "People's Republic of China." }
+      ]
+    },
+    "japan": {
+      "name": "Japan",
+      "aliases": ["japan", "empire of japan", "tokugawa shogunate"],
+      "eras": [
+        { "from": 1603, "to": 1868, "capital": "Edo (Tokyo)", "government": "Shogunate (military rule)", "leader": "Tokugawa shōguns", "note": "Isolationist unified state." },
+        { "from": 1868, "to": 1947, "capital": "Tokyo", "government": "Constitutional monarchy (Empire)", "leader": "Emperor", "note": "Rapid modernisation; Axis power in WWII." },
+        { "from": 1947, "to": 9999, "capital": "Tokyo", "government": "Constitutional monarchy (parliamentary)", "leader": "Emperor Naruhito; PM leads government", "population": "124 million (2024)", "note": "Post-war democracy and economic power." }
+      ]
+    },
+    "spain": {
+      "name": "Spain",
+      "aliases": ["spain", "kingdom of spain", "crown of castile", "castile", "crown of aragon"],
+      "eras": [
+        { "from": 1516, "to": 1700, "capital": "Madrid", "government": "Absolute monarchy (Habsburg)", "leader": "Habsburg kings", "note": "Global empire across the Americas and Pacific." },
+        { "from": 1939, "to": 1975, "capital": "Madrid", "government": "Fascist dictatorship", "leader": "Francisco Franco", "note": "Authoritarian state after the Spanish Civil War." },
+        { "from": 1978, "to": 9999, "capital": "Madrid", "government": "Constitutional monarchy", "leader": "King Felipe VI; PM leads government", "population": "48 million (2024)", "note": "Democratic monarchy; EU member." }
+      ]
+    },
+    "ottoman empire": {
+      "name": "Ottoman Empire",
+      "aliases": ["ottoman empire", "ottomans", "ottoman", "turkey", "republic of turkey", "türkiye"],
+      "eras": [
+        { "from": 1299, "to": 1922, "capital": "Bursa → Constantinople (Istanbul)", "government": "Absolute monarchy (Sultanate / Caliphate)", "leader": "Ottoman sultans", "note": "Spanned south-east Europe, west Asia and north Africa." },
+        { "from": 1923, "to": 9999, "capital": "Ankara", "government": "Presidential republic", "leader": "President of Turkey", "population": "85 million (2024)", "note": "Republic of Türkiye, successor state to the empire." }
+      ]
+    }
   }
 }
