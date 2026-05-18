@@ -29,9 +29,13 @@ export function createStory({ wars, formations, onBeat, onExit }) {
     return b.filter((x, i) => i === 0 || x.year !== b[i - 1].year || x.label !== b[i - 1].label);
   }
 
+  const timelineEl = document.getElementById("timeline");
+
   function show() {
     const bt = beats[idx];
     bar.hidden = false;
+    // Sit just above the timeline regardless of its (wrapping) height.
+    if (timelineEl) bar.style.bottom = (timelineEl.offsetHeight + 34) + "px";
     bar.innerHTML = `
       <button class="sb-prev" ${idx <= 0 ? "disabled" : ""}>◀</button>
       <div class="sb-main">

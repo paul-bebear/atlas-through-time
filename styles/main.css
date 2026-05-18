@@ -222,8 +222,8 @@ input[type=range]::-webkit-slider-thumb {
 #searchResults .sr small { color: var(--muted); margin-left: 6px; }
 
 /* Guided story bar */
-#storyBar { position: absolute; left: 50%; bottom: 132px; transform: translateX(-50%);
-  z-index: 10; width: min(680px, 94vw);
+#storyBar { position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
+  z-index: 13; width: min(680px, 94vw);
   display: flex; align-items: center; gap: 12px;
   background: rgba(14,24,38,0.95); border: 1px solid rgba(93,169,255,0.35);
   border-radius: 14px; padding: 10px 14px; backdrop-filter: blur(10px);
