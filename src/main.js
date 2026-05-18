@@ -13,6 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
+import { polityDetail } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 
@@ -187,9 +188,27 @@ async function boot() {
 
   createSearch({
     catalog: card.catalog,
-    onPick: entry => {
-      if (entry.lat != null) globe.flyTo(entry.lat, entry.lng, 1.2);
-      story.start(entry);
+    onPick: async hit => {
+      if (hit.kind === "curated") {
+        const entry = hit.entry;
+        if (entry.lat != null) globe.flyTo(entry.lat, entry.lng, 1.2);
+        story.start(entry);
+        return;
+      }
+      // DB polity: fly there if it has coords, jump the timeline into its
+      // span, show a live-from-database card.
+      const p = hit.polity;
+      story.exit?.();
+      setContext("🗄 " + p.canonical_name);
+      if (p.lat != null && p.lng != null) globe.flyTo(p.lat, p.lng, 1.2);
+      if (p.start_year != null) {
+        const mid = p.end_year != null
+          ? Math.round((p.start_year + p.end_year) / 2) : p.start_year;
+        timeline.setYear(mid);
+      }
+      timeline.setSpan(p.start_year, p.end_year ?? p.start_year, p.canonical_name);
+      card.openDbPolity(p);
+      try { card.openDbPolity(p, await polityDetail(p.id)); } catch { /* keep basic */ }
     }
   });
 }

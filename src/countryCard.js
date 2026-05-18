@@ -119,7 +119,25 @@ export function createInfoCard({ countries }) {
     }
   }
 
-  return { openCountry, openEntry, openEvent, close, catalog };
+  // A polity straight from the Supabase registry (the long tail beyond the
+  // curated 30). `detail` = { facts, refs } from db.polityDetail().
+  function openDbPolity(p, detail) {
+    const span = `${p.start_year != null ? yr(p.start_year) : "?"} – ${
+      p.end_year != null ? yr(p.end_year) : "present"}`;
+    const rows = [];
+    if (p.type) rows.push(["Type", p.type]);
+    for (const f of (detail?.facts || []))
+      rows.push([cap(f.key), f.value + (f.perspective ? ` (${f.perspective})` : "")]);
+    const wiki = (detail?.refs || []).find(r => r.kind === "wikipedia");
+    shell(p.canonical_name, `${span} · from the Atlas registry`,
+      rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
+      + (wiki ? `<a class="cc-link" href="${wiki.url}" target="_blank" rel="noopener">Read on Wikipedia →</a>` : "")
+      + `<div class="cc-note">Sourced from Wikidata. Curated profile (eras, leaders, facts) not added yet — this is the live database talking.</div>`);
+  }
+
+  return { openCountry, openEntry, openEvent, openDbPolity, close, catalog };
 }
+
+function cap(s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }
