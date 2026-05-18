@@ -1,0 +1,33 @@
+{
+  "_doc": "Curated continuity threads (the editorial spine). Wikidata succession is too noisy/territorial to auto-derive national continuity, so threads are hand-defined here against Wikidata polity QIDs. A QID appearing in >1 thread becomes role 'shared' automatically (e.g. the Polish–Lithuanian Commonwealth ∈ Poland AND Lithuania). Aggregate-not-interpret: contested lineages (Kievan Rus') are deliberately listed under every claimant. Extend continent-by-continent.",
+  "threads": [
+    {
+      "slug": "france", "display_name": "France", "region": "Europe", "core": "Q142",
+      "members": ["Q146246", "Q46370", "Q70972", "Q207162", "Q69808", "Q142"]
+    },
+    {
+      "slug": "germany", "display_name": "Germany", "region": "Europe", "core": "Q183",
+      "members": ["Q175211", "Q12548", "Q150981", "Q43287", "Q41304", "Q7318", "Q713750", "Q16957", "Q183"]
+    },
+    {
+      "slug": "holy-roman-empire", "display_name": "Holy Roman Empire", "region": "Europe", "core": "Q12548",
+      "members": ["Q12548"]
+    },
+    {
+      "slug": "poland", "display_name": "Poland", "region": "Europe", "core": "Q36",
+      "members": ["Q577867", "Q171348", "Q825902", "Q172107", "Q152115", "Q11750128", "Q207272", "Q211274", "Q36"]
+    },
+    {
+      "slug": "lithuania", "display_name": "Lithuania", "region": "Europe", "core": "Q37",
+      "members": ["Q49683", "Q825902", "Q172107", "Q8272919", "Q80211", "Q37"]
+    },
+    {
+      "slug": "russia", "display_name": "Russia", "region": "Europe", "core": "Q159",
+      "members": ["Q1108445", "Q186096", "Q34266", "Q139319", "Q2184", "Q15180", "Q159"]
+    },
+    {
+      "slug": "belarus", "display_name": "Belarus", "region": "Europe", "core": "Q184",
+      "members": ["Q1108445", "Q2895", "Q184"]
+    }
+  ]
+}
