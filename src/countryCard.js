@@ -21,6 +21,22 @@ export function createInfoCard({ countries }) {
   const eraFor = (c, year) =>
     (c.eras || []).find(e => year >= e.from && year <= (e.to ?? 9999)) || null;
 
+  // Lazy, cached Wikipedia thumbnail for a major city (kept light: one small
+  // image, fetched on open, cached across the session).
+  const thumbCache = new Map();
+  let openSeq = 0;
+
+  async function fetchThumb(title) {
+    if (thumbCache.has(title)) return thumbCache.get(title);
+    let url = null;
+    try {
+      const r = await fetch(WIKI + encodeURIComponent(title));
+      if (r.ok) url = (await r.json()).thumbnail?.source || null;
+    } catch { /* ignore */ }
+    thumbCache.set(title, url);
+    return url;
+  }
+
   function shell(title, sub, body) {
     card.hidden = false;
     card.innerHTML = `<span class="cc-close">×</span>
@@ -53,12 +69,29 @@ export function createInfoCard({ countries }) {
       ? `${yr(era.from)} – ${era.to >= 9999 ? "present" : yr(era.to)}`
       : `as shown in ${yr(year)}`;
 
+    const facts = (c?.facts || []).slice(0, 4);
+    const factsHtml = facts.length
+      ? `<div class="cc-facts"><div class="cc-facts-h">✦ Did you know</div><ul>${
+          facts.map(f => `<li>${f}</li>`).join("")}</ul></div>`
+      : "";
+
+    const myseq = ++openSeq;
     shell(title, eraTxt,
-      rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
+      `<div class="cc-imgwrap"></div>`
+      + rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + wars
       + (era?.note ? `<div class="cc-note">${era.note}</div>` : "")
       + (c && !era ? `<div class="cc-note">No profile for ${yr(year)} yet — ${c.name} is curated for other periods.</div>` : "")
-      + (!c ? `<div class="cc-note">No curated profile yet — showing raw map data. We'll deepen this.</div>` : ""));
+      + (!c ? `<div class="cc-note">No curated profile yet — showing raw map data. We'll deepen this.</div>` : "")
+      + factsHtml);
+
+    if (c) {
+      fetchThumb(c.image || c.name).then(src => {
+        if (!src || openSeq !== myseq) return;
+        const wrap = card.querySelector(".cc-imgwrap");
+        if (wrap) wrap.innerHTML = `<img class="cc-thumb" src="${src}" alt="">`;
+      });
+    }
   }
 
   async function openEvent(ev) {

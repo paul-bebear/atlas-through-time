@@ -139,6 +139,13 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .cc-row .k { color: var(--muted); }
 .cc-row .v { text-align: right; font-weight: 600; }
 .cc-note { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+.cc-imgwrap:empty { display: none; }
+.cc-facts { margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(93,169,255,0.10); border: 1px solid rgba(93,169,255,0.25); }
+.cc-facts-h { font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--accent); margin-bottom: 6px; }
+.cc-facts ul { margin: 0; padding-left: 16px; }
+.cc-facts li { font-size: 12px; line-height: 1.5; margin: 4px 0; color: var(--text); }
 
 /* Timeline */
 #timeline {

@@ -1,9 +1,15 @@
 {
-  "_schema": "Period-aware country facts. Each country has eras [{from,to,capital,government,leader,population,note}]. 'to': 9999 = present. Maps 1:1 to a future Postgres table country_facts(country_id, from_year, to_year, capital, government, leader, population, note) so 'monarchies in 1800' / 'fascist states 1925-2025' become WHERE queries. 'aliases' lets historical map names resolve to one country.",
+  "_schema": "Period-aware country facts. country -> {name, aliases[], image (Wikipedia article for a major city thumbnail), facts[], eras:[{from,to,capital,government,leader,population,note}]}. 'to':9999 = present. Maps 1:1 to a future Postgres table; 'monarchies in 1800' / 'fascist states 1925-2025' become WHERE queries.",
   "countries": {
     "france": {
       "name": "France",
       "aliases": ["france", "kingdom of france", "french republic", "french empire", "first french empire", "francia", "west francia"],
+      "image": "Paris",
+      "facts": [
+        "The Eiffel Tower was meant to be temporary — built for the 1889 World's Fair.",
+        "France has had 5 republics, 2 empires and 3 monarchies since 1789.",
+        "It is the most-visited country on Earth."
+      ],
       "eras": [
         { "from": 987, "to": 1791, "capital": "Paris", "government": "Feudal then absolute monarchy", "leader": "Capet / Valois / Bourbon dynasties", "note": "Royal domain expanded for centuries until the great fiefs were absorbed into the crown." },
         { "from": 1792, "to": 1804, "capital": "Paris", "government": "Republic (First Republic)", "leader": "National Convention / Directory", "note": "Monarchy abolished during the French Revolution." },
@@ -15,6 +21,12 @@
     "united kingdom": {
       "name": "United Kingdom",
       "aliases": ["united kingdom", "great britain", "england", "kingdom of england", "english empire", "british empire", "uk"],
+      "image": "London",
+      "facts": [
+        "At its peak the British Empire covered a quarter of the planet's land.",
+        "The UK has no single written constitution.",
+        "The world's first underground railway opened in London in 1863."
+      ],
       "eras": [
         { "from": 927, "to": 1648, "capital": "London", "government": "Monarchy", "leader": "English monarchs", "note": "Kingdom of England; long contested continental territory with France." },
         { "from": 1707, "to": 1900, "capital": "London", "government": "Constitutional monarchy", "leader": "British monarch; PM leads government", "population": "~38 million (1900)", "note": "Centre of the largest empire in history." },
@@ -24,6 +36,12 @@
     "germany": {
       "name": "Germany",
       "aliases": ["germany", "german empire", "nazi germany", "german reich", "west germany", "east germany", "prussia", "kingdom of prussia"],
+      "image": "Berlin",
+      "facts": [
+        "Germany only unified into one nation-state in 1871.",
+        "It was split into two countries from 1949 to 1990.",
+        "Home to over 1,500 varieties of sausage."
+      ],
       "eras": [
         { "from": 1871, "to": 1918, "capital": "Berlin", "government": "Constitutional monarchy (Empire)", "leader": "Kaiser Wilhelm II", "population": "~65 million (1914)", "note": "Unified under Prussia in 1871." },
         { "from": 1919, "to": 1933, "capital": "Berlin", "government": "Republic (Weimar)", "note": "Democratic republic after WWI; collapsed amid crisis." },
@@ -34,6 +52,12 @@
     "italy": {
       "name": "Italy",
       "aliases": ["italy", "kingdom of italy", "italian republic", "roman empire", "roman republic", "rome"],
+      "image": "Rome",
+      "facts": [
+        "Rome has been a city for over 2,700 years.",
+        "Italy didn't unify as one country until 1861.",
+        "It has more UNESCO World Heritage sites than any other country."
+      ],
       "eras": [
         { "from": -509, "to": -27, "capital": "Rome", "government": "Roman Republic", "note": "City-state expanding to control the Mediterranean." },
         { "from": -27, "to": 476, "capital": "Rome", "government": "Empire", "leader": "Roman emperors", "note": "The Roman Empire at its height spanned three continents." },
@@ -45,6 +69,12 @@
     "russia": {
       "name": "Russia",
       "aliases": ["russia", "russian empire", "russian federation", "soviet union", "ussr", "muscovy", "grand duchy of moscow", "tsardom of russia"],
+      "image": "Moscow",
+      "facts": [
+        "Russia spans 11 time zones — the most of any country.",
+        "It is larger than Pluto by surface area.",
+        "Lake Baikal holds about 20% of the world's unfrozen fresh water."
+      ],
       "eras": [
         { "from": 1547, "to": 1721, "capital": "Moscow", "government": "Tsardom (absolute monarchy)", "leader": "Tsars (Rurik / Romanov)", "note": "Expanded across Siberia." },
         { "from": 1721, "to": 1917, "capital": "St Petersburg", "government": "Absolute monarchy (Empire)", "leader": "Romanov emperors", "population": "~125 million (1900)", "note": "One of the great powers of Europe." },
@@ -55,6 +85,12 @@
     "united states": {
       "name": "United States",
       "aliases": ["united states", "united states of america", "usa", "us"],
+      "image": "Washington,_D.C.",
+      "facts": [
+        "Started as 13 colonies; now 50 states across a continent.",
+        "The US economy is the largest in the world by nominal GDP.",
+        "Has no official language at the federal level."
+      ],
       "eras": [
         { "from": 1776, "to": 1860, "capital": "Washington, D.C. (from 1800)", "government": "Federal republic", "population": "~31 million (1860)", "note": "Thirteen colonies expanding across North America." },
         { "from": 1861, "to": 1865, "capital": "Washington, D.C.", "government": "Federal republic (Civil War)", "leader": "President Abraham Lincoln", "note": "Union vs Confederacy over slavery and secession." },
@@ -64,6 +100,12 @@
     "china": {
       "name": "China",
       "aliases": ["china", "qing", "qing empire", "qing dynasty", "ming", "ming dynasty", "han", "han dynasty", "tang", "republic of china", "people's republic of china"],
+      "image": "Beijing",
+      "facts": [
+        "The world's oldest continuous civilisation, over 3,500 years of written history.",
+        "The Great Wall is over 21,000 km long in total.",
+        "Invented paper, printing, gunpowder and the compass."
+      ],
       "eras": [
         { "from": -221, "to": 1911, "capital": "Xi'an / Beijing (varied)", "government": "Imperial dynasty", "leader": "Emperors (Qin → Qing)", "note": "Cycles of unification, fragmentation and reunification under successive dynasties." },
         { "from": 1912, "to": 1949, "capital": "Nanjing / Beijing", "government": "Republic (then civil war)", "leader": "Kuomintang", "note": "Republic of China; warlord era and civil war." },
@@ -73,6 +115,12 @@
     "japan": {
       "name": "Japan",
       "aliases": ["japan", "empire of japan", "tokugawa shogunate"],
+      "image": "Tokyo",
+      "facts": [
+        "Comprises about 14,000 islands.",
+        "Has the world's oldest continuous hereditary monarchy.",
+        "Tokyo is the most populous metropolitan area on Earth."
+      ],
       "eras": [
         { "from": 1603, "to": 1868, "capital": "Edo (Tokyo)", "government": "Shogunate (military rule)", "leader": "Tokugawa shōguns", "note": "Isolationist unified state." },
         { "from": 1868, "to": 1947, "capital": "Tokyo", "government": "Constitutional monarchy (Empire)", "leader": "Emperor", "note": "Rapid modernisation; Axis power in WWII." },
@@ -82,6 +130,12 @@
     "spain": {
       "name": "Spain",
       "aliases": ["spain", "kingdom of spain", "crown of castile", "castile", "crown of aragon"],
+      "image": "Madrid",
+      "facts": [
+        "The first empire on which 'the sun never set'.",
+        "Spanish is the world's second-most spoken native language.",
+        "Has a wordless national anthem."
+      ],
       "eras": [
         { "from": 1516, "to": 1700, "capital": "Madrid", "government": "Absolute monarchy (Habsburg)", "leader": "Habsburg kings", "note": "Global empire across the Americas and Pacific." },
         { "from": 1939, "to": 1975, "capital": "Madrid", "government": "Fascist dictatorship", "leader": "Francisco Franco", "note": "Authoritarian state after the Spanish Civil War." },
@@ -89,11 +143,303 @@
       ]
     },
     "ottoman empire": {
-      "name": "Ottoman Empire",
+      "name": "Ottoman Empire / Türkiye",
       "aliases": ["ottoman empire", "ottomans", "ottoman", "turkey", "republic of turkey", "türkiye"],
+      "image": "Istanbul",
+      "facts": [
+        "Lasted over 600 years (1299–1922).",
+        "Istanbul straddles two continents, Europe and Asia.",
+        "The sultan was also caliph of the Islamic world."
+      ],
       "eras": [
         { "from": 1299, "to": 1922, "capital": "Bursa → Constantinople (Istanbul)", "government": "Absolute monarchy (Sultanate / Caliphate)", "leader": "Ottoman sultans", "note": "Spanned south-east Europe, west Asia and north Africa." },
-        { "from": 1923, "to": 9999, "capital": "Ankara", "government": "Presidential republic", "leader": "President of Turkey", "population": "85 million (2024)", "note": "Republic of Türkiye, successor state to the empire." }
+        { "from": 1923, "to": 9999, "capital": "Ankara", "government": "Presidential republic", "leader": "President of Türkiye", "population": "85 million (2024)", "note": "Republic of Türkiye, successor state to the empire." }
+      ]
+    },
+    "india": {
+      "name": "India",
+      "aliases": ["india", "mughal empire", "british india", "british raj", "republic of india", "maratha empire"],
+      "image": "New_Delhi",
+      "facts": [
+        "The world's most populous country and largest democracy.",
+        "The number zero and the decimal system were developed here.",
+        "Has over 700 languages in everyday use."
+      ],
+      "eras": [
+        { "from": 1526, "to": 1857, "capital": "Delhi / Agra", "government": "Mughal Empire", "leader": "Mughal emperors", "note": "Wealthy empire covering most of the subcontinent." },
+        { "from": 1858, "to": 1947, "capital": "Calcutta → New Delhi", "government": "British colonial rule (the Raj)", "leader": "British Crown / Viceroy", "note": "Crown rule after the 1857 rebellion." },
+        { "from": 1947, "to": 9999, "capital": "New Delhi", "government": "Federal parliamentary republic", "leader": "President; PM leads government", "population": "1.43 billion (2024)", "note": "Independent republic after partition with Pakistan." }
+      ]
+    },
+    "brazil": {
+      "name": "Brazil",
+      "aliases": ["brazil", "empire of brazil", "federative republic of brazil"],
+      "image": "Brasília",
+      "facts": [
+        "The only Portuguese-speaking country in the Americas.",
+        "Was an independent monarchy (Empire of Brazil) until 1889.",
+        "The Amazon holds about 10% of all known species."
+      ],
+      "eras": [
+        { "from": 1822, "to": 1889, "capital": "Rio de Janeiro", "government": "Constitutional monarchy (Empire)", "leader": "Emperors Pedro I & II", "note": "Independent empire after splitting from Portugal." },
+        { "from": 1889, "to": 9999, "capital": "Rio de Janeiro → Brasília (1960)", "government": "Federal presidential republic", "population": "212 million (2024)", "note": "Largest country in South America." }
+      ]
+    },
+    "mexico": {
+      "name": "Mexico",
+      "aliases": ["mexico", "aztec empire", "first mexican empire", "united mexican states", "new spain"],
+      "image": "Mexico_City",
+      "facts": [
+        "Mexico City is built on the ruins of the Aztec capital Tenochtitlan.",
+        "Introduced chocolate, chillies and tomatoes to the world.",
+        "Has 35 UNESCO World Heritage sites."
+      ],
+      "eras": [
+        { "from": 1325, "to": 1521, "capital": "Tenochtitlan", "government": "Aztec Empire", "leader": "Aztec tlatoani", "note": "Dominant power in central Mexico before the Spanish conquest." },
+        { "from": 1521, "to": 1821, "capital": "Mexico City", "government": "Spanish colony (New Spain)", "note": "Centre of Spanish power in the Americas." },
+        { "from": 1821, "to": 9999, "capital": "Mexico City", "government": "Federal presidential republic", "population": "129 million (2024)", "note": "Independent from Spain in 1821." }
+      ]
+    },
+    "egypt": {
+      "name": "Egypt",
+      "aliases": ["egypt", "ancient egypt", "kingdom of egypt", "arab republic of egypt", "ptolemaic egypt"],
+      "image": "Cairo",
+      "facts": [
+        "The Great Pyramid stood as the tallest human structure for ~3,800 years.",
+        "Ancient Egyptian civilisation lasted over 3,000 years.",
+        "The Nile is the lifeline of a country that is 95% desert."
+      ],
+      "eras": [
+        { "from": -3100, "to": -332, "capital": "Memphis / Thebes", "government": "Pharaonic kingdom", "leader": "Pharaohs", "note": "One of the earliest and longest-lived civilisations." },
+        { "from": -332, "to": -30, "capital": "Alexandria", "government": "Hellenistic kingdom (Ptolemaic)", "leader": "Ptolemaic dynasty (to Cleopatra VII)", "note": "Greek-ruled after Alexander the Great." },
+        { "from": 1953, "to": 9999, "capital": "Cairo", "government": "Presidential republic", "population": "114 million (2024)", "note": "Republic after the 1952 revolution." }
+      ]
+    },
+    "greece": {
+      "name": "Greece",
+      "aliases": ["greece", "hellenic republic", "ancient greece", "kingdom of greece", "byzantine empire", "eastern roman empire"],
+      "image": "Athens",
+      "facts": [
+        "Birthplace of democracy, the Olympic Games and Western philosophy.",
+        "Has around 6,000 islands; about 230 are inhabited.",
+        "No point in Greece is more than ~137 km from the sea."
+      ],
+      "eras": [
+        { "from": -800, "to": -146, "capital": "Athens / Sparta (city-states)", "government": "City-states (democracy, oligarchy)", "note": "Classical Greece — foundations of Western thought." },
+        { "from": 330, "to": 1453, "capital": "Constantinople", "government": "Byzantine Empire (monarchy)", "leader": "Byzantine emperors", "note": "Greek-speaking continuation of the Roman Empire." },
+        { "from": 1974, "to": 9999, "capital": "Athens", "government": "Parliamentary republic", "population": "10 million (2024)", "note": "Republic since the fall of the military junta." }
+      ]
+    },
+    "iran": {
+      "name": "Iran (Persia)",
+      "aliases": ["iran", "persia", "persian empire", "achaemenid empire", "safavid empire", "qajar", "islamic republic of iran"],
+      "image": "Tehran",
+      "facts": [
+        "The Achaemenid Empire was the largest the world had yet seen (~480 BCE).",
+        "Called Persia in the West until 1935.",
+        "One of the world's oldest continuous major civilisations."
+      ],
+      "eras": [
+        { "from": -550, "to": -330, "capital": "Persepolis / Susa", "government": "Achaemenid Empire", "leader": "Cyrus, Darius, Xerxes", "note": "Vast empire from the Balkans to the Indus." },
+        { "from": 1501, "to": 1736, "capital": "Isfahan", "government": "Safavid Empire", "note": "Established Shia Islam as the state religion." },
+        { "from": 1979, "to": 9999, "capital": "Tehran", "government": "Islamic republic / theocracy", "leader": "Supreme Leader", "population": "89 million (2024)", "note": "Theocratic republic after the 1979 revolution." }
+      ]
+    },
+    "netherlands": {
+      "name": "Netherlands",
+      "aliases": ["netherlands", "dutch republic", "holland", "united provinces", "kingdom of the netherlands"],
+      "image": "Amsterdam",
+      "facts": [
+        "About a quarter of the country lies below sea level.",
+        "The world's first stock exchange opened in Amsterdam (1602).",
+        "Among the most bicycle-dense countries on Earth."
+      ],
+      "eras": [
+        { "from": 1581, "to": 1795, "capital": "The Hague / Amsterdam", "government": "Dutch Republic (federation)", "note": "A 17th-century maritime and trading superpower." },
+        { "from": 1815, "to": 9999, "capital": "Amsterdam", "government": "Constitutional monarchy", "leader": "King Willem-Alexander; PM leads government", "population": "18 million (2024)", "note": "Founding member of the EU." }
+      ]
+    },
+    "portugal": {
+      "name": "Portugal",
+      "aliases": ["portugal", "kingdom of portugal", "portuguese empire", "portuguese republic"],
+      "image": "Lisbon",
+      "facts": [
+        "Launched the European Age of Discovery in the 1400s.",
+        "Has the oldest fixed land borders in Europe.",
+        "Portuguese is spoken by ~260 million people worldwide."
+      ],
+      "eras": [
+        { "from": 1139, "to": 1910, "capital": "Lisbon", "government": "Monarchy", "leader": "Portuguese kings", "note": "Pioneered global maritime exploration and a vast empire." },
+        { "from": 1910, "to": 9999, "capital": "Lisbon", "government": "Republic", "population": "10 million (2024)", "note": "Republic since 1910; EU member." }
+      ]
+    },
+    "sweden": {
+      "name": "Sweden",
+      "aliases": ["sweden", "kingdom of sweden", "swedish empire"],
+      "image": "Stockholm",
+      "facts": [
+        "Was a great European power in the 17th century (the Swedish Empire).",
+        "Hasn't fought a war since 1814 — over two centuries of peace.",
+        "Awards the Nobel Prizes (except Peace)."
+      ],
+      "eras": [
+        { "from": 1611, "to": 1721, "capital": "Stockholm", "government": "Monarchy (Swedish Empire)", "leader": "Swedish kings", "note": "Dominated the Baltic region." },
+        { "from": 1809, "to": 9999, "capital": "Stockholm", "government": "Constitutional monarchy", "leader": "King Carl XVI Gustaf; PM leads government", "population": "10.6 million (2024)", "note": "Modern parliamentary democracy." }
+      ]
+    },
+    "poland": {
+      "name": "Poland",
+      "aliases": ["poland", "polish-lithuanian commonwealth", "duchy of warsaw", "congress poland", "republic of poland"],
+      "image": "Warsaw",
+      "facts": [
+        "The Polish–Lithuanian Commonwealth was one of Europe's largest states.",
+        "Poland vanished from the map entirely from 1795 to 1918.",
+        "Had one of the world's first codified constitutions (1791)."
+      ],
+      "eras": [
+        { "from": 1569, "to": 1795, "capital": "Kraków / Warsaw", "government": "Elective monarchy (Commonwealth)", "note": "Vast multi-ethnic state with an elected king." },
+        { "from": 1918, "to": 1939, "capital": "Warsaw", "government": "Republic (Second Republic)", "note": "Reborn after 123 years of partition." },
+        { "from": 1989, "to": 9999, "capital": "Warsaw", "government": "Parliamentary republic", "population": "37 million (2024)", "note": "Democratic republic; EU and NATO member." }
+      ]
+    },
+    "austria": {
+      "name": "Austria",
+      "aliases": ["austria", "austria-hungary", "austrian empire", "habsburg monarchy", "archduchy of austria", "republic of austria"],
+      "image": "Vienna",
+      "facts": [
+        "Vienna was the seat of the Habsburgs for over 600 years.",
+        "Austria-Hungary was Europe's second-largest country before WWI.",
+        "Birthplace of Mozart, Freud and the croissant's ancestor."
+      ],
+      "eras": [
+        { "from": 1804, "to": 1867, "capital": "Vienna", "government": "Empire (Habsburg)", "leader": "Habsburg emperors", "note": "Major European power." },
+        { "from": 1867, "to": 1918, "capital": "Vienna", "government": "Dual monarchy (Austria-Hungary)", "leader": "Emperor Franz Joseph I", "note": "Multi-ethnic empire dissolved after WWI." },
+        { "from": 1955, "to": 9999, "capital": "Vienna", "government": "Federal parliamentary republic", "population": "9 million (2024)", "note": "Neutral republic; EU member." }
+      ]
+    },
+    "mongol empire": {
+      "name": "Mongol Empire",
+      "aliases": ["mongol empire", "mongolia", "golden horde", "yuan dynasty", "ilkhanate"],
+      "image": "Ulaanbaatar",
+      "facts": [
+        "The largest contiguous land empire in history.",
+        "At its peak it covered ~16% of Earth's land area.",
+        "Ran one of the first international postal relay systems (the Yam)."
+      ],
+      "eras": [
+        { "from": 1206, "to": 1368, "capital": "Karakorum → Khanbaliq (Beijing)", "government": "Steppe empire (Khaganate)", "leader": "Genghis Khan and successors", "note": "Stretched from Korea to Eastern Europe." },
+        { "from": 1992, "to": 9999, "capital": "Ulaanbaatar", "government": "Semi-presidential republic (Mongolia)", "population": "3.5 million (2024)", "note": "Modern Mongolia, heartland of the old empire." }
+      ]
+    },
+    "canada": {
+      "name": "Canada",
+      "aliases": ["canada", "dominion of canada", "british north america"],
+      "image": "Ottawa",
+      "facts": [
+        "The world's second-largest country by area.",
+        "Has the longest coastline of any country (~202,000 km).",
+        "Officially bilingual: English and French."
+      ],
+      "eras": [
+        { "from": 1867, "to": 1931, "capital": "Ottawa", "government": "Self-governing British dominion", "note": "Confederation of British North American colonies." },
+        { "from": 1931, "to": 9999, "capital": "Ottawa", "government": "Federal parliamentary constitutional monarchy", "leader": "Monarch (Charles III); PM leads government", "population": "41 million (2024)", "note": "Fully sovereign Commonwealth realm." }
+      ]
+    },
+    "australia": {
+      "name": "Australia",
+      "aliases": ["australia", "commonwealth of australia"],
+      "image": "Canberra",
+      "facts": [
+        "The only nation that is also a whole continent.",
+        "Home to the world's oldest continuous cultures (~65,000 years).",
+        "Has more kangaroos than people."
+      ],
+      "eras": [
+        { "from": 1901, "to": 9999, "capital": "Canberra", "government": "Federal parliamentary constitutional monarchy", "leader": "Monarch (Charles III); PM leads government", "population": "27 million (2024)", "note": "Federation of British colonies from 1901." }
+      ]
+    },
+    "south korea": {
+      "name": "Korea",
+      "aliases": ["korea", "south korea", "north korea", "joseon", "korean empire", "republic of korea"],
+      "image": "Seoul",
+      "facts": [
+        "The Joseon dynasty ruled a unified Korea for over 500 years.",
+        "Korea was divided into North and South in 1945.",
+        "Hangul, the Korean alphabet, was invented in the 1440s."
+      ],
+      "eras": [
+        { "from": 1392, "to": 1897, "capital": "Hanseong (Seoul)", "government": "Monarchy (Joseon dynasty)", "note": "Long-lived unified Korean kingdom." },
+        { "from": 1948, "to": 9999, "capital": "Seoul", "government": "Presidential republic (South)", "population": "52 million (South, 2024)", "note": "Republic of Korea after the post-war division." }
+      ]
+    },
+    "ethiopia": {
+      "name": "Ethiopia",
+      "aliases": ["ethiopia", "abyssinia", "ethiopian empire", "kingdom of aksum"],
+      "image": "Addis_Ababa",
+      "facts": [
+        "One of only two African states never colonised.",
+        "Uses its own 13-month calendar and is ~7 years 'behind'.",
+        "Possibly the origin of coffee."
+      ],
+      "eras": [
+        { "from": 1270, "to": 1974, "capital": "Gondar → Addis Ababa", "government": "Monarchy (Ethiopian Empire)", "leader": "Emperors (Solomonic dynasty)", "note": "Defeated Italy at Adwa (1896) to keep its independence." },
+        { "from": 1991, "to": 9999, "capital": "Addis Ababa", "government": "Federal parliamentary republic", "population": "129 million (2024)", "note": "Federal republic; seat of the African Union." }
+      ]
+    },
+    "south africa": {
+      "name": "South Africa",
+      "aliases": ["south africa", "union of south africa", "republic of south africa"],
+      "image": "Pretoria",
+      "facts": [
+        "Has three capital cities (executive, legislative, judicial).",
+        "Apartheid was dismantled by 1994; Mandela became president.",
+        "12 official languages."
+      ],
+      "eras": [
+        { "from": 1910, "to": 1948, "capital": "Pretoria / Cape Town", "government": "British dominion", "note": "Union of South Africa." },
+        { "from": 1948, "to": 1994, "capital": "Pretoria", "government": "Apartheid state", "note": "Institutionalised racial segregation." },
+        { "from": 1994, "to": 9999, "capital": "Pretoria / Cape Town / Bloemfontein", "government": "Parliamentary republic", "population": "63 million (2024)", "note": "Multiracial democracy after apartheid." }
+      ]
+    },
+    "saudi arabia": {
+      "name": "Saudi Arabia",
+      "aliases": ["saudi arabia", "kingdom of saudi arabia", "hejaz", "arabia"],
+      "image": "Riyadh",
+      "facts": [
+        "The only country named after its ruling family.",
+        "Holds Islam's two holiest cities, Mecca and Medina.",
+        "Has no permanent rivers."
+      ],
+      "eras": [
+        { "from": 1932, "to": 9999, "capital": "Riyadh", "government": "Absolute monarchy", "leader": "House of Saud", "population": "37 million (2024)", "note": "Unified into a kingdom in 1932; vast oil reserves." }
+      ]
+    },
+    "argentina": {
+      "name": "Argentina",
+      "aliases": ["argentina", "argentine republic", "united provinces of the río de la plata"],
+      "image": "Buenos_Aires",
+      "facts": [
+        "Home to both the highest and lowest points in the Americas.",
+        "The tango originated in Buenos Aires.",
+        "Spans from subtropics to Antarctic-facing Patagonia."
+      ],
+      "eras": [
+        { "from": 1816, "to": 9999, "capital": "Buenos Aires", "government": "Federal presidential republic", "population": "46 million (2024)", "note": "Independent from Spain in 1816." }
+      ]
+    },
+    "vietnam": {
+      "name": "Vietnam",
+      "aliases": ["vietnam", "đại việt", "north vietnam", "south vietnam", "socialist republic of vietnam", "french indochina"],
+      "image": "Hanoi",
+      "facts": [
+        "Resisted, and outlasted, a millennium of Chinese rule.",
+        "Was divided into North and South until reunification in 1976.",
+        "World's second-largest coffee exporter."
+      ],
+      "eras": [
+        { "from": 1802, "to": 1883, "capital": "Huế", "government": "Monarchy (Nguyễn dynasty)", "note": "Last Vietnamese imperial dynasty." },
+        { "from": 1887, "to": 1954, "capital": "Hanoi / Saigon", "government": "French colonial rule (Indochina)", "note": "Part of French Indochina." },
+        { "from": 1976, "to": 9999, "capital": "Hanoi", "government": "One-party socialist state", "population": "100 million (2024)", "note": "Reunified after the Vietnam War." }
       ]
     }
   }
