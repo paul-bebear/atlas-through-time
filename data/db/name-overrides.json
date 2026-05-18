@@ -1,0 +1,6 @@
+{
+  "_doc": "Manual historical-basemaps name → Wikidata QID overrides. Highest priority in resolve-names.mjs (confidence 1.0). Fill this in continent-by-continent from the unmatched-names.json worklist.",
+  "Eastern Roman Empire": "Q12544",
+  "Frankish Empire": "Q193714",
+  "Soviet Union": "Q15180"
+}
