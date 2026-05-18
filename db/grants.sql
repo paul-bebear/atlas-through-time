@@ -3,8 +3,12 @@
 -- schema and adds public READ-ONLY policies so the app (anon key) can read.
 -- Writes happen with the service_role key, which bypasses RLS.
 --
--- Also required (one-time, in the dashboard):
---   Settings → API → Exposed schemas → add `atlas`
+-- Exposing `atlas` to the Data API is done here in SQL (no dashboard
+-- needed — the "Exposed schemas" UI moved/is hard to find). This points
+-- PostgREST at public + graphql_public + atlas and hot-reloads it.
+alter role authenticator set pgrst.db_schemas = 'public, graphql_public, atlas';
+notify pgrst, 'reload config';
+notify pgrst, 'reload schema';
 
 grant usage on schema atlas to anon, authenticated, service_role;
 grant select on all tables in schema atlas to anon, authenticated;
