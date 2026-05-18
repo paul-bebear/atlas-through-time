@@ -1,0 +1,11 @@
+# Shelved CShapes data — large and regeneratable:
+#   raw:  tools/fetch via curl (see borders.js note)
+#   min:  node tools/simplify-cshapes.mjs
+data/cshapes.geojson
+data/cshapes.min.geojson
+
+# Local / tooling
+.vercel
+.DS_Store
+*.log
+node_modules

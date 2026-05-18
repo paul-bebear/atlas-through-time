@@ -1,0 +1,45 @@
+{
+  "_note": "Starter dataset. Keyed by lowercased country name. Period-agnostic for now; later we key facts by year range.",
+  "france": {
+    "name": "France",
+    "population": "68 million (2024)",
+    "leader": "President Emmanuel Macron",
+    "capital": "Paris",
+    "note": "One of the oldest unified states in Europe. Fought England for control of mainland territory across the medieval and early-modern periods."
+  },
+  "england": {
+    "name": "England",
+    "population": "~57 million (England, 2024)",
+    "leader": "Monarch Charles III (UK); Prime Minister leads government",
+    "capital": "London",
+    "note": "An island kingdom that long sought and held continental footholds in France before consolidating as part of the United Kingdom."
+  },
+  "united kingdom": {
+    "name": "United Kingdom",
+    "population": "69 million (2024)",
+    "leader": "Monarch Charles III; PM leads government",
+    "capital": "London",
+    "note": "Union of England, Scotland, Wales and Northern Ireland; former center of the largest empire in history."
+  },
+  "germany": {
+    "name": "Germany",
+    "population": "84 million (2024)",
+    "leader": "Chancellor (head of government)",
+    "capital": "Berlin",
+    "note": "Unified in 1871; its borders shifted dramatically across both World Wars."
+  },
+  "russia": {
+    "name": "Russia",
+    "population": "144 million (2024)",
+    "leader": "President Vladimir Putin",
+    "capital": "Moscow",
+    "note": "Largest country on Earth by area; successor state to the Russian Empire and Soviet Union."
+  },
+  "united states": {
+    "name": "United States",
+    "population": "335 million (2024)",
+    "leader": "President (head of state and government)",
+    "capital": "Washington, D.C.",
+    "note": "Expanded across North America through the 19th century via purchase, treaty and annexation."
+  }
+}

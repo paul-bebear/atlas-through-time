@@ -1,0 +1,422 @@
+[
+  {
+    "id": "france",
+    "name": "Formation of France",
+    "start": 987,
+    "end": 1700,
+    "summary": "West Francia began as a weak crown surrounded by powerful feudal duchies. Over seven centuries the Capetian and Valois kings absorbed Burgundy, Brittany, Aquitaine, Normandy and the rest into a centralised kingdom.",
+    "highlight": [
+      "France",
+      "Kingdom of France",
+      "West Francia",
+      "Francia",
+      "Burgundy",
+      "Duchy of Burgundy",
+      "Brittany",
+      "Duchy of Brittany",
+      "Aquitaine",
+      "Duchy of Aquitaine",
+      "Normandy",
+      "Toulouse",
+      "Provence"
+    ],
+    "stages": [
+      {
+        "year": 1000,
+        "label": "West Francia — strong duchies, weak crown"
+      },
+      {
+        "year": 1300,
+        "label": "Capetian kings expand the royal domain"
+      },
+      {
+        "year": 1500,
+        "label": "Great fiefs absorbed into the crown"
+      },
+      {
+        "year": 1700,
+        "label": "Centralised absolutist kingdom"
+      }
+    ],
+    "lat": 47,
+    "lng": 2
+  },
+  {
+    "id": "russia",
+    "name": "Rise of Russia",
+    "start": 1283,
+    "end": 1721,
+    "summary": "From fragmented Rus principalities under Mongol overlordship, the Grand Duchy of Moscow 'gathered the Russian lands', threw off the Mongol yoke, and expanded into a Eurasian empire.",
+    "highlight": [
+      "Russia",
+      "Russian Empire",
+      "Muscovy",
+      "Grand Duchy of Moscow",
+      "Tsardom of Russia",
+      "Novgorod",
+      "Kievan Rus"
+    ],
+    "stages": [
+      {
+        "year": 1300,
+        "label": "Fragmented Rus under Mongol overlordship"
+      },
+      {
+        "year": 1500,
+        "label": "Moscow gathers the Russian lands"
+      },
+      {
+        "year": 1700,
+        "label": "Tsardom expanding east and west"
+      },
+      {
+        "year": 1880,
+        "label": "Russian Empire spanning Eurasia"
+      }
+    ],
+    "lat": 56,
+    "lng": 40
+  },
+  {
+    "id": "spain",
+    "name": "Unification of Spain",
+    "start": 1469,
+    "end": 1516,
+    "summary": "The marriage of Isabella of Castile and Ferdinand of Aragon joined the two great Iberian crowns. The conquest of Granada in 1492 completed the Reconquista, forming the core of a unified Spain.",
+    "highlight": [
+      "Spain",
+      "Crown of Castile",
+      "Castile",
+      "Crown of Aragon",
+      "Aragon",
+      "Granada",
+      "Emirate of Granada",
+      "Navarre",
+      "Kingdom of Navarre"
+    ],
+    "stages": [
+      {
+        "year": 1400,
+        "label": "Iberian kingdoms: Castile, Aragon, Navarre, Granada"
+      },
+      {
+        "year": 1492,
+        "label": "Castile & Aragon joined; Granada conquered"
+      },
+      {
+        "year": 1600,
+        "label": "Habsburg Spain at its height"
+      }
+    ],
+    "lat": 40,
+    "lng": -4
+  },
+  {
+    "id": "usa",
+    "name": "Expansion of the United States",
+    "start": 1776,
+    "end": 1959,
+    "summary": "From thirteen Atlantic colonies, the United States expanded westward through purchase, treaty and annexation until it spanned the continent coast to coast.",
+    "highlight": [
+      "United States",
+      "United States of America",
+      "USA"
+    ],
+    "stages": [
+      {
+        "year": 1783,
+        "label": "Independence — 13 states on the Atlantic seaboard"
+      },
+      {
+        "year": 1800,
+        "label": "Trans-Appalachian expansion"
+      },
+      {
+        "year": 1880,
+        "label": "Transcontinental — coast to coast"
+      }
+    ],
+    "lat": 39,
+    "lng": -98
+  },
+  {
+    "id": "italy",
+    "name": "Italian Unification (Risorgimento)",
+    "start": 1815,
+    "end": 1871,
+    "summary": "After the Congress of Vienna, Italy was a patchwork of kingdoms, duchies and the Papal States. Led by Sardinia-Piedmont, the peninsula was unified into a single Kingdom of Italy, with Rome as capital from 1871.",
+    "highlight": [
+      "Italy",
+      "Kingdom of Italy",
+      "Sardinia",
+      "Kingdom of Sardinia",
+      "Piedmont-Sardinia",
+      "Two Sicilies",
+      "Kingdom of the Two Sicilies",
+      "Papal States",
+      "Tuscany",
+      "Grand Duchy of Tuscany",
+      "Lombardy-Venetia",
+      "Lombardy–Venetia",
+      "Modena",
+      "Parma",
+      "Naples",
+      "Venice"
+    ],
+    "stages": [
+      {
+        "year": 1815,
+        "label": "Restoration — a patchwork of states"
+      },
+      {
+        "year": 1880,
+        "label": "Unified Kingdom of Italy"
+      }
+    ],
+    "lat": 42,
+    "lng": 12
+  },
+  {
+    "id": "germany",
+    "name": "German Unification",
+    "start": 1815,
+    "end": 1871,
+    "summary": "The German Confederation was dozens of sovereign states. Prussia, through war and diplomacy under Bismarck, forged them into the German Empire, proclaimed in 1871.",
+    "highlight": [
+      "Germany",
+      "German Empire",
+      "Prussia",
+      "Kingdom of Prussia",
+      "Bavaria",
+      "Kingdom of Bavaria",
+      "Saxony",
+      "Kingdom of Saxony",
+      "Hanover",
+      "Württemberg",
+      "Baden",
+      "German Confederation",
+      "North German Confederation"
+    ],
+    "stages": [
+      {
+        "year": 1815,
+        "label": "German Confederation — dozens of states"
+      },
+      {
+        "year": 1880,
+        "label": "German Empire — unified under Prussia"
+      }
+    ],
+    "lat": 51,
+    "lng": 10
+  },
+  {
+    "id": "china",
+    "name": "Unification of China",
+    "start": -221,
+    "end": 1949,
+    "summary": "From the Warring States, the Qin forged the first unified Chinese empire. China cycled through unification, fragmentation and reunification under successive dynasties, down to the modern People's Republic.",
+    "highlight": [
+      "China",
+      "Qin",
+      "Qin dynasty",
+      "Han",
+      "Han dynasty",
+      "Tang",
+      "Tang dynasty",
+      "Song",
+      "Song dynasty",
+      "Yuan",
+      "Yuan dynasty",
+      "Ming",
+      "Ming dynasty",
+      "Qing",
+      "Qing Empire",
+      "Qing dynasty",
+      "Republic of China",
+      "People's Republic of China"
+    ],
+    "stages": [
+      {
+        "year": -200,
+        "label": "Qin & Han unify the warring states"
+      },
+      {
+        "year": 1279,
+        "label": "Mongol Yuan rules all of China"
+      },
+      {
+        "year": 1914,
+        "label": "Republic replaces the Qing"
+      },
+      {
+        "year": 1945,
+        "label": "Eve of the People's Republic"
+      }
+    ],
+    "lat": 35,
+    "lng": 105
+  },
+  {
+    "id": "japan",
+    "name": "Unification of Japan",
+    "start": 1467,
+    "end": 1868,
+    "summary": "The Sengoku ('Warring States') period left Japan split among rival daimyō. Oda, Toyotomi and finally Tokugawa unified the islands; the Meiji Restoration then forged a centralised modern state.",
+    "highlight": [
+      "Japan",
+      "Tokugawa shogunate",
+      "Tokugawa Shogunate",
+      "Empire of Japan"
+    ],
+    "stages": [
+      {
+        "year": 1500,
+        "label": "Sengoku — warring domains"
+      },
+      {
+        "year": 1600,
+        "label": "Tokugawa unification"
+      },
+      {
+        "year": 1880,
+        "label": "Meiji modern state"
+      }
+    ],
+    "lat": 36,
+    "lng": 138
+  },
+  {
+    "id": "ottoman",
+    "name": "Rise of the Ottoman Empire",
+    "start": 1299,
+    "end": 1683,
+    "summary": "From a small Anatolian frontier principality, the Ottomans took Constantinople in 1453 and expanded across three continents to become the dominant power of the eastern Mediterranean.",
+    "highlight": [
+      "Ottoman Empire",
+      "Ottomans",
+      "Ottoman",
+      "Sultanate of Rum",
+      "Turkey",
+      "Byzantine Empire"
+    ],
+    "stages": [
+      {
+        "year": 1300,
+        "label": "Anatolian frontier beylik"
+      },
+      {
+        "year": 1492,
+        "label": "Constantinople taken; empire rising"
+      },
+      {
+        "year": 1600,
+        "label": "Peak across three continents"
+      }
+    ],
+    "lat": 39,
+    "lng": 33
+  },
+  {
+    "id": "yugoslavia",
+    "name": "Yugoslavia: Birth & Breakup",
+    "start": 1918,
+    "end": 1992,
+    "summary": "South Slav lands divided between the Austro-Hungarian and Ottoman empires were united into a single Kingdom of Yugoslavia after WWI, then violently fragmented into independent successor states in the 1990s.",
+    "highlight": [
+      "Yugoslavia",
+      "Kingdom of Yugoslavia",
+      "Serbia",
+      "Croatia",
+      "Slovenia",
+      "Bosnia",
+      "Bosnia and Herzegovina",
+      "Montenegro",
+      "Macedonia",
+      "North Macedonia",
+      "Kosovo"
+    ],
+    "stages": [
+      {
+        "year": 1914,
+        "label": "South Slav lands split among empires"
+      },
+      {
+        "year": 1920,
+        "label": "Kingdom of Yugoslavia"
+      },
+      {
+        "year": 1994,
+        "label": "Breakup into successor states"
+      }
+    ],
+    "lat": 44,
+    "lng": 19
+  },
+  {
+    "id": "india",
+    "name": "Formation of Modern India",
+    "start": 1858,
+    "end": 1947,
+    "summary": "The Mughal Empire and a mosaic of regional powers gave way to British rule. Independence in 1947 — with the partition of Pakistan — produced the modern Republic of India.",
+    "highlight": [
+      "India",
+      "Mughal Empire",
+      "British India",
+      "British Raj",
+      "Maratha",
+      "Maratha Empire",
+      "Republic of India"
+    ],
+    "stages": [
+      {
+        "year": 1700,
+        "label": "Mughal & regional powers"
+      },
+      {
+        "year": 1880,
+        "label": "British Raj"
+      },
+      {
+        "year": 1960,
+        "label": "Republic of India after partition"
+      }
+    ],
+    "lat": 22,
+    "lng": 79
+  },
+  {
+    "id": "poland",
+    "name": "Poland: Partition & Rebirth",
+    "start": 1569,
+    "end": 1945,
+    "summary": "The vast Polish–Lithuanian Commonwealth was partitioned out of existence by Russia, Prussia and Austria. Poland reappeared after WWI, then had its borders shifted bodily westward after WWII.",
+    "highlight": [
+      "Poland",
+      "Polish-Lithuanian Commonwealth",
+      "Polish–Lithuanian Commonwealth",
+      "Duchy of Warsaw",
+      "Congress Poland"
+    ],
+    "stages": [
+      {
+        "year": 1700,
+        "label": "Polish–Lithuanian Commonwealth"
+      },
+      {
+        "year": 1800,
+        "label": "Partitioned out of existence"
+      },
+      {
+        "year": 1920,
+        "label": "Reborn Second Republic"
+      },
+      {
+        "year": 1945,
+        "label": "Borders shifted westward"
+      }
+    ],
+    "lat": 52,
+    "lng": 19
+  }
+]

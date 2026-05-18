@@ -1,0 +1,215 @@
+[
+  {
+    "id": "punic",
+    "name": "Punic Wars",
+    "start": -264,
+    "end": -146,
+    "snapshots": [
+      -300,
+      -200,
+      -100
+    ],
+    "sides": {
+      "Rome": [
+        "Rome",
+        "Roman Republic",
+        "Roman Empire"
+      ],
+      "Carthage": [
+        "Carthage",
+        "Carthaginian Empire"
+      ]
+    },
+    "summary": "Three wars between Rome and Carthage for dominance of the western Mediterranean. Rome's final victory and the destruction of Carthage made it the unrivalled power of the region and set the stage for the Roman Empire.",
+    "lat": 36.8,
+    "lng": 10.3
+  },
+  {
+    "id": "hundred-years",
+    "name": "Hundred Years' War",
+    "start": 1337,
+    "end": 1453,
+    "snapshots": [
+      1300,
+      1400,
+      1492
+    ],
+    "sides": {
+      "England": [
+        "England",
+        "Kingdom of England",
+        "English Empire"
+      ],
+      "France": [
+        "France",
+        "Kingdom of France"
+      ]
+    },
+    "summary": "A series of conflicts between England and France over claims to the French throne and control of vast territories in mainland France. England held large parts of western and southwestern France and fought for over a century to keep a continental foothold; France ultimately expelled the English from all of France except Calais.",
+    "lat": 47,
+    "lng": 1.5
+  },
+  {
+    "id": "thirty-years",
+    "name": "Thirty Years' War",
+    "start": 1618,
+    "end": 1648,
+    "snapshots": [
+      1600,
+      1650
+    ],
+    "sides": {
+      "Habsburg / Catholic": [
+        "Holy Roman Empire",
+        "Spain",
+        "Austria"
+      ],
+      "Anti-Habsburg": [
+        "Sweden",
+        "France",
+        "Dutch Republic",
+        "Denmark"
+      ]
+    },
+    "summary": "A devastating war fought largely in the Holy Roman Empire, beginning as a religious conflict and ending as a struggle over European political balance. The Peace of Westphalia (1648) reshaped the map and established the modern principle of state sovereignty.",
+    "lat": 50,
+    "lng": 10
+  },
+  {
+    "id": "seven-years",
+    "name": "Seven Years' War",
+    "start": 1756,
+    "end": 1763,
+    "snapshots": [
+      1715,
+      1783
+    ],
+    "sides": {
+      "Britain / Prussia": [
+        "Great Britain",
+        "United Kingdom",
+        "Prussia"
+      ],
+      "France / Austria / Russia": [
+        "France",
+        "Austria",
+        "Russia"
+      ]
+    },
+    "summary": "Often called the first 'world war', fought across Europe, the Americas, and India. Britain's victory stripped France of most of its North American and Indian possessions, reshaping global colonial empires.",
+    "lat": 50,
+    "lng": 8
+  },
+  {
+    "id": "napoleonic",
+    "name": "Napoleonic Wars",
+    "start": 1803,
+    "end": 1815,
+    "snapshots": [
+      1800,
+      1815
+    ],
+    "sides": {
+      "France": [
+        "France",
+        "French Empire",
+        "First French Empire"
+      ],
+      "Coalition": [
+        "United Kingdom",
+        "Great Britain",
+        "Russia",
+        "Austria",
+        "Prussia"
+      ]
+    },
+    "summary": "Napoleon's French Empire against shifting European coalitions. At its height France dominated most of continental Europe; defeat at Waterloo led to a redrawing of European borders at the Congress of Vienna.",
+    "lat": 48.8,
+    "lng": 2.3
+  },
+  {
+    "id": "wwi",
+    "name": "World War I",
+    "start": 1914,
+    "end": 1918,
+    "snapshots": [
+      1914,
+      1920
+    ],
+    "sides": {
+      "Allied Powers": [
+        "France",
+        "United Kingdom",
+        "Russia",
+        "Italy",
+        "United States"
+      ],
+      "Central Powers": [
+        "Germany",
+        "German Empire",
+        "Austria-Hungary",
+        "Ottoman Empire",
+        "Bulgaria"
+      ]
+    },
+    "summary": "A global war centred in Europe. Its end dismantled the German, Austro-Hungarian, Russian, and Ottoman empires, creating a host of new nation-states across central and eastern Europe and the Middle East.",
+    "lat": 50,
+    "lng": 5
+  },
+  {
+    "id": "wwii",
+    "name": "World War II",
+    "start": 1939,
+    "end": 1945,
+    "snapshots": [
+      1938,
+      1945
+    ],
+    "sides": {
+      "Allies": [
+        "United Kingdom",
+        "United States",
+        "Soviet Union",
+        "France",
+        "China"
+      ],
+      "Axis": [
+        "Germany",
+        "Nazi Germany",
+        "Italy",
+        "Japan"
+      ]
+    },
+    "summary": "The deadliest conflict in human history. Axis expansion peaked around 1942 before being rolled back; the postwar settlement split Europe into Western and Soviet spheres and redrew borders worldwide.",
+    "lat": 52,
+    "lng": 15
+  },
+  {
+    "id": "cold-war",
+    "name": "Cold War",
+    "start": 1947,
+    "end": 1991,
+    "snapshots": [
+      1945,
+      1960,
+      1994
+    ],
+    "sides": {
+      "Western Bloc": [
+        "United States",
+        "United Kingdom",
+        "France",
+        "West Germany"
+      ],
+      "Eastern Bloc": [
+        "Soviet Union",
+        "Russia",
+        "East Germany",
+        "China"
+      ]
+    },
+    "summary": "A decades-long geopolitical standoff between the US-led Western bloc and the Soviet-led Eastern bloc. No direct war between the superpowers, but proxy conflicts worldwide; it ended with the dissolution of the Soviet Union and a wave of new states.",
+    "lat": 50,
+    "lng": 20
+  }
+]

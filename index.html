@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atlas Through Time</title>
+<link rel="stylesheet" href="styles/main.css" />
+<script type="importmap">
+{
+  "imports": {
+    "globe.gl": "https://esm.sh/globe.gl@2.34.4"
+  }
+}
+</script>
+</head>
+<body>
+  <div id="globe"></div>
+
+  <header id="topbar">
+    <div id="brand">🌍 Atlas Through Time</div>
+    <div id="context">Explore history — click a country, war or formation</div>
+    <div id="era"></div>
+  </header>
+
+  <button id="menuBtn" title="Open menu">☰ Explore</button>
+
+  <aside id="drawer" class="closed">
+    <div class="drawer-top">
+      <div class="drawer-title">Explore</div>
+      <button id="drawerClose" title="Close">×</button>
+    </div>
+
+    <div class="acc open">
+      <button class="acc-h">Wars &amp; Conflicts <span class="chev">▾</span></button>
+      <div class="acc-b">
+        <div id="warsList"></div>
+        <div id="warDetail" hidden></div>
+      </div>
+    </div>
+
+    <div class="acc open">
+      <button class="acc-h">Nation formation <span class="chev">▾</span></button>
+      <div class="acc-b">
+        <div id="formationsList"></div>
+        <div id="formationDetail" hidden></div>
+      </div>
+    </div>
+
+    <div class="acc">
+      <button class="acc-h">Map key <span class="chev">▾</span></button>
+      <div class="acc-b"><div id="legend"></div></div>
+    </div>
+
+    <div class="acc">
+      <button class="acc-h">About &amp; data <span class="chev">▾</span></button>
+      <div class="acc-b">
+        <p class="about">
+          <b>Borders:</b> historical-basemaps snapshots, snapped to the nearest period.<br>
+          <b>Events:</b> curated set + a Wikidata battle harvest.<br>
+          <b>Descriptions:</b> fetched live from Wikipedia on click.<br>
+          <b>Time scale:</b> logarithmic — 1&nbsp;CE sits ~30% along the slider so recent centuries get more room.
+        </p>
+      </div>
+    </div>
+  </aside>
+
+  <section id="infoCard" hidden></section>
+
+  <footer id="timeline">
+    <div id="timeRow">
+      <button id="play" title="Play / pause">▶</button>
+      <button id="prev" title="Step back">◀</button>
+      <div id="yearLabel">—</div>
+      <button id="next" title="Step forward">▶</button>
+      <div id="stepGroup" title="Time step per move">
+        <button data-step="1">1y</button>
+        <button data-step="5" class="on">5y</button>
+        <button data-step="25">25y</button>
+        <button data-step="100">100y</button>
+      </div>
+      <button id="surprise" title="Jump somewhere &amp; somewhen random">🎲 Surprise me</button>
+      <div id="status">loading…</div>
+    </div>
+    <div id="trackMarks"></div>
+    <input id="slider" type="range" min="-3000" max="2025" value="1900" step="1" />
+    <div id="ticks"></div>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
