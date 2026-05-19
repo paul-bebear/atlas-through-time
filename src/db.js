@@ -46,6 +46,29 @@ export async function polityDetail(id) {
   return { facts, refs };
 }
 
+// CC0 territory polygons active in a given year (the data-product borders
+// layer — e.g. source 'ohm-usa'). Returns a GeoJSON FeatureCollection.
+const territoryCache = new Map();
+export async function territoryForYear(source, year) {
+  if (!dbEnabled()) return { type: "FeatureCollection", features: [] };
+  const ck = source + ":" + year;
+  if (territoryCache.has(ck)) return territoryCache.get(ck);
+  const rows = await get(
+    `territory?source=eq.${enc(source)}` +
+    `&valid_from=lte.${year}&or=(valid_to.gte.${year},valid_to.is.null)` +
+    `&select=geometry,polity:polity_id(canonical_name)`);
+  const fc = {
+    type: "FeatureCollection",
+    features: rows.filter(r => r.geometry).map(r => ({
+      type: "Feature",
+      properties: { NAME: r.polity?.canonical_name || "" },
+      geometry: r.geometry
+    }))
+  };
+  territoryCache.set(ck, fc);
+  return fc;
+}
+
 // historical-basemaps polygon name strings that resolve to this polity —
 // exactly the spellings the border layer uses, so highlighting matches.
 export async function resolvedNames(polityId) {

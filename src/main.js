@@ -13,13 +13,13 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail, threadMembers, resolvedNames } from "./db.js";
+import { polityDetail, threadMembers, resolvedNames, territoryForYear } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
-const state = { year: 1900, wars: [], lastSig: null };
+const state = { year: 1900, wars: [], lastSig: null, territory: null };
 
 const bordersSig = (source, features) => source + "|" + features.length;
 const eraEl = document.getElementById("era");
@@ -91,7 +91,17 @@ async function boot() {
   // and a period card that re-renders live as you move through time.
   let selection = null;            // { names, render(year) }
   let pickFeature = () => {};
-  const clearSelection = () => { selection = null; };
+  // Exit CC0 territory mode (USA growth etc). Returns true if it was on, so
+  // callers can force a normal-border refresh.
+  const exitTerritory = () => {
+    if (!state.territory) return false;
+    state.territory = null; state.lastSig = null;
+    return true;
+  };
+  const clearSelection = () => {
+    selection = null;
+    if (exitTerritory()) timeline.setYear(timeline.currentYear());
+  };
 
   const globe = createGlobe(document.getElementById("globe"), {
     onCountryClick: f => pickFeature(f),
@@ -108,6 +118,20 @@ async function boot() {
       // Event layer updates every single year.
       const vis = events.forYear(year);
       globe.setEvents(vis);
+
+      // Territory mode (CC0 OHM data layer, e.g. USA growth) overrides the
+      // coarse display borders — show the DB polygons active this year.
+      if (state.territory) {
+        try {
+          const fc = await territoryForYear(state.territory.source, year);
+          if (state.year !== year) return;
+          globe.setBorders(fc);
+          globe.setHighlights([{ names: fc.features.map(f => f.properties.NAME), side: "A" }]);
+          timeline.setStatus(`${state.territory.label} · ${fc.features.length} polities · ${vis.length} events`);
+        } catch (e) { timeline.setStatus(e.message); }
+        if (selection) selection.render(year);
+        return;
+      }
 
       // Re-tessellate polygons only when the snapshot actually changes,
       // so scrubbing within one period stays cheap.
@@ -158,26 +182,50 @@ async function boot() {
   };
 
   function selectCurated(entry) {
+    exitTerritory();
     const names = [entry.name, ...(entry.aliases || [])];
-    setContext(entry.name);
+    const isUSA = names.some(n => {
+      const x = n.toLowerCase();
+      return x.includes("united states") || x === "usa" || x === "us";
+    });
+
     const feats = globe.featuresForNames(names);
     const ll = entry.lat != null ? { lat: entry.lat, lng: entry.lng }
       : feats[0] ? featureCentroid(feats[0]) : null;
-    if (ll) globe.flyTo(ll.lat, ll.lng, 1.0);
     globe.setHighlights([{ names, side: "A" }]);
-    const eras = entry.eras || [];
-    const from = eras.length ? Math.min(...eras.map(e => e.from)) : null;
-    const to = eras.length ? Math.max(...eras.map(e => (e.to >= 9999 ? 2025 : e.to))) : 2025;
-    scopeSlider(names, from, to, entry.name);
     selection = {
       names,
       render: y => card.openEntry(entry, y,
         activeWarsFor(y).filter(w => names.some(n => belligerent(w, n))))
     };
-    selection.render(timeline.currentYear());
+
+    if (isUSA) {
+      // CC0 territory mode — watch the USA grow 1776 → today.
+      state.territory = { source: "ohm-usa", label: "🇺🇸 USA territorial growth" };
+      state.lastSig = null;
+      setContext("🇺🇸 USA — territorial growth");
+      globe.flyTo(39, -98, 1.6);
+      timeline.clearOverlays();
+      timeline.setSpan(1776, 2025, "USA territorial growth");
+      timeline.setMarkers(
+        [1776, 1783, 1803, 1819, 1845, 1848, 1853, 1867, 1898, 1912, 1959]
+          .map(y => ({ year: y, label: "US expansion" })));
+      timeline.setYear(Math.max(1776, Math.min(2025, timeline.currentYear())));
+    } else {
+      setContext(entry.name);
+      if (ll) globe.flyTo(ll.lat, ll.lng, 1.0);
+      const eras = entry.eras || [];
+      const from = eras.length ? Math.min(...eras.map(e => e.from)) : null;
+      const to = eras.length ? Math.max(...eras.map(e => (e.to >= 9999 ? 2025 : e.to))) : 2025;
+      scopeSlider(names, from, to, entry.name);
+      // Drive one onChange so borders refresh (incl. leaving territory mode)
+      // and the card renders for the current year.
+      timeline.setYear(timeline.currentYear());
+    }
   }
 
   async function selectDbPolity(p) {
+    const wasT = exitTerritory();
     let resolved = [];
     try { resolved = await resolvedNames(p.id); } catch { /* optional */ }
     const names = [...new Set([
@@ -195,13 +243,16 @@ async function boot() {
     let detail = null;
     try { detail = await polityDetail(p.id); } catch { /* basic */ }
     selection = { names, render: y => card.openDbPolity(p, detail, y) };
-    selection.render(timeline.currentYear());
+    if (wasT) timeline.setYear(timeline.currentYear());
+    else selection.render(timeline.currentYear());
   }
 
   pickFeature = f => {
+    const wasT = exitTerritory();
     const name = featureName(f);
     const entry = card.resolve(name);
     if (entry) { selectCurated(entry); return; }
+    if (wasT) timeline.setYear(timeline.currentYear());
     setContext(name);
     const c = featureCentroid(f);
     if (c) globe.flyTo(c.lat, c.lng, 0.9);
