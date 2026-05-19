@@ -13,7 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail, threadMembers, resolvedNames, territoryForYear } from "./db.js";
+import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 
@@ -389,6 +389,10 @@ async function boot() {
       await selectDbPolity(hit.polity);
     }
   });
+
+  // Eagerly warm the USA territory cache in the background — by the time
+  // the user searches "United States", the bulk data is already loaded.
+  territoryAll("ohm-usa").catch(() => { /* non-fatal */ });
 }
 
 boot().catch(err => {

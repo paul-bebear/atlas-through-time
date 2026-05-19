@@ -48,22 +48,57 @@ export async function polityDetail(id) {
 
 // CC0 territory polygons active in a year. Fetch the whole source set ONCE
 // (it's static), then filter client-side — every subsequent year change is
-// free (no network). The big save vs per-year querying.
+// free (no network).
+//
+// Fast path: a regenerated-from-DB static JSON shipped with the site (served
+// from the CDN edge — much faster than a Supabase REST roundtrip). The
+// Supabase territory table remains the canonical source for the public API;
+// this is just the app's fast-path cache. Falls back to Supabase if the
+// static file is missing (e.g. while a fresh source is being added).
+const STATIC_BY_SOURCE = { "ohm-usa": "data/db/territory.usa.json" };
 const territoryAllCache = new Map();
-export async function territoryAll(source) {
+const territoryAllInflight = new Map();
+
+async function loadStatic(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`static ${r.status}`);
+  const rows = await r.json();
+  return rows.filter(r => r.geometry).map(r => ({
+    type: "Feature",
+    properties: { NAME: r.name || "" },
+    valid_from: r.from_year, valid_to: r.to_year,
+    geometry: r.geometry
+  }));
+}
+
+async function loadFromDb(source) {
   if (!dbEnabled()) return [];
-  if (territoryAllCache.has(source)) return territoryAllCache.get(source);
   const rows = await get(
     `territory?source=eq.${enc(source)}` +
     `&select=valid_from,valid_to,geometry,polity:polity_id(canonical_name)` +
     `&limit=5000`);
-  const features = rows.filter(r => r.geometry).map(r => ({
+  return rows.filter(r => r.geometry).map(r => ({
     type: "Feature",
     properties: { NAME: r.polity?.canonical_name || "" },
     valid_from: r.valid_from, valid_to: r.valid_to,
     geometry: r.geometry
   }));
+}
+
+export async function territoryAll(source) {
+  if (territoryAllCache.has(source)) return territoryAllCache.get(source);
+  if (territoryAllInflight.has(source)) return territoryAllInflight.get(source);
+  const p = (async () => {
+    try {
+      const url = STATIC_BY_SOURCE[source];
+      if (url) return await loadStatic(url);
+    } catch { /* fall through to DB */ }
+    return await loadFromDb(source);
+  })();
+  territoryAllInflight.set(source, p);
+  const features = await p;
   territoryAllCache.set(source, features);
+  territoryAllInflight.delete(source);
   return features;
 }
 export async function territoryForYear(source, year) {
