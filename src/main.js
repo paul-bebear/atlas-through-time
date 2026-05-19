@@ -13,7 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail, threadMembers } from "./db.js";
+import { polityDetail, threadMembers, resolvedNames } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 
@@ -178,7 +178,13 @@ async function boot() {
   }
 
   async function selectDbPolity(p) {
-    const names = [p.canonical_name, ...((p.polity_name || []).map(n => n.name))].filter(Boolean);
+    let resolved = [];
+    try { resolved = await resolvedNames(p.id); } catch { /* optional */ }
+    const names = [...new Set([
+      p.canonical_name,
+      ...((p.polity_name || []).map(n => n.name)),
+      ...resolved
+    ].filter(Boolean))];
     setContext("🗄 " + p.canonical_name);
     const feats = globe.featuresForNames(names);
     const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng }
@@ -273,9 +279,20 @@ async function boot() {
     const startIndex = atPolityId
       ? Math.max(0, beats.findIndex(b => b.polity.id === atPolityId)) : 0;
     const detailCache = new Map();
+    const nameCache = new Map();
     story.startCustom("🧵 " + th.display_name, beats, async bt => {
       const mp = bt.polity;
-      const names = [mp.canonical_name, ...((mp.polity_name || []).map(n => n.name))].filter(Boolean);
+      if (!nameCache.has(mp.id)) {
+        let resolved = [];
+        try { resolved = await resolvedNames(mp.id); } catch { /* optional */ }
+        nameCache.set(mp.id, [...new Set([
+          mp.canonical_name,
+          ...((mp.polity_name || []).map(n => n.name)),
+          th.display_name,            // border layer often uses the enduring name
+          ...resolved                 // exact historical-basemaps spellings
+        ].filter(Boolean))]);
+      }
+      const names = nameCache.get(mp.id);
       setContext("🧵 " + th.display_name + " — " + mp.canonical_name);
       const feats = globe.featuresForNames(names);
       const ll = mp.lat != null ? { lat: mp.lat, lng: mp.lng }

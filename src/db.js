@@ -46,6 +46,14 @@ export async function polityDetail(id) {
   return { facts, refs };
 }
 
+// historical-basemaps polygon name strings that resolve to this polity —
+// exactly the spellings the border layer uses, so highlighting matches.
+export async function resolvedNames(polityId) {
+  if (!dbEnabled()) return [];
+  const rows = await get(`name_resolution?polity_id=eq.${polityId}&select=source_string`);
+  return rows.map(r => r.source_string);
+}
+
 // Threads whose name matches the query (the headline continuity result).
 export async function searchThreads(q, limit = 6) {
   if (!dbEnabled() || !q) return [];
