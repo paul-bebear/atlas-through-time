@@ -19,7 +19,7 @@ import { initPanel } from "./panel.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
-const state = { year: 1900, wars: [], lastSig: null, territory: null };
+const state = { year: 1900, wars: [], lastSig: null, territory: null, territorySig: null };
 
 const bordersSig = (source, features) => source + "|" + features.length;
 const eraEl = document.getElementById("era");
@@ -95,7 +95,7 @@ async function boot() {
   // callers can force a normal-border refresh.
   const exitTerritory = () => {
     if (!state.territory) return false;
-    state.territory = null; state.lastSig = null;
+    state.territory = null; state.lastSig = null; state.territorySig = null;
     return true;
   };
   const clearSelection = () => {
@@ -125,11 +125,15 @@ async function boot() {
         try {
           const fc = await territoryForYear(state.territory.source, year);
           if (state.year !== year) return;
-          globe.setBorders(fc);
-          // No bulk highlight — let each polygon show as a normal cyan
-          // outline over the satellite (states/territories appear and
-          // reshape as you scrub).
-          globe.setHighlights([]);
+          // Skip re-tessellation when the active polygon set is unchanged
+          // (most years between border events are identical) — the big
+          // scrubbing win.
+          const sig = fc.features.length + "|" +
+            fc.features.map(f => f.properties.NAME).sort().join(",");
+          if (sig !== state.territorySig) {
+            state.territorySig = sig;
+            globe.setBorders(fc);
+          }
           timeline.setStatus(`${state.territory.label} · ${fc.features.length} polities · ${vis.length} events`);
         } catch (e) { timeline.setStatus(e.message); }
         if (selection) selection.render(year);
@@ -195,7 +199,7 @@ async function boot() {
     const feats = globe.featuresForNames(names);
     const ll = entry.lat != null ? { lat: entry.lat, lng: entry.lng }
       : feats[0] ? featureCentroid(feats[0]) : null;
-    globe.setHighlights([{ names, side: "A" }]);
+    if (!isUSA) globe.setHighlights([{ names, side: "A" }]);
     selection = {
       names,
       render: y => card.openEntry(entry, y,
@@ -206,6 +210,10 @@ async function boot() {
       // CC0 territory mode — watch the USA grow 1776 → today.
       state.territory = { source: "ohm-usa", label: "🇺🇸 USA territorial growth" };
       state.lastSig = null;
+      state.territorySig = null;
+      // Clear any prior highlights ONCE; per-year scrubbing won't re-touch
+      // the highlight map (which would force an extra polygon re-tessellation).
+      globe.setHighlights([]);
       setContext("🇺🇸 USA — territorial growth");
       globe.flyTo(39, -98, 1.6);
       timeline.clearOverlays();

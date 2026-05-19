@@ -46,27 +46,34 @@ export async function polityDetail(id) {
   return { facts, refs };
 }
 
-// CC0 territory polygons active in a given year (the data-product borders
-// layer — e.g. source 'ohm-usa'). Returns a GeoJSON FeatureCollection.
-const territoryCache = new Map();
-export async function territoryForYear(source, year) {
-  if (!dbEnabled()) return { type: "FeatureCollection", features: [] };
-  const ck = source + ":" + year;
-  if (territoryCache.has(ck)) return territoryCache.get(ck);
+// CC0 territory polygons active in a year. Fetch the whole source set ONCE
+// (it's static), then filter client-side — every subsequent year change is
+// free (no network). The big save vs per-year querying.
+const territoryAllCache = new Map();
+export async function territoryAll(source) {
+  if (!dbEnabled()) return [];
+  if (territoryAllCache.has(source)) return territoryAllCache.get(source);
   const rows = await get(
     `territory?source=eq.${enc(source)}` +
-    `&valid_from=lte.${year}&or=(valid_to.gte.${year},valid_to.is.null)` +
-    `&select=geometry,polity:polity_id(canonical_name)`);
-  const fc = {
+    `&select=valid_from,valid_to,geometry,polity:polity_id(canonical_name)` +
+    `&limit=5000`);
+  const features = rows.filter(r => r.geometry).map(r => ({
+    type: "Feature",
+    properties: { NAME: r.polity?.canonical_name || "" },
+    valid_from: r.valid_from, valid_to: r.valid_to,
+    geometry: r.geometry
+  }));
+  territoryAllCache.set(source, features);
+  return features;
+}
+export async function territoryForYear(source, year) {
+  const all = await territoryAll(source);
+  return {
     type: "FeatureCollection",
-    features: rows.filter(r => r.geometry).map(r => ({
-      type: "Feature",
-      properties: { NAME: r.polity?.canonical_name || "" },
-      geometry: r.geometry
-    }))
+    features: all.filter(f =>
+      (f.valid_from == null || f.valid_from <= year) &&
+      (f.valid_to == null || f.valid_to >= year))
   };
-  territoryCache.set(ck, fc);
-  return fc;
 }
 
 // historical-basemaps polygon name strings that resolve to this polity —
