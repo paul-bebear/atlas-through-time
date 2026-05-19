@@ -6,6 +6,7 @@
 export function createStory({ wars, formations, onBeat, onExit }) {
   const bar = document.getElementById("storyBar");
   let country = null, beats = [], idx = 0;
+  let title = "", stepCb = null;
 
   const aliasSet = e =>
     new Set([e.name, ...(e.aliases || [])].map(s => s.toLowerCase()));
@@ -39,7 +40,7 @@ export function createStory({ wars, formations, onBeat, onExit }) {
     bar.innerHTML = `
       <button class="sb-prev" ${idx <= 0 ? "disabled" : ""}>◀</button>
       <div class="sb-main">
-        <div class="sb-title">📖 ${country.name}<span class="sb-count">${idx + 1} / ${beats.length}</span></div>
+        <div class="sb-title">${title}<span class="sb-count">${idx + 1} / ${beats.length}</span></div>
         <div class="sb-label"><span class="sb-kind">${bt.kind}</span>${yr(bt.year)} · ${bt.label}</div>
       </div>
       <button class="sb-next" ${idx >= beats.length - 1 ? "disabled" : ""}>▶</button>
@@ -47,7 +48,7 @@ export function createStory({ wars, formations, onBeat, onExit }) {
     bar.querySelector(".sb-prev").onclick = () => step(-1);
     bar.querySelector(".sb-next").onclick = () => step(1);
     bar.querySelector(".sb-exit").onclick = exit;
-    onBeat(bt, country, beats);
+    stepCb(bt, idx, beats);
   }
 
   function step(d) {
@@ -62,6 +63,20 @@ export function createStory({ wars, formations, onBeat, onExit }) {
       const y = e.eras?.[0]?.from ?? 2000;
       beats = [{ year: y, kind: "Profile", label: e.name }];
     }
+    title = `📖 ${e.name}`;
+    stepCb = (bt) => onBeat(bt, e, beats);
+    idx = 0;
+    show();
+  }
+
+  // Generic player for externally-built beats (e.g. a DB continuity thread).
+  // cb(beat, idx, beats) is called on every step.
+  function startCustom(t, bs, cb) {
+    if (!bs || !bs.length) return;
+    country = null;
+    title = t;
+    beats = bs;
+    stepCb = cb;
     idx = 0;
     show();
   }
@@ -72,7 +87,7 @@ export function createStory({ wars, formations, onBeat, onExit }) {
     if (onExit) onExit();
   }
 
-  return { start, exit };
+  return { start, startCustom, exit };
 }
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }

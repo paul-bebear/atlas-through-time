@@ -13,7 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail } from "./db.js";
+import { polityDetail, threadsForPolity, threadMembers } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 
@@ -195,20 +195,48 @@ async function boot() {
         story.start(entry);
         return;
       }
-      // DB polity: fly there if it has coords, jump the timeline into its
-      // span, show a live-from-database card.
+      // DB polity. If it belongs to a continuity thread, play the whole
+      // thread (Francia → … → France); otherwise show the single polity.
       const p = hit.polity;
       story.exit?.();
-      setContext("🗄 " + p.canonical_name);
-      if (p.lat != null && p.lng != null) globe.flyTo(p.lat, p.lng, 1.2);
-      if (p.start_year != null) {
-        const mid = p.end_year != null
-          ? Math.round((p.start_year + p.end_year) / 2) : p.start_year;
-        timeline.setYear(mid);
+
+      const showPolity = async (mp, threadTitle, beats) => {
+        setContext((threadTitle ? "🧵 " + threadTitle + " — " : "🗄 ") + mp.canonical_name);
+        if (mp.lat != null && mp.lng != null) globe.flyTo(mp.lat, mp.lng, 1.2);
+        if (mp.start_year != null) timeline.setYear(mp.start_year);
+        if (beats) {
+          timeline.setSpan(beats[0].year, beats[beats.length - 1].year, threadTitle);
+          timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
+        } else {
+          timeline.setSpan(p.start_year, p.end_year ?? p.start_year, p.canonical_name);
+        }
+        card.openDbPolity(mp);
+        try { card.openDbPolity(mp, await polityDetail(mp.id)); } catch { /* keep basic */ }
+      };
+
+      let threads = [];
+      try { threads = await threadsForPolity(p.id); } catch { /* fall back */ }
+
+      if (threads.length) {
+        const th = threads[0].thread;
+        const members = await threadMembers(th.id);
+        const beats = members
+          .filter(m => m.polity)
+          .map(m => ({
+            year: m.polity.start_year ?? 0,
+            kind: m.role,
+            label: m.polity.canonical_name,
+            polity: m.polity
+          }))
+          // Chronological; entities still extant (no end) sort last.
+          .sort((a, b) =>
+            (a.polity.end_year ?? 9999) - (b.polity.end_year ?? 9999) ||
+            (a.year - b.year));
+        story.startCustom("🧵 " + th.display_name, beats,
+          bt => showPolity(bt.polity, th.display_name, beats));
+      } else {
+        await showPolity(p, null, null);
       }
-      timeline.setSpan(p.start_year, p.end_year ?? p.start_year, p.canonical_name);
-      card.openDbPolity(p);
-      try { card.openDbPolity(p, await polityDetail(p.id)); } catch { /* keep basic */ }
     }
   });
 }

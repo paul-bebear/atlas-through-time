@@ -45,3 +45,19 @@ export async function polityDetail(id) {
   ]);
   return { facts, refs };
 }
+
+// Continuity threads this polity belongs to (it may be SHARED across more
+// than one — e.g. the Polish–Lithuanian Commonwealth ∈ Poland & Lithuania).
+export async function threadsForPolity(polityId) {
+  if (!dbEnabled()) return [];
+  const rows = await get(
+    `thread_polity?polity_id=eq.${polityId}&select=role,thread:thread_id(id,slug,display_name)`);
+  return rows.map(r => ({ role: r.role, thread: r.thread })).filter(r => r.thread);
+}
+
+// Ordered members of a thread (the continuity spine), chronological.
+export async function threadMembers(threadId) {
+  return get(`thread_polity?thread_id=eq.${threadId}` +
+    `&select=role,from_year,to_year,polity:polity_id(id,canonical_name,type,start_year,end_year,lat,lng,wikidata_qid)` +
+    `&order=from_year`);
+}
