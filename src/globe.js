@@ -48,16 +48,16 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
 
   world
     .polygonCapColor(f => {
-      const k = featureName(f).toLowerCase();
+      const k = norm(featureName(f));
       if (k === selectedKey) return SEL_FILL;
       const s = highlightMap.get(k);
       if (s === "A") return HILITE_A;
       if (s === "B") return HILITE_B;
       return "rgba(0,0,0,0)"; // fully transparent — satellite imagery stays crisp
     })
-    .polygonStrokeColor(f => (featureName(f).toLowerCase() === selectedKey ? STROKE_SEL : STROKE))
+    .polygonStrokeColor(f => (norm(featureName(f)) === selectedKey ? STROKE_SEL : STROKE))
     .polygonAltitude(f => {
-      const k = featureName(f).toLowerCase();
+      const k = norm(featureName(f));
       if (k === selectedKey) return 0.03;
       return highlightMap.has(k) ? 0.014 : 0.006;
     })
@@ -65,7 +65,7 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
     .onPolygonHover(f => { el.style.cursor = f ? "pointer" : "grab"; })
     .onPolygonClick(f => {
       if (Date.now() - lastPointClick < 350) return; // an event point handled it
-      if (f) { selectedKey = featureName(f).toLowerCase(); refresh(); onCountryClick(f); }
+      if (f) { selectedKey = norm(featureName(f)); refresh(); onCountryClick(f); }
     });
 
   const refresh = () => world.polygonsData(world.polygonsData());
@@ -78,16 +78,17 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
   return {
     world,
     setBorders: gj => { currentFeatures = gj.features || []; world.polygonsData(currentFeatures); },
-    // Features in the current border set whose name matches any of `names`.
+    // Features in the current border set whose name matches any of `names`
+    // (dash/diacritic/punctuation-insensitive).
     featuresForNames(names) {
-      const set = new Set((names || []).map(n => String(n).toLowerCase()));
-      return currentFeatures.filter(f => set.has(featureName(f).toLowerCase()));
+      const set = new Set((names || []).map(norm));
+      return currentFeatures.filter(f => set.has(norm(featureName(f))));
     },
     setCities: c => world.labelsData(c || []),
     setEvents: e => world.pointsData(e || []),
     setHighlights(highlights) {
       highlightMap = new Map();
-      (highlights || []).forEach(h => h.names.forEach(n => highlightMap.set(n.toLowerCase(), h.side)));
+      (highlights || []).forEach(h => h.names.forEach(n => highlightMap.set(norm(n), h.side)));
       world.polygonsData(world.polygonsData());
     },
     flyTo(lat, lng, altitude = 0.75, ms = 1400) { world.pointOfView({ lat, lng, altitude }, ms); }
@@ -95,3 +96,15 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
 }
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }
+
+// Normalise a place name for matching: lowercase, strip diacritics,
+// unify dashes, drop punctuation, collapse spaces.
+function norm(s) {
+  return String(s == null ? "" : s)
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[‐-―−]/g, "-")
+    .replace(/[^a-z0-9 -]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}

@@ -263,19 +263,24 @@ async function boot() {
     }
   });
 
+    // Year to park the slider on for a polity: when it began if it has
+    // ended; for still-extant states use a modern year (their Wikidata
+    // inception is often an ancient conflation, e.g. France = 481).
+  const repYear = p => p.end_year != null
+    ? (p.start_year ?? p.end_year)
+    : (p.start_year != null && p.start_year > 1700 ? p.start_year : 2015);
+
   async function playThread(th, atPolityId) {
     const members = await threadMembers(th.id);
     const beats = members
       .filter(m => m.polity)
       .map(m => ({
-        year: m.polity.start_year ?? 0,
+        year: repYear(m.polity),
         kind: m.role,
         label: m.polity.canonical_name,
         polity: m.polity
       }))
-      .sort((a, b) =>
-        (a.polity.end_year ?? 9999) - (b.polity.end_year ?? 9999) ||
-        (a.year - b.year));
+      .sort((a, b) => a.year - b.year || (a.polity.start_year ?? 0) - (b.polity.start_year ?? 0));
     const startIndex = atPolityId
       ? Math.max(0, beats.findIndex(b => b.polity.id === atPolityId)) : 0;
     const detailCache = new Map();
@@ -302,7 +307,7 @@ async function boot() {
       timeline.clearOverlays();
       timeline.setSpan(beats[0].year, beats[beats.length - 1].year, th.display_name);
       timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
-      if (mp.start_year != null) timeline.setYear(mp.start_year);
+      timeline.setYear(bt.year);
       if (!detailCache.has(mp.id)) {
         try { detailCache.set(mp.id, await polityDetail(mp.id)); }
         catch { detailCache.set(mp.id, null); }
