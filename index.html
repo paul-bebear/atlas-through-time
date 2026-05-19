@@ -84,6 +84,44 @@
         ~30% along the slider so recent centuries get more room.</p>
       </div>
     </div>
+
+    <div class="acc">
+      <button class="acc-h">Public API <span class="chev">▾</span></button>
+      <div class="acc-b about">
+        <p>The Atlas dataset is free to read over HTTPS. Principle:
+        aggregate, never interpret — disputed facts are stored as multiple
+        sourced rows, never adjudicated.</p>
+
+        <p><b>Base:</b> <code>https://cbvkgcvngigjvodnxgxg.supabase.co/rest/v1/</code></p>
+        <p><b>Headers:</b><br>
+          <code>apikey: &lt;anon key — see <a href="https://github.com/paul-bebear/atlas-through-time/blob/main/src/db-config.js" target="_blank" rel="noopener">db-config.js</a>&gt;</code><br>
+          <code>Accept-Profile: atlas</code></p>
+
+        <p><b>Tables:</b> <code>polity</code> · <code>polity_name</code> ·
+          <code>thread</code> · <code>thread_polity</code> ·
+          <code>relation</code> · <code>fact</code> · <code>territory</code> ·
+          <code>name_resolution</code> · <code>event</code> ·
+          <code>reference</code>. Full schema: <a href="https://github.com/paul-bebear/atlas-through-time/blob/main/db/schema.sql" target="_blank" rel="noopener">db/schema.sql</a>.</p>
+
+        <p><b>Examples:</b></p>
+<pre>GET /polity?canonical_name=ilike.*france*
+GET /thread?slug=eq.lithuania&amp;select=id,display_name
+GET /thread_polity?thread_id=eq.5&amp;select=role,polity:polity_id(canonical_name)
+GET /territory?source=eq.ohm-usa&amp;valid_from=lte.1850&amp;or=(valid_to.gte.1850,valid_to.is.null)
+GET /fact?subject_type=eq.polity&amp;key=eq.head_of_state&amp;subject_id=eq.21</pre>
+
+        <p><b>License:</b> the combined dataset is <b>CC BY 4.0</b>.
+        Commercial use and redistribution allowed with attribution to each
+        upstream source (see <em>About &amp; data</em> above). Per-source
+        notes: Wikipedia text is live-only (CC BY-SA, not in the API);
+        border outlines on this site are display-only — historical-basemaps
+        is GPL-3.0 and is <b>not</b> in the API. The redistributable
+        <code>territory</code> layer is sourced from OpenHistoricalMap (CC0).</p>
+
+        <p class="muted-note">No rate-limits yet on the public anon key.
+        Open an issue on the GitHub repo for B2B integrations.</p>
+      </div>
+    </div>
   </aside>
 
   <section id="infoCard" hidden></section>

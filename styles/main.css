@@ -88,6 +88,15 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   color: var(--muted); border: 1px solid var(--border);
   border-radius: 99px; padding: 0 6px; white-space: nowrap; }
 .muted-note { font-size: 11px; color: var(--muted); }
+.about code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px;
+  word-break: break-all; }
+.about pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; line-height: 1.5; color: var(--text);
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 11px; margin: 0 0 9px;
+  overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
 
 .era-group { font-size: 11px; font-weight: 700; text-transform: uppercase;
   letter-spacing: .7px; color: var(--muted); margin: 12px 0 6px; }
