@@ -163,7 +163,7 @@ export function createInfoCard({ countries }) {
     return ` (${f.from_year != null ? yr(f.from_year) : "?"}–${f.to_year != null ? yr(f.to_year) : "…"})`;
   };
 
-  return { openCountry, openEntry, openEvent, openDbPolity, close, catalog };
+  return { openCountry, openEntry, openEvent, openDbPolity, close, catalog, resolve };
 }
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }

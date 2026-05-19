@@ -74,9 +74,15 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
   window.addEventListener("resize", resize);
   resize();
 
+  let currentFeatures = [];
   return {
     world,
-    setBorders: gj => world.polygonsData(gj.features || []),
+    setBorders: gj => { currentFeatures = gj.features || []; world.polygonsData(currentFeatures); },
+    // Features in the current border set whose name matches any of `names`.
+    featuresForNames(names) {
+      const set = new Set((names || []).map(n => String(n).toLowerCase()));
+      return currentFeatures.filter(f => set.has(featureName(f).toLowerCase()));
+    },
     setCities: c => world.labelsData(c || []),
     setEvents: e => world.pointsData(e || []),
     setHighlights(highlights) {
