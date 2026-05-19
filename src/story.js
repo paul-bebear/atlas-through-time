@@ -71,13 +71,13 @@ export function createStory({ wars, formations, onBeat, onExit }) {
 
   // Generic player for externally-built beats (e.g. a DB continuity thread).
   // cb(beat, idx, beats) is called on every step.
-  function startCustom(t, bs, cb) {
+  function startCustom(t, bs, cb, startIndex = 0) {
     if (!bs || !bs.length) return;
     country = null;
     title = t;
     beats = bs;
     stepCb = cb;
-    idx = 0;
+    idx = Math.max(0, Math.min(bs.length - 1, startIndex));
     show();
   }
 

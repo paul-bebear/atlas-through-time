@@ -46,6 +46,12 @@ export async function polityDetail(id) {
   return { facts, refs };
 }
 
+// Threads whose name matches the query (the headline continuity result).
+export async function searchThreads(q, limit = 6) {
+  if (!dbEnabled() || !q) return [];
+  return get(`thread?display_name=ilike.*${enc(q)}*&select=id,slug,display_name&limit=${limit}`);
+}
+
 // Continuity threads this polity belongs to (it may be SHARED across more
 // than one — e.g. the Polish–Lithuanian Commonwealth ∈ Poland & Lithuania).
 export async function threadsForPolity(polityId) {

@@ -13,7 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail, threadsForPolity, threadMembers } from "./db.js";
+import { polityDetail, threadMembers } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 
@@ -257,56 +257,52 @@ async function boot() {
     }
   });
 
+  async function playThread(th, atPolityId) {
+    const members = await threadMembers(th.id);
+    const beats = members
+      .filter(m => m.polity)
+      .map(m => ({
+        year: m.polity.start_year ?? 0,
+        kind: m.role,
+        label: m.polity.canonical_name,
+        polity: m.polity
+      }))
+      .sort((a, b) =>
+        (a.polity.end_year ?? 9999) - (b.polity.end_year ?? 9999) ||
+        (a.year - b.year));
+    const startIndex = atPolityId
+      ? Math.max(0, beats.findIndex(b => b.polity.id === atPolityId)) : 0;
+    const detailCache = new Map();
+    story.startCustom("🧵 " + th.display_name, beats, async bt => {
+      const mp = bt.polity;
+      const names = [mp.canonical_name, ...((mp.polity_name || []).map(n => n.name))].filter(Boolean);
+      setContext("🧵 " + th.display_name + " — " + mp.canonical_name);
+      const feats = globe.featuresForNames(names);
+      const ll = mp.lat != null ? { lat: mp.lat, lng: mp.lng }
+        : feats[0] ? featureCentroid(feats[0]) : null;
+      if (ll) globe.flyTo(ll.lat, ll.lng, 1.2);
+      globe.setHighlights([{ names, side: "A" }]);
+      timeline.clearOverlays();
+      timeline.setSpan(beats[0].year, beats[beats.length - 1].year, th.display_name);
+      timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
+      if (mp.start_year != null) timeline.setYear(mp.start_year);
+      if (!detailCache.has(mp.id)) {
+        try { detailCache.set(mp.id, await polityDetail(mp.id)); }
+        catch { detailCache.set(mp.id, null); }
+      }
+      selection = { names, render: y => card.openDbPolity(mp, detailCache.get(mp.id), y) };
+      selection.render(timeline.currentYear());
+    }, startIndex);
+  }
+
   createSearch({
     catalog: card.catalog,
     onPick: async hit => {
       story.exit?.();
-      // Curated and DB picks share the SAME selection model as a globe
-      // click: scoped slider + period card that tracks the timeline.
+      // Curated, thread, and single-polity picks share the selection model.
       if (hit.kind === "curated") { selectCurated(hit.entry); return; }
-
-      const p = hit.polity;
-      let threads = [];
-      try { threads = await threadsForPolity(p.id); } catch { /* fall back */ }
-
-      if (!threads.length) { await selectDbPolity(p); return; }
-
-      // Belongs to a continuity thread → play it; each beat is just a
-      // selection of that member, so scrubbing still tracks the card.
-      const th = threads[0].thread;
-      const members = await threadMembers(th.id);
-      const beats = members
-        .filter(m => m.polity)
-        .map(m => ({
-          year: m.polity.start_year ?? 0,
-          kind: m.role,
-          label: m.polity.canonical_name,
-          polity: m.polity
-        }))
-        .sort((a, b) =>
-          (a.polity.end_year ?? 9999) - (b.polity.end_year ?? 9999) ||
-          (a.year - b.year));
-      const detailCache = new Map();
-      story.startCustom("🧵 " + th.display_name, beats, async bt => {
-        const mp = bt.polity;
-        const names = [mp.canonical_name, ...((mp.polity_name || []).map(n => n.name))].filter(Boolean);
-        setContext("🧵 " + th.display_name + " — " + mp.canonical_name);
-        const feats = globe.featuresForNames(names);
-        const ll = mp.lat != null ? { lat: mp.lat, lng: mp.lng }
-          : feats[0] ? featureCentroid(feats[0]) : null;
-        if (ll) globe.flyTo(ll.lat, ll.lng, 1.2);
-        globe.setHighlights([{ names, side: "A" }]);
-        timeline.clearOverlays();
-        timeline.setSpan(beats[0].year, beats[beats.length - 1].year, th.display_name);
-        timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
-        if (mp.start_year != null) timeline.setYear(mp.start_year);
-        if (!detailCache.has(mp.id)) {
-          try { detailCache.set(mp.id, await polityDetail(mp.id)); }
-          catch { detailCache.set(mp.id, null); }
-        }
-        selection = { names, render: y => card.openDbPolity(mp, detailCache.get(mp.id), y) };
-        selection.render(timeline.currentYear());
-      });
+      if (hit.kind === "thread") { await playThread(hit.thread, hit.atPolityId); return; }
+      await selectDbPolity(hit.polity);
     }
   });
 }
