@@ -78,6 +78,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .acc-b { display: none; padding: 12px 14px; }
 .acc.open .acc-b { display: block; }
 .about { font-size: 12px; line-height: 1.6; color: var(--muted); margin: 0; }
+.about p { margin: 0 0 9px; }
+.about a { color: var(--accent); text-decoration: none; }
+.about a:hover { text-decoration: underline; }
+.credits { list-style: none; margin: 0 0 9px; padding: 0; }
+.credits li { padding: 5px 0; border-top: 1px solid var(--border);
+  color: var(--text); }
+.credits .lic { display: inline-block; margin-left: 4px; font-size: 10px;
+  color: var(--muted); border: 1px solid var(--border);
+  border-radius: 99px; padding: 0 6px; white-space: nowrap; }
+.muted-note { font-size: 11px; color: var(--muted); }
 
 .era-group { font-size: 11px; font-weight: 700; text-transform: uppercase;
   letter-spacing: .7px; color: var(--muted); margin: 12px 0 6px; }
