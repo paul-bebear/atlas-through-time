@@ -28,6 +28,46 @@
     {
       "slug": "belarus", "display_name": "Belarus", "region": "Europe", "core": "Q184",
       "members": ["Q1108445", "Q2895", "Q184"]
+    },
+    {
+      "slug": "azerbaijan", "display_name": "Azerbaijan", "region": "Asia", "core": "Q227",
+      "members": ["Q206411", "Q131337", "Q227"]
+    },
+    {
+      "slug": "china", "display_name": "China", "region": "Asia", "core": "Q148",
+      "members": ["Q7209", "Q9683", "Q9903", "Q8733", "Q13426199", "Q148"]
+    },
+    {
+      "slug": "japan", "display_name": "Japan", "region": "Asia", "core": "Q17",
+      "members": ["Q205662", "Q188712", "Q17"]
+    },
+    {
+      "slug": "india", "display_name": "India", "region": "Asia", "core": "Q668",
+      "members": ["Q62943", "Q11774", "Q33296", "Q129286", "Q668"]
+    },
+    {
+      "slug": "iran", "display_name": "Iran", "region": "Asia", "core": "Q794",
+      "members": ["Q389688", "Q83891", "Q18234383", "Q63158027", "Q107258515", "Q794"]
+    },
+    {
+      "slug": "egypt", "display_name": "Egypt", "region": "Africa", "core": "Q79",
+      "members": ["Q11768", "Q2320005", "Q124943", "Q79"]
+    },
+    {
+      "slug": "united-states", "display_name": "United States", "region": "North America", "core": "Q30",
+      "members": ["Q30"]
+    },
+    {
+      "slug": "mexico", "display_name": "Mexico", "region": "North America", "core": "Q96",
+      "members": ["Q2608489", "Q285658", "Q96"]
+    },
+    {
+      "slug": "brazil", "display_name": "Brazil", "region": "South America", "core": "Q155",
+      "members": ["Q217230", "Q155"]
+    },
+    {
+      "slug": "south-africa", "display_name": "South Africa", "region": "Africa", "core": "Q258",
+      "members": ["Q550374", "Q193619", "Q258"]
     }
   ]
 }

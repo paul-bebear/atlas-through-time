@@ -1,11 +1,11 @@
 {
-  "generated": "2026-05-18T17:09:58.512Z",
+  "generated": "2026-05-19T12:25:22.219Z",
   "counts": {
-    "polity": 907,
-    "polity_name": 2338,
-    "relation": 1912,
-    "fact": 745,
-    "reference": 778
+    "polity": 1771,
+    "polity_name": 5049,
+    "relation": 3383,
+    "fact": 1384,
+    "reference": 1545
   },
   "note": "v1: identity/span/type/capital/coords/succession/refs. Leaders & population with time qualifiers = next iteration."
 }

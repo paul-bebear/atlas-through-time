@@ -36,18 +36,37 @@ const SEED_TITLES = [
   "Habsburg monarchy", "Dutch Republic", "Kingdom of the Netherlands",
   "Kingdom of Portugal", "Swedish Empire", "Kingdom of Hungary", "Bohemia",
   "Kingdom of Bohemia", "Serbia", "Kingdom of Serbia", "Yugoslavia",
-  "Kingdom of Greece", "Ancient Greece", "Kievan Rus'", "Golden Horde"
+  "Kingdom of Greece", "Ancient Greece", "Kievan Rus'", "Golden Horde",
+  // Global anchors so non-EU coverage has its key threads guaranteed.
+  "China", "Qing dynasty", "Ming dynasty", "Han dynasty", "Tang dynasty",
+  "Republic of China", "Japan", "Empire of Japan", "Tokugawa shogunate",
+  "Korea", "Joseon", "Goryeo", "India", "Mughal Empire", "British Raj",
+  "Maurya Empire", "Gupta Empire", "Vietnam", "Khmer Empire", "Siam",
+  "Thailand", "Indonesia", "Majapahit", "Mongol Empire",
+  "Ottoman Empire", "Safavid Iran", "Qajar Iran", "Pahlavi Iran", "Iran",
+  "Achaemenid Empire", "Sasanian Empire", "Azerbaijan",
+  "Azerbaijan Democratic Republic", "Armenia", "Georgia (country)",
+  "Saudi Arabia", "Egypt", "Ptolemaic Kingdom", "Ancient Egypt",
+  "Mali Empire", "Songhai Empire", "Ghana Empire", "Kingdom of Aksum",
+  "Ethiopian Empire", "Kingdom of Kongo", "Zulu Kingdom", "Nigeria",
+  "South Africa", "United States", "Confederate States of America",
+  "Mexico", "Aztec Empire", "Inca Empire", "Brazil", "Empire of Brazil",
+  "Argentina", "Gran Colombia", "Canada", "Australia", "New Zealand"
 ];
 
-// Generic Europe net (bounded). Country-like classes with an inception,
-// tied to Europe via continent or present-day country.
-const CANDIDATE_QUERY = `
+// Country-like classes with an inception, tied to a continent (directly or
+// via present-day country). Run per continent to keep each query light.
+const CONTINENTS = {
+  Europe: "Q46", Asia: "Q48", Africa: "Q15",
+  "North America": "Q49", "South America": "Q18", Oceania: "Q55838"
+};
+const candidateQuery = cont => `
 SELECT DISTINCT ?item WHERE {
   VALUES ?cls { wd:Q3624078 wd:Q3024240 wd:Q417175 wd:Q48349 wd:Q6256 wd:Q1250464 }
   ?item wdt:P31 ?cls ; wdt:P571 ?inc .
-  { ?item wdt:P30 wd:Q46 } UNION { ?item wdt:P17 ?c . ?c wdt:P30 wd:Q46 }
+  { ?item wdt:P30 wd:${cont} } UNION { ?item wdt:P17 ?c . ?c wdt:P30 wd:${cont} }
 }
-LIMIT 900`;
+LIMIT 700`;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -121,12 +140,16 @@ async function main() {
   const seedQids = await resolveTitles(SEED_TITLES);
   console.log(`  ${seedQids.length} seed QIDs`);
 
-  console.log("Querying generic Europe candidates…");
   let candQids = [];
-  try {
-    candQids = (await sparql(CANDIDATE_QUERY)).map(b => qidOf(b.item.value));
-  } catch (e) { console.warn("  candidate query failed:", e.message); }
-  console.log(`  ${candQids.length} candidates`);
+  for (const [name, qid] of Object.entries(CONTINENTS)) {
+    try {
+      const r = (await sparql(candidateQuery(qid))).map(b => qidOf(b.item.value));
+      candQids.push(...r);
+      console.log(`  ${name}: ${r.length}`);
+    } catch (e) { console.warn(`  ${name} failed: ${e.message}`); }
+    await sleep(800);
+  }
+  console.log(`  candidates total: ${candQids.length}`);
 
   const qids = [...new Set([...seedQids, ...candQids])];
   console.log(`Fetching details for ${qids.length} polities…`);
