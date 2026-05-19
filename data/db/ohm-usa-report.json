@@ -1,0 +1,21 @@
+{
+  "generated": "2026-05-19T17:45:02.942Z",
+  "source": "OpenHistoricalMap (CC0)",
+  "region": "USA bbox 15,-179.9,72,-66",
+  "relations_total": 619,
+  "geometry_ok": 617,
+  "open_ring_warnings": 21,
+  "with_wikidata": 485,
+  "matched_our_polities": 11,
+  "distinct_polygons": 617,
+  "active_by_year": {
+    "1776": 19,
+    "1800": 48,
+    "1850": 81,
+    "1900": 134,
+    "1912": 137,
+    "1959": 136,
+    "2000": 144
+  },
+  "note": "PILOT — not loaded to Supabase. Eyeball ohm-usa-sample.geojson. US states likely absent from polity registry (we imported sovereign-state classes) — follow-up: import states as polities, or key territory by wikidata directly."
+}
