@@ -96,6 +96,7 @@ async function boot() {
   const exitTerritory = () => {
     if (!state.territory) return false;
     state.territory = null; state.lastSig = null; state.territorySig = null;
+    globe.clearTerritoryOutlines();
     return true;
   };
   const clearSelection = () => {
@@ -115,30 +116,29 @@ async function boot() {
       state.year = year;
       eraEl.textContent = `${yearLabel(year)} · ${eraFor(year)}`;
 
-      // Event layer updates every single year.
-      const vis = events.forYear(year);
-      globe.setEvents(vis);
-
-      // Territory mode (CC0 OHM data layer, e.g. USA growth) overrides the
-      // coarse display borders — show the DB polygons active this year.
+      // Territory mode (CC0 OHM data layer, e.g. USA growth) replaces the
+      // world borders with lightweight outline paths for that year. Skip
+      // the events layer here — it's free latency we don't need in the
+      // focused demo, and rerenders cost per tick.
       if (state.territory) {
         try {
           const fc = await territoryForYear(state.territory.source, year);
           if (state.year !== year) return;
-          // Skip re-tessellation when the active polygon set is unchanged
-          // (most years between border events are identical) — the big
-          // scrubbing win.
           const sig = fc.features.length + "|" +
             fc.features.map(f => f.properties.NAME).sort().join(",");
           if (sig !== state.territorySig) {
             state.territorySig = sig;
-            globe.setBorders(fc);
+            globe.setTerritoryOutlines(fc.features);
           }
-          timeline.setStatus(`${state.territory.label} · ${fc.features.length} polities · ${vis.length} events`);
+          timeline.setStatus(`${state.territory.label} · ${fc.features.length} polities`);
         } catch (e) { timeline.setStatus(e.message); }
         if (selection) selection.render(year);
         return;
       }
+
+      // Event layer updates every single year (skipped in territory mode).
+      const vis = events.forYear(year);
+      globe.setEvents(vis);
 
       // Re-tessellate polygons only when the snapshot actually changes,
       // so scrubbing within one period stays cheap.

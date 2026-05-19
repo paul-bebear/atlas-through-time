@@ -15,7 +15,7 @@ const root = new URL("..", import.meta.url);
 const BBOX = "15,-179.9,72,-66";
 const TEST_YEARS = [1776, 1800, 1850, 1900, 1912, 1959, 2000];
 const EPS = 1e-6;       // endpoint-match tolerance for ring stitching
-const SIMPLIFY = 0.02;  // RDP tolerance in degrees (~2 km — fine for states)
+const SIMPLIFY = 0.06;  // RDP tolerance in degrees (~6 km — invisible at globe scale)
 
 const yearOf = iso => {
   if (!iso) return null;

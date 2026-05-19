@@ -46,6 +46,17 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
   let highlightMap = new Map();
   let selectedKey = null;
 
+  // Paths layer (outlines only) — used for territory mode. Much lighter
+  // than tessellating filled polygon meshes.
+  world
+    .pathsData([])
+    .pathPoints(d => d.points)
+    .pathPointLat(p => p[0])
+    .pathPointLng(p => p[1])
+    .pathColor(() => STROKE)
+    .pathStroke(0.6)
+    .pathTransitionDuration(0);
+
   world
     .polygonCapColor(f => {
       const k = norm(featureName(f));
@@ -78,6 +89,23 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
   return {
     world,
     setBorders: gj => { currentFeatures = gj.features || []; world.polygonsData(currentFeatures); },
+    // Render a set of GeoJSON features as outline-only paths (the
+    // territory layer). Far lighter than tessellating filled polygons.
+    setTerritoryOutlines(features) {
+      const paths = [];
+      for (const f of (features || [])) {
+        if (!f.geometry) continue;
+        const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates]
+          : f.geometry.type === "MultiPolygon" ? f.geometry.coordinates : [];
+        for (const poly of polys)
+          for (const ring of poly)
+            paths.push({ name: f.properties?.NAME || "",
+              points: ring.map(([lng, lat]) => [lat, lng]) });
+      }
+      currentFeatures = []; world.polygonsData([]);
+      world.pathsData(paths);
+    },
+    clearTerritoryOutlines() { world.pathsData([]); },
     // Features in the current border set whose name matches any of `names`
     // (dash/diacritic/punctuation-insensitive).
     featuresForNames(names) {

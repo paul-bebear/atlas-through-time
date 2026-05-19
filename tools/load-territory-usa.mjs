@@ -95,14 +95,14 @@ async function main() {
   }
   const created = await chunked("polity", toCreate.map(({ _k, ...p }) => p),
     100, "return=representation");
-  // Map back by wikidata (or by order for null-qid rows).
-  let ci = 0;
+  // PostgREST returns in insertion order, so positional pairing for
+  // null-QID rows only works if we index INTO the null-QID subset.
+  const byQid = new Map(created.filter(c => c.wikidata_qid).map(c => [c.wikidata_qid, c]));
+  const nullRows = created.filter(c => !c.wikidata_qid);
+  let nIdx = 0;
   for (const t of toCreate) {
-    const row = t.wikidata_qid
-      ? created.find(c => c.wikidata_qid === t.wikidata_qid)
-      : created[ci];
+    const row = t.wikidata_qid ? byQid.get(t.wikidata_qid) : nullRows[nIdx++];
     if (row) polityIdByKey.set(t._k, row.id);
-    if (!t.wikidata_qid) ci++;
   }
   console.log(`  polities: ${created.length} created, ${groups.size - created.length} reused`);
 
