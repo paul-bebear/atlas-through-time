@@ -1,0 +1,41 @@
+{
+  "generated": "2026-05-19T16:45:10.547Z",
+  "region": "Europe bbox 34,-12,72,45",
+  "relations_total": 3478,
+  "with_start_date": 3477,
+  "with_end_date": 3240,
+  "with_wikidata": 3182,
+  "distinct_wikidata": 1334,
+  "overlap_with_our_polities": 344,
+  "overlap_sample": [
+    "Q186320",
+    "Q159631",
+    "Q20135",
+    "Q13816636",
+    "Q180393",
+    "Q39193",
+    "Q2360973",
+    "Q2396442",
+    "Q2277",
+    "Q12560",
+    "Q165154",
+    "Q165763",
+    "Q154195",
+    "Q836680",
+    "Q3113481"
+  ],
+  "active_relations_by_year": {
+    "1": 20,
+    "1000": 102,
+    "1500": 241,
+    "1815": 216,
+    "1914": 225,
+    "2000": 232,
+    "-500": 16
+  },
+  "geometry_spike": "sampled \"Baden\" (Q186320); 229 outer ways, 17948 pts",
+  "verdict_hints": {
+    "date_coverage_pct": 100,
+    "qid_coverage_pct": 91
+  }
+}
