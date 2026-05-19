@@ -112,6 +112,12 @@ create table fact (
 -- Territory over time. GeoJSON in jsonb now; PostGIS optional later
 -- (add a geometry(MultiPolygon,4326) column + GIST index when needed).
 -- Disputed borders = overlapping rows distinguished by `perspective`.
+--
+-- ⚠️ LICENSING GUARDRAIL: only PERMISSIVELY-licensed geometry (PD / CC0 /
+-- CC BY) may ever be loaded here — this table is part of the redistributable,
+-- monetised API. historical-basemaps (GPL-3.0) is DISPLAY-ONLY (client-side
+-- draw) and must NEVER be inserted into this table or served by the API.
+-- Awaiting a permissive replacement before territory is populated.
 create table territory (
   id          bigint generated always as identity primary key,
   polity_id   bigint not null references polity(id) on delete cascade,
