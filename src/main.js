@@ -210,8 +210,9 @@ async function boot() {
         } else {
           timeline.setSpan(p.start_year, p.end_year ?? p.start_year, p.canonical_name);
         }
-        card.openDbPolity(mp);
-        try { card.openDbPolity(mp, await polityDetail(mp.id)); } catch { /* keep basic */ }
+        const focus = mp.start_year ?? mp.end_year ?? null;
+        card.openDbPolity(mp, null, focus);
+        try { card.openDbPolity(mp, await polityDetail(mp.id), focus); } catch { /* keep basic */ }
       };
 
       let threads = [];

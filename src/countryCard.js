@@ -119,25 +119,51 @@ export function createInfoCard({ countries }) {
     }
   }
 
-  // A polity straight from the Supabase registry (the long tail beyond the
-  // curated 30). `detail` = { facts, refs } from db.polityDetail().
-  function openDbPolity(p, detail) {
+  // A polity straight from the Supabase registry. Period-aware: shows the
+  // ruler / population relevant to `year` (the viewed moment) rather than
+  // dumping every fact. `detail` = { facts, refs } from db.polityDetail().
+  function openDbPolity(p, detail, year) {
     const span = `${p.start_year != null ? yr(p.start_year) : "?"} – ${
       p.end_year != null ? yr(p.end_year) : "present"}`;
+    const facts = detail?.facts || [];
+    const y = year ?? p.start_year ?? p.end_year;
+
+    // Fact active at year: from <= y <= to (open ends allowed).
+    const activeAt = key => facts
+      .filter(f => f.key === key &&
+        (f.from_year == null || y == null || f.from_year <= y) &&
+        (f.to_year == null || y == null || f.to_year >= y));
+    // Population: the reading closest to (but not after) y, else latest.
+    const popRows = facts.filter(f => f.key === "population");
+    const pop = popRows
+      .filter(f => y == null || f.from_year == null || f.from_year <= y)
+      .sort((a, b) => (b.from_year ?? -1e9) - (a.from_year ?? -1e9))[0]
+      || popRows.sort((a, b) => (b.from_year ?? -1e9) - (a.from_year ?? -1e9))[0];
+
     const rows = [];
     if (p.type) rows.push(["Type", p.type]);
-    for (const f of (detail?.facts || []))
-      rows.push([cap(f.key), f.value + (f.perspective ? ` (${f.perspective})` : "")]);
+    const cap0 = activeAt("capital")[0] || facts.find(f => f.key === "capital");
+    if (cap0) rows.push(["Capital", cap0.value]);
+    for (const f of activeAt("head_of_state"))
+      rows.push(["Head of state", `${f.value}${yspan(f)}`]);
+    for (const f of activeAt("head_of_government"))
+      rows.push(["Head of government", `${f.value}${yspan(f)}`]);
+    if (pop) rows.push(["Population", pop.value + (pop.from_year ? ` (${yr(pop.from_year)})` : "")]);
+
     const wiki = (detail?.refs || []).find(r => r.kind === "wikipedia");
-    shell(p.canonical_name, `${span} · from the Atlas registry`,
+    const asOf = y != null ? ` · as of ${yr(y)}` : "";
+    shell(p.canonical_name, `${span} · from the Atlas registry${asOf}`,
       rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + (wiki ? `<a class="cc-link" href="${wiki.url}" target="_blank" rel="noopener">Read on Wikipedia →</a>` : "")
-      + `<div class="cc-note">Sourced from Wikidata. Curated profile (eras, leaders, facts) not added yet — this is the live database talking.</div>`);
+      + `<div class="cc-note">Live from the Atlas database (Wikidata-sourced). Rulers/population shown for the viewed year.</div>`);
   }
+
+  const yspan = f => {
+    if (f.from_year == null && f.to_year == null) return "";
+    return ` (${f.from_year != null ? yr(f.from_year) : "?"}–${f.to_year != null ? yr(f.to_year) : "…"})`;
+  };
 
   return { openCountry, openEntry, openEvent, openDbPolity, close, catalog };
 }
-
-function cap(s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }
