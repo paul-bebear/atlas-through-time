@@ -200,9 +200,26 @@ async function boot() {
       const p = hit.polity;
       story.exit?.();
 
-      const showPolity = async (mp, threadTitle, beats) => {
+      // Names to try highlighting a polity by (its own + aliases).
+      const polNames = mp => [
+        mp.canonical_name,
+        ...((mp.polity_name || []).map(n => n.name))
+      ].filter(Boolean);
+
+      // A dependable focus point for the whole thread/polity even when the
+      // historical polity itself has no Wikidata coordinates: prefer the
+      // curated catalog entry by name, else the first thing with coords.
+      const catLL = name => {
+        const c = card.catalog.find(x =>
+          x.entry.name.toLowerCase() === String(name || "").toLowerCase());
+        return c && c.entry.lat != null ? { lat: c.entry.lat, lng: c.entry.lng } : null;
+      };
+
+      const showPolity = async (mp, threadTitle, beats, fallbackLL) => {
         setContext((threadTitle ? "🧵 " + threadTitle + " — " : "🗄 ") + mp.canonical_name);
-        if (mp.lat != null && mp.lng != null) globe.flyTo(mp.lat, mp.lng, 1.2);
+        const ll = (mp.lat != null && mp.lng != null) ? { lat: mp.lat, lng: mp.lng } : fallbackLL;
+        if (ll) globe.flyTo(ll.lat, ll.lng, 1.2);
+        globe.setHighlights([{ names: polNames(mp), side: "A" }]);
         if (mp.start_year != null) timeline.setYear(mp.start_year);
         if (beats) {
           timeline.setSpan(beats[0].year, beats[beats.length - 1].year, threadTitle);
@@ -233,10 +250,14 @@ async function boot() {
           .sort((a, b) =>
             (a.polity.end_year ?? 9999) - (b.polity.end_year ?? 9999) ||
             (a.year - b.year));
+        const fallbackLL = catLL(th.display_name)
+          || beats.map(b => b.polity).find(q => q.lat != null)
+          || null;
         story.startCustom("🧵 " + th.display_name, beats,
-          bt => showPolity(bt.polity, th.display_name, beats));
+          bt => showPolity(bt.polity, th.display_name, beats,
+            fallbackLL && { lat: fallbackLL.lat, lng: fallbackLL.lng }));
       } else {
-        await showPolity(p, null, null);
+        await showPolity(p, null, null, catLL(p.canonical_name));
       }
     }
   });

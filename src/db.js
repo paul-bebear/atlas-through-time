@@ -56,8 +56,9 @@ export async function threadsForPolity(polityId) {
 }
 
 // Ordered members of a thread (the continuity spine), chronological.
+// Embeds each polity's names so the globe can highlight by alias.
 export async function threadMembers(threadId) {
   return get(`thread_polity?thread_id=eq.${threadId}` +
-    `&select=role,from_year,to_year,polity:polity_id(id,canonical_name,type,start_year,end_year,lat,lng,wikidata_qid)` +
+    `&select=role,from_year,to_year,polity:polity_id(id,canonical_name,type,start_year,end_year,lat,lng,wikidata_qid,polity_name(name))` +
     `&order=from_year`);
 }
