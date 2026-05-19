@@ -126,7 +126,10 @@ async function boot() {
           const fc = await territoryForYear(state.territory.source, year);
           if (state.year !== year) return;
           globe.setBorders(fc);
-          globe.setHighlights([{ names: fc.features.map(f => f.properties.NAME), side: "A" }]);
+          // No bulk highlight — let each polygon show as a normal cyan
+          // outline over the satellite (states/territories appear and
+          // reshape as you scrub).
+          globe.setHighlights([]);
           timeline.setStatus(`${state.territory.label} · ${fc.features.length} polities · ${vis.length} events`);
         } catch (e) { timeline.setStatus(e.message); }
         if (selection) selection.render(year);
