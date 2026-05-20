@@ -55,6 +55,7 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
     .pathPointLng(p => p[1])
     .pathColor(() => STROKE)
     .pathStroke(0.6)
+    .pathLabel(d => d.name ? `<b>${d.name}</b>` : "")
     .pathTransitionDuration(0);
 
   world
