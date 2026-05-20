@@ -68,6 +68,46 @@
     {
       "slug": "south-africa", "display_name": "South Africa", "region": "Africa", "core": "Q258",
       "members": ["Q550374", "Q193619", "Q258"]
+    },
+    {
+      "slug": "united-kingdom", "display_name": "United Kingdom", "region": "Europe", "core": "Q145",
+      "members": ["Q179876", "Q161885", "Q145"]
+    },
+    {
+      "slug": "italy", "display_name": "Italy", "region": "Europe", "core": "Q38",
+      "members": ["Q17167", "Q2277", "Q42834", "Q172579", "Q153660", "Q38"]
+    },
+    {
+      "slug": "spain", "display_name": "Spain", "region": "Europe", "core": "Q29",
+      "members": ["Q126936", "Q217196", "Q204920", "Q600093", "Q13474305", "Q29"]
+    },
+    {
+      "slug": "greece", "display_name": "Greece", "region": "Europe", "core": "Q41",
+      "members": ["Q12544", "Q209065", "Q41"]
+    },
+    {
+      "slug": "turkey", "display_name": "Türkiye", "region": "Asia", "core": "Q43",
+      "members": ["Q975405", "Q12560", "Q43"]
+    },
+    {
+      "slug": "korea", "display_name": "Korea", "region": "Asia", "core": "Q884",
+      "members": ["Q28208", "Q28179", "Q28233", "Q18097", "Q884"]
+    },
+    {
+      "slug": "vietnam", "display_name": "Vietnam", "region": "Asia", "core": "Q881",
+      "members": ["Q172640", "Q180573", "Q881"]
+    },
+    {
+      "slug": "canada", "display_name": "Canada", "region": "North America", "core": "Q16",
+      "members": ["Q16"]
+    },
+    {
+      "slug": "australia", "display_name": "Australia", "region": "Oceania", "core": "Q408",
+      "members": ["Q408"]
+    },
+    {
+      "slug": "argentina", "display_name": "Argentina", "region": "South America", "core": "Q414",
+      "members": ["Q738144", "Q832554", "Q414"]
     }
   ]
 }
