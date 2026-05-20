@@ -61,9 +61,12 @@ SELECT ?item ?pop ?when WHERE {
 const qidOf = u => u.split("/").pop();
 
 async function main() {
-  const tp = await j("thread_polity.json");
-  const qids = [...new Set(tp.map(r => r.polity_qid))];
-  console.log(`Thread-member polities: ${qids.length}`);
+  // Every polity in the registry with a Wikidata QID — pulls heads of
+  // state / government with reign dates + population time-series for the
+  // full set, not just thread members.
+  const P = await j("polity.json");
+  const qids = [...new Set(P.map(p => p.wikidata_qid).filter(Boolean))];
+  console.log(`Polities with QID: ${qids.length}`);
 
   const facts = [];
   for (let i = 0; i < qids.length; i += 25) {
