@@ -1,13 +1,14 @@
 // Left-drawer panel: mode radio + layer checkboxes.
-// Phase 1 per Architecture.md — the UI mutates state.mode / state.layers.*.enabled
-// but no renderer reads those yet, so toggling is intentionally inert.
-// onModeChange / onLayerToggle hooks are provided for Phase 2 wiring.
+// View-only: emits onModeChange / onLayerToggle callbacks. State mutation
+// happens in main.js (so e.g. entering us-territorial via the radio routes
+// through the same selectCurated() path as the search bar).
+// Call refresh() whenever state.mode / state.layers change externally.
 
 const MODES = [
   { id: "discovery",      label: "Discovery" },
-  { id: "us-territorial", label: "US Territorial Growth", disabled: true },
-  { id: "map-quiz",       label: "Map Quiz",              disabled: true },
-  { id: "empire-story",   label: "Empire Story",          disabled: true },
+  { id: "us-territorial", label: "US Territorial Growth" },
+  { id: "map-quiz",       label: "Map Quiz",      disabled: true },
+  { id: "empire-story",   label: "Empire Story",  disabled: true },
 ];
 
 const LAYERS = [
@@ -47,20 +48,13 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
         <div class="lp-heading">Layers</div>
         ${layers}
       </div>
-      <p class="lp-note">Phase 1 — controls are wired but not yet observed by the globe. Phase 2 will hook them up.</p>
+      <p class="lp-note">Borders · Cities · Events are live. Greyed-out modes & layers land in later phases.</p>
     `;
     root.querySelectorAll('input[name="lp-mode"]').forEach(el => {
-      el.onchange = () => {
-        state.mode = el.value;
-        if (onModeChange) onModeChange(state.mode);
-      };
+      el.onchange = () => onModeChange?.(el.value);
     });
     root.querySelectorAll('input[name="lp-layer"]').forEach(el => {
-      el.onchange = () => {
-        const id = el.value;
-        if (state.layers[id]) state.layers[id].enabled = el.checked;
-        if (onLayerToggle) onLayerToggle(id, el.checked);
-      };
+      el.onchange = () => onLayerToggle?.(el.value, el.checked);
     });
   }
 

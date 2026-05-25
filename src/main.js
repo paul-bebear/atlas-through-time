@@ -20,10 +20,11 @@ import { createLayersPanel } from "./layersPanel.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
-// State shape per Architecture.md Phase 1. The new fields (mode, layers,
-// modeState, selection) are wired into the layers panel but not yet consumed
-// by renderers — Phase 1 is a structural refactor with no behaviour change.
-// `lastSig`/`territory`/`territorySig` are legacy carve-outs removed in Phase 2.
+// State shape per Architecture.md Phase 2.
+//   mode        — exclusive intent ("discovery" | "us-territorial" | …)
+//   modeState   — mode-scoped working data (for us-territorial: {source,label,sig})
+//   layers.*    — stackable overlays; renderers gate on .enabled
+//   lastSig     — borders-layer cache key (rendering optimization)
 const state = {
   year: 1900,
   mode: "discovery",
@@ -37,7 +38,7 @@ const state = {
   },
   selection: null,
   modeState: null,
-  lastSig: null, territory: null, territorySig: null,
+  lastSig: null,
 };
 let warsData = [];               // wars dataset (was state.wars before Phase 1)
 
@@ -105,7 +106,6 @@ async function boot() {
   const card = createInfoCard({ countries });
   buildLegend();
   initPanel();
-  createLayersPanel({ state });        // Phase 1 — wired, inert (no renderer reads state.layers yet)
 
   // Country selection is unified: clicking a polygon or picking from search
   // produce the SAME scoped state — name on the slider, major-event marks,
@@ -113,12 +113,15 @@ async function boot() {
   let selection = null;            // { names, render(year) }
   let dbSelectionSeq = 0;          // bail stale selectDbPolity awaits
   let pickFeature = () => {};
-  // Exit CC0 territory mode (USA growth etc). Returns true if it was on, so
-  // callers can force a normal-border refresh.
+  // Exit us-territorial mode. Returns true if we were in it, so callers
+  // can force a normal-border refresh.
   const exitTerritory = () => {
-    if (!state.territory) return false;
-    state.territory = null; state.lastSig = null; state.territorySig = null;
+    if (state.mode !== "us-territorial") return false;
+    state.mode = "discovery";
+    state.modeState = null;
+    state.lastSig = null;
     globe.clearTerritoryOutlines();
+    layersPanel?.refresh();
     return true;
   };
   const clearSelection = () => {
@@ -131,7 +134,7 @@ async function boot() {
     onCountryClick: f => pickFeature(f),
     onEventClick: ev => { clearSelection(); card.openEvent(ev); }
   });
-  globe.setCities(cities);
+  globe.setCities(state.layers.cities.enabled ? cities : []);
 
 
   const timeline = createTimeline({
@@ -139,41 +142,48 @@ async function boot() {
       state.year = year;
       eraEl.textContent = `${yearLabel(year)} · ${eraFor(year)}`;
 
-      // Territory mode (CC0 OHM data layer, e.g. USA growth) replaces the
-      // world borders with lightweight outline paths for that year. Skip
-      // the events layer here — it's free latency we don't need in the
-      // focused demo, and rerenders cost per tick.
-      if (state.territory) {
+      // us-territorial mode replaces the world borders with lightweight outline
+      // paths for the year. Events layer is intentionally skipped — it's free
+      // latency we don't need in the focused demo, and rerenders cost per tick.
+      if (state.mode === "us-territorial") {
         try {
-          const fc = await territoryForYear(state.territory.source, year);
-          if (state.year !== year || !state.territory) return;
+          const fc = await territoryForYear(state.modeState.source, year);
+          if (state.year !== year || state.mode !== "us-territorial") return;
           const sig = fc.features.length + "|" +
             fc.features.map(f => f.properties.NAME).sort().join(",");
-          if (sig !== state.territorySig) {
-            state.territorySig = sig;
+          if (sig !== state.modeState.sig) {
+            state.modeState.sig = sig;
             globe.setTerritoryOutlines(fc.features);
           }
-          timeline.setStatus(`${state.territory.label} · ${fc.features.length} polities`);
+          timeline.setStatus(`${state.modeState.label} · ${fc.features.length} polities`);
         } catch (e) { timeline.setStatus(e.message); }
         if (selection) selection.render(year);
         return;
       }
 
-      // Event layer updates every single year (skipped in territory mode).
-      const vis = events.forYear(year);
+      // Events layer (gated). Disabled → render empty so existing points clear.
+      const vis = state.layers.events.enabled ? events.forYear(year) : [];
       globe.setEvents(vis);
 
-      // Re-tessellate polygons only when the snapshot actually changes,
-      // so scrubbing within one period stays cheap.
+      // Borders layer (gated). Disabled → push empty borders, mark cache "off"
+      // so flipping back forces a fresh tessellate at the current year.
       try {
-        const { features, source } = await bordersForYear(year);
-        if (state.year !== year || state.territory) return; // a newer scrub OR territory mode superseded this one
-        const sig = bordersSig(source, features);
-        if (sig !== state.lastSig) {
-          state.lastSig = sig;
-          globe.setBorders({ features });
+        if (state.layers.borders.enabled) {
+          const { features, source } = await bordersForYear(year);
+          if (state.year !== year || state.mode === "us-territorial") return;
+          const sig = bordersSig(source, features);
+          if (sig !== state.lastSig) {
+            state.lastSig = sig;
+            globe.setBorders({ features });
+          }
+          timeline.setStatus(`borders ${source} · ${vis.length} events`);
+        } else {
+          if (state.lastSig !== "off") {
+            state.lastSig = "off";
+            globe.setBorders({ features: [] });
+          }
+          timeline.setStatus(`borders off · ${vis.length} events`);
         }
-        timeline.setStatus(`borders ${source} · ${vis.length} events`);
       } catch (e) {
         timeline.setStatus(e.message);
       }
@@ -230,10 +240,11 @@ async function boot() {
     };
 
     if (isUSA) {
-      // CC0 territory mode — watch the USA grow 1776 → today.
-      state.territory = { source: "ohm-usa", label: "🇺🇸 USA territorial growth" };
+      // us-territorial mode — watch the USA grow 1776 → today.
+      state.mode = "us-territorial";
+      state.modeState = { source: "ohm-usa", label: "🇺🇸 USA territorial growth", sig: null };
       state.lastSig = null;
-      state.territorySig = null;
+      layersPanel?.refresh();
       // setTerritoryOutlines (driven by the first onChange below) clears
       // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
@@ -417,6 +428,28 @@ async function boot() {
       if (hit.kind === "thread") { await playThread(hit.thread, hit.atPolityId); return; }
       await selectDbPolity(hit.polity);
     }
+  });
+
+  // Modes & Layers panel — declared AFTER selectCurated/clearSelection/globe/
+  // timeline so the handlers can reference them directly. Late-bound names
+  // (`layersPanel?.refresh()`) used elsewhere resolve via closure.
+  const layersPanel = createLayersPanel({
+    state,
+    onModeChange: mode => {
+      if (mode === state.mode) return;
+      if (mode === "us-territorial") {
+        const usaEntry = card.resolve("United States");
+        if (usaEntry) selectCurated(usaEntry);
+      } else if (mode === "discovery") {
+        clearSelection();
+      }
+    },
+    onLayerToggle: (id, enabled) => {
+      if (!state.layers[id]) return;
+      state.layers[id].enabled = enabled;
+      if (id === "cities") globe.setCities(enabled ? cities : []);
+      else timeline.setYear(timeline.currentYear());   // borders + events re-render via onChange
+    },
   });
 
   // Eagerly warm the USA territory cache in the background — by the time
