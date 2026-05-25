@@ -77,6 +77,30 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .acc.open .chev { transform: rotate(180deg); }
 .acc-b { display: none; padding: 12px 14px; }
 .acc.open .acc-b { display: block; }
+
+/* Layers panel (Modes & Layers accordion). Phase 1 shell — see Architecture.md. */
+#layersPanel .lp-section { margin-bottom: 14px; }
+#layersPanel .lp-section:last-of-type { margin-bottom: 6px; }
+#layersPanel .lp-heading {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+  margin: 0 0 6px; padding-left: 2px;
+}
+#layersPanel .lp-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px; font-size: 13px; cursor: pointer;
+  border-radius: 6px; line-height: 1.3;
+}
+#layersPanel .lp-row:hover { background: rgba(255,255,255,0.05); }
+#layersPanel .lp-row.is-disabled { opacity: 0.42; cursor: not-allowed; }
+#layersPanel .lp-row.is-disabled:hover { background: transparent; }
+#layersPanel input[type="radio"],
+#layersPanel input[type="checkbox"] { accent-color: var(--accent); margin: 0; }
+#layersPanel .lp-note {
+  font-size: 11px; color: var(--muted); margin: 4px 2px 0;
+  font-style: italic; line-height: 1.4;
+}
+
 .about { font-size: 12px; line-height: 1.6; color: var(--muted); margin: 0; }
 .about p { margin: 0 0 9px; }
 .about a { color: var(--accent); text-decoration: none; }

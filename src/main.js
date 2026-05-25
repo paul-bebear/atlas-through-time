@@ -16,10 +16,30 @@ import { createSearch } from "./search.js";
 import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
+import { createLayersPanel } from "./layersPanel.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
-const state = { year: 1900, wars: [], lastSig: null, territory: null, territorySig: null };
+// State shape per Architecture.md Phase 1. The new fields (mode, layers,
+// modeState, selection) are wired into the layers panel but not yet consumed
+// by renderers — Phase 1 is a structural refactor with no behaviour change.
+// `lastSig`/`territory`/`territorySig` are legacy carve-outs removed in Phase 2.
+const state = {
+  year: 1900,
+  mode: "discovery",
+  layers: {
+    borders: { enabled: true, source: "historical-basemaps" },
+    cities:  { enabled: true },
+    events:  { enabled: true, count: 0 },
+    wars:    { enabled: false },
+    empires: { enabled: false },
+    trade:   { enabled: false },
+  },
+  selection: null,
+  modeState: null,
+  lastSig: null, territory: null, territorySig: null,
+};
+let warsData = [];               // wars dataset (was state.wars before Phase 1)
 
 const bordersSig = (source, features) => source + "|" + features.length;
 const eraEl = document.getElementById("era");
@@ -60,7 +80,7 @@ function featureCentroid(feature) {
   return best ? { lng: best[0], lat: best[1] } : null;
 }
 
-const activeWarsFor = y => state.wars.filter(w => y >= w.start && y <= w.end);
+const activeWarsFor = y => warsData.filter(w => y >= w.start && y <= w.end);
 const belligerent = (war, name) =>
   Object.values(war.sides).flat().some(s => s.toLowerCase() === name.toLowerCase());
 
@@ -79,12 +99,13 @@ async function boot() {
     loadJSON("data/events.json"),
     loadOptionalJSON("data/events.generated.json", [])
   ]);
-  state.wars = wars;
+  warsData = wars;
 
   const events = createEvents([...seedEvents, ...genEvents]);
   const card = createInfoCard({ countries });
   buildLegend();
   initPanel();
+  createLayersPanel({ state });        // Phase 1 — wired, inert (no renderer reads state.layers yet)
 
   // Country selection is unified: clicking a polygon or picking from search
   // produce the SAME scoped state — name on the slider, major-event marks,
