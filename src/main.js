@@ -90,6 +90,7 @@ async function boot() {
   // produce the SAME scoped state — name on the slider, major-event marks,
   // and a period card that re-renders live as you move through time.
   let selection = null;            // { names, render(year) }
+  let dbSelectionSeq = 0;          // bail stale selectDbPolity awaits
   let pickFeature = () => {};
   // Exit CC0 territory mode (USA growth etc). Returns true if it was on, so
   // callers can force a normal-border refresh.
@@ -101,6 +102,7 @@ async function boot() {
   };
   const clearSelection = () => {
     selection = null;
+    globe.setHighlights([]);          // also drops selectedKey via setHighlights
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
 
@@ -123,7 +125,7 @@ async function boot() {
       if (state.territory) {
         try {
           const fc = await territoryForYear(state.territory.source, year);
-          if (state.year !== year) return;
+          if (state.year !== year || !state.territory) return;
           const sig = fc.features.length + "|" +
             fc.features.map(f => f.properties.NAME).sort().join(",");
           if (sig !== state.territorySig) {
@@ -144,7 +146,7 @@ async function boot() {
       // so scrubbing within one period stays cheap.
       try {
         const { features, source } = await bordersForYear(year);
-        if (state.year !== year) return; // a newer scrub superseded this one
+        if (state.year !== year || state.territory) return; // a newer scrub OR territory mode superseded this one
         const sig = bordersSig(source, features);
         if (sig !== state.lastSig) {
           state.lastSig = sig;
@@ -211,9 +213,8 @@ async function boot() {
       state.territory = { source: "ohm-usa", label: "🇺🇸 USA territorial growth" };
       state.lastSig = null;
       state.territorySig = null;
-      // Clear any prior highlights ONCE; per-year scrubbing won't re-touch
-      // the highlight map (which would force an extra polygon re-tessellation).
-      globe.setHighlights([]);
+      // setTerritoryOutlines (driven by the first onChange below) clears
+      // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
       globe.flyTo(39, -98, 1.6);
       timeline.clearOverlays();
@@ -236,9 +237,11 @@ async function boot() {
   }
 
   async function selectDbPolity(p) {
+    const mine = ++dbSelectionSeq;
     const wasT = exitTerritory();
     let resolved = [];
     try { resolved = await resolvedNames(p.id); } catch { /* optional */ }
+    if (mine !== dbSelectionSeq) return;       // a newer pick already started
     const names = [...new Set([
       p.canonical_name,
       ...((p.polity_name || []).map(n => n.name)),
@@ -253,6 +256,7 @@ async function boot() {
     scopeSlider(names, p.start_year, p.end_year ?? p.start_year ?? 2025, p.canonical_name);
     let detail = null;
     try { detail = await polityDetail(p.id); } catch { /* basic */ }
+    if (mine !== dbSelectionSeq) return;       // newer pick won the race
     selection = { names, render: y => card.openDbPolity(p, detail, y) };
     if (wasT) timeline.setYear(timeline.currentYear());
     else selection.render(timeline.currentYear());
@@ -329,7 +333,7 @@ async function boot() {
     // ended; for still-extant states use a modern year (their Wikidata
     // inception is often an ancient conflation, e.g. France = 481).
   const repYear = p => p.end_year != null
-    ? (p.start_year ?? p.end_year)
+    ? (p.start_year ?? (p.end_year - 200))   // unknown start (e.g. Roman Empire): park ~midpoint
     : (p.start_year != null && p.start_year > 1700 ? p.start_year : 2015);
 
   async function playThread(th, atPolityId) {
@@ -347,11 +351,14 @@ async function boot() {
       ? Math.max(0, beats.findIndex(b => b.polity.id === atPolityId)) : 0;
     const detailCache = new Map();
     const nameCache = new Map();
+    let beatSeq = 0;                            // bail stale beat async work
     story.startCustom("🧵 " + th.display_name, beats, async bt => {
+      const mine = ++beatSeq;
       const mp = bt.polity;
       if (!nameCache.has(mp.id)) {
         let resolved = [];
         try { resolved = await resolvedNames(mp.id); } catch { /* optional */ }
+        if (mine !== beatSeq) return;           // user stepped on past us
         nameCache.set(mp.id, [...new Set([
           mp.canonical_name,
           ...((mp.polity_name || []).map(n => n.name)),
@@ -374,6 +381,7 @@ async function boot() {
         try { detailCache.set(mp.id, await polityDetail(mp.id)); }
         catch { detailCache.set(mp.id, null); }
       }
+      if (mine !== beatSeq) return;             // newer beat already past us
       selection = { names, render: y => card.openDbPolity(mp, detailCache.get(mp.id), y) };
       selection.render(timeline.currentYear());
     }, startIndex);

@@ -125,6 +125,7 @@ export function createSearch({ catalog, onPick }) {
         await Promise.all(threads.map(async t => {
           t._members = (await threadMembers(t.id)).filter(m => m.polity);
         }));
+        if (mine !== seq) return;        // a newer query started while we fetched member spines
         const inThread = new Set(threads.flatMap(t => t._members.map(m => m.polity.id)));
         const curatedNames = new Set(curated.map(h => h.label.toLowerCase()));
         const dbHits = pols

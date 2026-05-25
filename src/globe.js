@@ -77,7 +77,10 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
     .onPolygonHover(f => { el.style.cursor = f ? "pointer" : "grab"; })
     .onPolygonClick(f => {
       if (Date.now() - lastPointClick < 350) return; // an event point handled it
-      if (f) { selectedKey = norm(featureName(f)); refresh(); onCountryClick(f); }
+      if (!f) return;
+      onCountryClick(f);                       // selectCurated etc. run their setHighlights (which clears selectedKey)
+      selectedKey = norm(featureName(f));      // then re-mark the clicked one
+      refresh();
     });
 
   const refresh = () => world.polygonsData(world.polygonsData());
@@ -103,6 +106,9 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
             paths.push({ name: f.properties?.NAME || "",
               points: ring.map(([lng, lat]) => [lat, lng]) });
       }
+      // Reset selection visuals so polygons come back clean on territory exit.
+      highlightMap = new Map();
+      selectedKey = null;
       currentFeatures = []; world.polygonsData([]);
       world.pathsData(paths);
     },
@@ -118,6 +124,7 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
     setHighlights(highlights) {
       highlightMap = new Map();
       (highlights || []).forEach(h => h.names.forEach(n => highlightMap.set(norm(n), h.side)));
+      selectedKey = null;             // selection event will re-set this AFTER if a polygon was clicked
       world.polygonsData(world.polygonsData());
     },
     flyTo(lat, lng, altitude = 0.75, ms = 1400) { world.pointOfView({ lat, lng, altitude }, ms); }
