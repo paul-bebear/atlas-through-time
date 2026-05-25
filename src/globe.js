@@ -54,7 +54,7 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
     .pathPointLat(p => p[0])
     .pathPointLng(p => p[1])
     .pathColor(() => STROKE)
-    .pathStroke(0.6)
+    .pathStroke(1.2)                   // ≥1 px gives a usable hover hit-box; 0.6 was effectively unreachable
     .pathLabel(d => d.name ? `<b>${d.name}</b>` : "")
     .pathTransitionDuration(0);
 

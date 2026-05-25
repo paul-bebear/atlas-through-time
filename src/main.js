@@ -441,7 +441,12 @@ async function boot() {
         const usaEntry = card.resolve("United States");
         if (usaEntry) selectCurated(usaEntry);
       } else if (mode === "discovery") {
+        // Full reset — mirrors the story.onExit pattern so the timeline span,
+        // markers, and top-bar context all return to default. (clearSelection
+        // alone just removes the selection; the visual overlays would persist.)
         clearSelection();
+        timeline.clearOverlays();
+        setContext(DEFAULT_CONTEXT, false);
       }
     },
     onLayerToggle: (id, enabled) => {
