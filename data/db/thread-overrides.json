@@ -108,6 +108,34 @@
     {
       "slug": "argentina", "display_name": "Argentina", "region": "South America", "core": "Q414",
       "members": ["Q738144", "Q832554", "Q414"]
+    },
+    {
+      "slug": "netherlands", "display_name": "Netherlands", "region": "Europe", "core": "Q55",
+      "members": ["Q157109", "Q170072", "Q188553", "Q212278", "Q15864", "Q55"]
+    },
+    {
+      "slug": "portugal", "display_name": "Portugal", "region": "Europe", "core": "Q45",
+      "members": ["Q1139807", "Q45670", "Q167360", "Q45"]
+    },
+    {
+      "slug": "sweden", "display_name": "Sweden", "region": "Europe", "core": "Q34",
+      "members": ["Q62623", "Q215443", "Q62589", "Q34"]
+    },
+    {
+      "slug": "austria", "display_name": "Austria", "region": "Europe", "core": "Q40",
+      "members": ["Q283627", "Q3624335", "Q12548", "Q153136", "Q131964", "Q28513", "Q268970", "Q176495", "Q40"]
+    },
+    {
+      "slug": "mongol-empire", "display_name": "Mongol Empire", "region": "Asia", "core": "Q12557",
+      "members": ["Q12557", "Q487829", "Q79965", "Q178084", "Q484195", "Q212056", "Q711"]
+    },
+    {
+      "slug": "ethiopia", "display_name": "Ethiopia", "region": "Africa", "core": "Q115",
+      "members": ["Q139377", "Q207521", "Q940821", "Q115"]
+    },
+    {
+      "slug": "saudi-arabia", "display_name": "Saudi Arabia", "region": "Asia", "core": "Q851",
+      "members": ["Q146871", "Q146862", "Q956357", "Q1756546", "Q851"]
     }
   ]
 }
