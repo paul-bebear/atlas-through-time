@@ -92,6 +92,8 @@ function buildLegend() {
 }
 
 async function boot() {
+  // Snapshot the URL params before anything can replaceState over them.
+  const bootParams = new URLSearchParams(location.search);
   const [wars, formations, countries, cities, seedEvents, genEvents] = await Promise.all([
     loadJSON("data/wars.json"),
     loadJSON("data/formations.json"),
@@ -127,8 +129,26 @@ async function boot() {
     layersPanel?.refresh();
     return true;
   };
+  // Shareable view: the URL always mirrors {year, mode, selection} so any
+  // moment on the globe can be sent as a link. Debounced — scrubbing
+  // shouldn't write history on every tick.
+  let selLabel = null;
+  let urlTimer = null;
+  const syncURL = () => {
+    clearTimeout(urlTimer);
+    urlTimer = setTimeout(() => {
+      const q = new URLSearchParams();
+      q.set("year", String(state.year));
+      if (state.mode !== "discovery") q.set("mode", state.mode);
+      if (selLabel) q.set("sel", selLabel);
+      history.replaceState(null, "", "?" + q.toString());
+    }, 300);
+  };
+
   const clearSelection = () => {
     selection = null;
+    selLabel = null;
+    syncURL();
     globe.setHighlights([]);          // also drops selectedKey via setHighlights
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
@@ -166,6 +186,7 @@ async function boot() {
   const timeline = createTimeline({
     onChange: async (year) => {
       state.year = year;
+      syncURL();
       eraEl.textContent = `${yearLabel(year)} · ${eraFor(year)}`;
 
       // us-territorial mode replaces the world borders with lightweight outline
@@ -265,6 +286,7 @@ async function boot() {
 
   function selectCurated(entry) {
     exitTerritory();
+    selLabel = entry.name;
     const names = [entry.name, ...(entry.aliases || [])];
     const isUSA = names.some(n => {
       const x = n.toLowerCase();
@@ -332,6 +354,8 @@ async function boot() {
     try { detail = await polityDetail(p.id); } catch { /* basic */ }
     if (mine !== dbSelectionSeq) return;       // newer pick won the race
     selection = { names, render: y => card.openDbPolity(p, detail, y) };
+    selLabel = p.canonical_name;
+    syncURL();
     if (wasT) timeline.setYear(timeline.currentYear());
     else selection.render(timeline.currentYear());
   }
@@ -379,6 +403,8 @@ async function boot() {
       names: [name],
       render: y => card.openCountry(f, y, activeWarsFor(y).filter(w => belligerent(w, name)))
     };
+    selLabel = name;
+    syncURL();
     selection.render(timeline.currentYear());
   };
   // --------------------------------------------------------------------
@@ -439,6 +465,7 @@ async function boot() {
     : (p.start_year != null && p.start_year > 1700 ? p.start_year : 2015);
 
   async function playThread(th, atPolityId) {
+    selLabel = null;                 // thread playback isn't URL-restorable yet
     const members = await threadMembers(th.id);
     const beats = members
       .filter(m => m.polity)
@@ -535,6 +562,24 @@ async function boot() {
     },
   });
   layersPanel.updateCounts();
+
+  // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
+  // Selection first (it may move the year), then the shared year wins.
+  const qMode = bootParams.get("mode");
+  const qSel = bootParams.get("sel");
+  const qYear = parseInt(bootParams.get("year"), 10);
+  if (qMode === "us-territorial") {
+    const e = card.resolve("United States");
+    if (e) selectCurated(e);
+  } else if (qSel) {
+    const e = card.resolve(qSel);
+    if (e) selectCurated(e);
+    else searchPolities(qSel, 5).then(hits => {
+      const p = hits.find(h => h.canonical_name.toLowerCase() === qSel.toLowerCase()) || hits[0];
+      if (p) selectDbPolity(p);
+    }).catch(() => { /* bad sel param — ignore */ });
+  }
+  if (Number.isFinite(qYear)) timeline.setYear(qYear);
 
   // Eagerly warm the USA territory cache in the background — by the time
   // the user searches "United States", the bulk data is already loaded.
