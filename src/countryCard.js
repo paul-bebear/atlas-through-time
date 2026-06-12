@@ -163,7 +163,38 @@ export function createInfoCard({ countries }) {
     return ` (${f.from_year != null ? yr(f.from_year) : "?"}–${f.to_year != null ? yr(f.to_year) : "…"})`;
   };
 
-  return { openCountry, openEntry, openEvent, openDbPolity, close, catalog, resolve };
+  // A city at a moment in time. `displayName` is the period-correct name
+  // (Constantinople), `c` the city record (modern name, founding year),
+  // `partOf` the polity whose border polygon contains it right now.
+  async function openCity(displayName, c, year, partOf) {
+    const myseq = ++openSeq;
+    const modern = c.name !== displayName ? `today ${c.name} · ` : "";
+    const sub = `${modern}city · ${yr(year)}`;
+    const rows =
+      `<div class="cc-row"><span class="k">In ${yr(year)}</span><span class="v">${
+        partOf ? "part of " + partOf : "—"}</span></div>`
+      + (c.founded != null ? `<div class="cc-row"><span class="k">Founded</span><span class="v">${yr(c.founded)}</span></div>` : "")
+      + (c.until != null ? `<div class="cc-row"><span class="k">Fell</span><span class="v">${yr(c.until)}</span></div>` : "");
+    shell(displayName, sub, rows + `<div class="cc-loading">Fetching from Wikipedia…</div>`);
+    try {
+      let r = await fetch(WIKI + encodeURIComponent(displayName));
+      if (!r.ok && displayName !== c.name) r = await fetch(WIKI + encodeURIComponent(c.name));
+      if (!r.ok) throw new Error("not found");
+      const d = await r.json();
+      if (openSeq !== myseq) return;
+      const thumb = d.thumbnail?.source ? `<img class="cc-thumb" src="${d.thumbnail.source}" alt="">` : "";
+      const link = d.content_urls?.desktop?.page;
+      shell(displayName, sub,
+        rows + thumb
+        + `<div class="cc-extract">${d.extract || "No summary available."}</div>`
+        + (link ? `<a class="cc-link" href="${link}" target="_blank" rel="noopener">Read on Wikipedia →</a>` : ""));
+    } catch {
+      if (openSeq !== myseq) return;
+      shell(displayName, sub, rows);
+    }
+  }
+
+  return { openCountry, openEntry, openEvent, openDbPolity, openCity, close, catalog, resolve };
 }
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }

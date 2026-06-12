@@ -114,6 +114,7 @@ async function boot() {
   let dbSelectionSeq = 0;          // bail stale selectDbPolity awaits
   let pickFeature = () => {};
   let pickTerritory = () => {};    // us-territorial path click (late-bound like pickFeature)
+  let pickCity = () => {};         // city label click (late-bound)
   let layersPanel = null;          // assigned at the end of boot; onChange fires before that
   // Exit us-territorial mode. Returns true if we were in it, so callers
   // can force a normal-border refresh.
@@ -135,9 +136,31 @@ async function boot() {
   const globe = createGlobe(document.getElementById("globe"), {
     onCountryClick: f => pickFeature(f),
     onEventClick: ev => { clearSelection(); card.openEvent(ev); },
-    onTerritoryClick: name => pickTerritory(name)
+    onTerritoryClick: name => pickTerritory(name),
+    onCityClick: d => pickCity(d)
   });
-  globe.setCities(state.layers.cities.enabled ? cities : []);
+
+  // Cities through time: a city dot is permanent once founded (gone if the
+  // city dies — Babylon, Carthage), and its LABEL is period-correct
+  // (Byzantium → Constantinople → Istanbul). Re-pushed to the globe only
+  // when the visible name-set actually changes.
+  let citySig = null;
+  const cityNameAt = (c, y) => {
+    const p = (c.names || []).find(n => y >= (n.from ?? -1e9) && y <= (n.to ?? 1e9));
+    return p ? p.name : c.name;
+  };
+  const refreshCities = y => {
+    if (!state.layers.cities.enabled) return;
+    const vis = cities
+      .filter(c => (c.founded == null || y >= c.founded) && (c.until == null || y <= c.until))
+      .map(c => ({ name: cityNameAt(c, y), lat: c.lat, lng: c.lng, city: c }));
+    const sig = vis.map(v => v.name).join("|");
+    if (sig === citySig) return;
+    citySig = sig;
+    globe.setCities(vis);
+    state.layers.cities.count = vis.length;
+    layersPanel?.updateCounts();
+  };
 
 
   const timeline = createTimeline({
@@ -155,6 +178,7 @@ async function boot() {
           state.modeState.eventsCleared = true;
           globe.setEvents([]);
         }
+        refreshCities(year);
         try {
           const fc = await territoryForYear(state.modeState.source, year);
           if (state.year !== year || state.mode !== "us-territorial") return;
@@ -172,6 +196,8 @@ async function boot() {
         if (selection) selection.render(year);
         return;
       }
+
+      refreshCities(year);
 
       // Events layer (gated). Disabled → render empty so existing points clear.
       const vis = state.layers.events.enabled ? events.forYear(year) : [];
@@ -328,6 +354,14 @@ async function boot() {
       selection = { names: [name], render: y => card.openDbPolity(p, detail, y) };
       selection.render(timeline.currentYear());
     } catch { /* DB unreachable — context label is enough feedback */ }
+  };
+
+  // City label click → "in <year>, part of <polity>". The containment test
+  // runs against the on-screen border polygons — a live display lookup over
+  // the GPL layer, never persisted or served (licensing guardrail).
+  pickCity = d => {
+    const host = globe.allFeatures().find(f => featureContains(f, d.lng, d.lat));
+    card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
   };
 
   pickFeature = f => {
@@ -488,11 +522,18 @@ async function boot() {
     onLayerToggle: (id, enabled) => {
       if (!state.layers[id]) return;
       state.layers[id].enabled = enabled;
-      if (id === "cities") globe.setCities(enabled ? cities : []);
+      if (id === "cities") {
+        citySig = null;
+        if (enabled) refreshCities(state.year);
+        else {
+          globe.setCities([]);
+          state.layers.cities.count = 0;
+          layersPanel.updateCounts();
+        }
+      }
       else timeline.setYear(timeline.currentYear());   // borders + events re-render via onChange
     },
   });
-  state.layers.cities.count = cities.length;
   layersPanel.updateCounts();
 
   // Eagerly warm the USA territory cache in the background — by the time

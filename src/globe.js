@@ -13,7 +13,7 @@ const SEL_FILL = "rgba(143, 233, 255, 0.30)"; // selected country tint
 // Free Earth textures shipped with three-globe (MIT). No API key.
 const TEX = "https://unpkg.com/three-globe/example/img/";
 
-export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick }) {
+export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick }) {
   let lastPointClick = 0;
 
   const world = Globe()(el)
@@ -28,6 +28,8 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .labelLat(d => d.lat).labelLng(d => d.lng).labelText(d => d.name)
     .labelSize(0.4).labelDotRadius(0.14)
     .labelColor(() => "rgba(255, 220, 150, 0.65)").labelResolution(2)
+    .onLabelHover(l => { el.style.cursor = l ? "pointer" : "grab"; })
+    .onLabelClick(d => { lastPointClick = Date.now(); onCityClick?.(d); })
     .pointLat(d => d.lat).pointLng(d => d.lng)
     .pointColor(d => d._color)
     .pointAltitude(0.006)
@@ -122,6 +124,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       return currentFeatures.filter(f => set.has(norm(featureName(f))));
     },
     setCities: c => world.labelsData(c || []),
+    allFeatures: () => currentFeatures,
     setEvents: e => world.pointsData(e || []),
     setHighlights(highlights) {
       highlightMap = new Map();
