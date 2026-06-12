@@ -19,7 +19,7 @@ export function createTimeline({ onChange, onSurprise }) {
   slider.max = STEPS;
   slider.step = 1;
 
-  [-3000, -1000, -300, 1, 800, 1500, 1850, 2000].forEach(y => {
+  [-3000, -1000, 1, 800, 1500, 1850, 2000].forEach(y => {
     const s = document.createElement("span");
     s.textContent = yearLabel(y);
     s.style.left = yearToPos(y) * 100 + "%";

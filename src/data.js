@@ -45,7 +45,7 @@ export const SLIDER_MAX = 2025;
 //
 // F is an offset (> SLIDER_MAX) solved so pos(ANCHOR_YEAR) = ANCHOR_POS.
 const ANCHOR_YEAR = 1;
-const ANCHOR_POS = 0.30;
+const ANCHOR_POS = 0.18;   // year 1 at 18% → CE owns ~82% of the track
 
 const timeScale = (() => {
   const posFor = (F, year) => {

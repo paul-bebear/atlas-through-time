@@ -27,6 +27,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .polygonSideColor(() => "rgba(0,0,0,0)")
     .labelLat(d => d.lat).labelLng(d => d.lng).labelText(d => d.name)
     .labelSize(0.4).labelDotRadius(0.14)
+    .labelAltitude(0.033)              // above the polygon caps (0.006–0.03) or they occlude the labels
     .labelColor(() => "rgba(255, 220, 150, 0.65)").labelResolution(2)
     .onLabelHover(l => { el.style.cursor = l ? "pointer" : "grab"; })
     .onLabelClick(d => { lastPointClick = Date.now(); onCityClick?.(d); })
