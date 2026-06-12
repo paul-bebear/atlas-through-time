@@ -64,7 +64,14 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--muted);
   margin: 0 0 10px; padding-left: 2px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; user-select: none;
 }
+#modesPanel .modes-chev { transition: transform .2s ease; }
+#modesPanel.collapsed .modes-chev { transform: rotate(-90deg); }
+#modesPanel.collapsed #layersPanel { display: none; }
+#modesPanel.collapsed { padding-bottom: 10px; }
+#modesPanel .lp-count { margin-left: auto; color: var(--muted); font-size: 11px; }
 @media (max-width: 720px) {
   #modesPanel { width: calc(100vw - 36px); top: 110px; max-height: 50vh; }
 }

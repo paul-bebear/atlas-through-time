@@ -13,7 +13,7 @@ const SEL_FILL = "rgba(143, 233, 255, 0.30)"; // selected country tint
 // Free Earth textures shipped with three-globe (MIT). No API key.
 const TEX = "https://unpkg.com/three-globe/example/img/";
 
-export function createGlobe(el, { onCountryClick, onEventClick }) {
+export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick }) {
   let lastPointClick = 0;
 
   const world = Globe()(el)
@@ -56,6 +56,8 @@ export function createGlobe(el, { onCountryClick, onEventClick }) {
     .pathColor(() => STROKE)
     .pathStroke(1.2)                   // ≥1 px gives a usable hover hit-box; 0.6 was effectively unreachable
     .pathLabel(d => d.name ? `<b>${d.name}</b>` : "")
+    .onPathHover(p => { el.style.cursor = p ? "pointer" : "grab"; })
+    .onPathClick(d => { if (d?.name) onTerritoryClick?.(d.name); })
     .pathTransitionDuration(0);
 
   world

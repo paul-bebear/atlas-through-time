@@ -22,7 +22,23 @@ const LAYERS = [
 
 export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
   const root = document.getElementById("layersPanel");
-  if (!root) return { refresh: () => {} };
+  if (!root) return { refresh: () => {}, updateCounts: () => {} };
+
+  // Collapse: title click folds the whole panel; phones start folded so the
+  // panel doesn't eat half the viewport.
+  const aside = root.closest("#modesPanel");
+  const title = aside?.querySelector(".modes-title");
+  if (title && !title.dataset.wired) {
+    title.dataset.wired = "1";
+    title.innerHTML += `<span class="modes-chev">▾</span>`;
+    title.onclick = () => aside.classList.toggle("collapsed");
+    if (window.innerWidth < 720) aside.classList.add("collapsed");
+  }
+
+  const countOf = id => {
+    const c = state.layers[id]?.count;
+    return c != null ? c : "";
+  };
 
   function render() {
     const modes = MODES.map(m => `
@@ -38,6 +54,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
           ${state.layers[l.id]?.enabled ? "checked" : ""}
           ${l.disabled ? "disabled" : ""}>
         <span>${l.label}</span>
+        <span class="lp-count" data-count="${l.id}">${countOf(l.id)}</span>
       </label>`).join("");
     root.innerHTML = `
       <div class="lp-section">
@@ -58,6 +75,14 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
     });
   }
 
+  // Update only the count badges — called per scrub tick, so no full
+  // re-render (that would rebuild inputs mid-interaction).
+  function updateCounts() {
+    root.querySelectorAll(".lp-count").forEach(el => {
+      el.textContent = countOf(el.dataset.count);
+    });
+  }
+
   render();
-  return { refresh: render };
+  return { refresh: render, updateCounts };
 }

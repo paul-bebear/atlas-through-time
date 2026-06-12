@@ -13,7 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll } from "./db.js";
+import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll, searchPolities } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
@@ -113,6 +113,8 @@ async function boot() {
   let selection = null;            // { names, render(year) }
   let dbSelectionSeq = 0;          // bail stale selectDbPolity awaits
   let pickFeature = () => {};
+  let pickTerritory = () => {};    // us-territorial path click (late-bound like pickFeature)
+  let layersPanel = null;          // assigned at the end of boot; onChange fires before that
   // Exit us-territorial mode. Returns true if we were in it, so callers
   // can force a normal-border refresh.
   const exitTerritory = () => {
@@ -132,7 +134,8 @@ async function boot() {
 
   const globe = createGlobe(document.getElementById("globe"), {
     onCountryClick: f => pickFeature(f),
-    onEventClick: ev => { clearSelection(); card.openEvent(ev); }
+    onEventClick: ev => { clearSelection(); card.openEvent(ev); },
+    onTerritoryClick: name => pickTerritory(name)
   });
   globe.setCities(state.layers.cities.enabled ? cities : []);
 
@@ -146,11 +149,20 @@ async function boot() {
       // paths for the year. Events layer is intentionally skipped — it's free
       // latency we don't need in the focused demo, and rerenders cost per tick.
       if (state.mode === "us-territorial") {
+        // One-time on entry: clear leftover event points from the last
+        // normal render (they'd otherwise float, frozen, over the USA).
+        if (!state.modeState.eventsCleared) {
+          state.modeState.eventsCleared = true;
+          globe.setEvents([]);
+        }
         try {
           const fc = await territoryForYear(state.modeState.source, year);
           if (state.year !== year || state.mode !== "us-territorial") return;
+          // Sig includes valid_from: the same state name recurs across time
+          // slices with different geometry (Maine pre/post-1842), so names
+          // alone would miss real border changes.
           const sig = fc.features.length + "|" +
-            fc.features.map(f => f.properties.NAME).sort().join(",");
+            fc.features.map(f => f.properties.NAME + ":" + (f.valid_from ?? "")).sort().join(",");
           if (sig !== state.modeState.sig) {
             state.modeState.sig = sig;
             globe.setTerritoryOutlines(fc.features);
@@ -164,6 +176,8 @@ async function boot() {
       // Events layer (gated). Disabled → render empty so existing points clear.
       const vis = state.layers.events.enabled ? events.forYear(year) : [];
       globe.setEvents(vis);
+      state.layers.events.count = vis.length;
+      layersPanel?.updateCounts();
 
       // Borders layer (gated). Disabled → push empty borders, mark cache "off"
       // so flipping back forces a fresh tessellate at the current year.
@@ -176,6 +190,8 @@ async function boot() {
             state.lastSig = sig;
             globe.setBorders({ features });
           }
+          state.layers.borders.count = features.length;
+          layersPanel?.updateCounts();
           timeline.setStatus(`borders ${source} · ${vis.length} events`);
         } else {
           if (state.lastSig !== "off") {
@@ -242,7 +258,7 @@ async function boot() {
     if (isUSA) {
       // us-territorial mode — watch the USA grow 1776 → today.
       state.mode = "us-territorial";
-      state.modeState = { source: "ohm-usa", label: "🇺🇸 USA territorial growth", sig: null };
+      state.modeState = { source: "ohm-usa", label: "🇺🇸 USA territorial growth", sig: null, eventsCleared: false };
       state.lastSig = null;
       layersPanel?.refresh();
       // setTerritoryOutlines (driven by the first onChange below) clears
@@ -293,6 +309,26 @@ async function boot() {
     if (wasT) timeline.setYear(timeline.currentYear());
     else selection.render(timeline.currentYear());
   }
+
+  // Click on a state/territory outline in us-territorial mode → open its
+  // polity card WITHOUT leaving the mode (states exist as DB polities from
+  // the OHM pilot load).
+  let territoryClickSeq = 0;
+  pickTerritory = async name => {
+    if (!name) return;
+    const mine = ++territoryClickSeq;
+    setContext("🇺🇸 " + name);
+    try {
+      const hits = await searchPolities(name, 5);
+      const p = hits.find(h => h.canonical_name.toLowerCase() === name.toLowerCase()) || hits[0];
+      if (!p || mine !== territoryClickSeq) return;
+      let detail = null;
+      try { detail = await polityDetail(p.id); } catch { /* basic */ }
+      if (mine !== territoryClickSeq) return;
+      selection = { names: [name], render: y => card.openDbPolity(p, detail, y) };
+      selection.render(timeline.currentYear());
+    } catch { /* DB unreachable — context label is enough feedback */ }
+  };
 
   pickFeature = f => {
     const wasT = exitTerritory();
@@ -430,10 +466,10 @@ async function boot() {
     }
   });
 
-  // Modes & Layers panel — declared AFTER selectCurated/clearSelection/globe/
-  // timeline so the handlers can reference them directly. Late-bound names
-  // (`layersPanel?.refresh()`) used elsewhere resolve via closure.
-  const layersPanel = createLayersPanel({
+  // Modes & Layers panel — assigned AFTER selectCurated/clearSelection/globe/
+  // timeline so the handlers can reference them directly. Declared up top as
+  // `let` because onChange fires (and null-chains) before this line runs.
+  layersPanel = createLayersPanel({
     state,
     onModeChange: mode => {
       if (mode === state.mode) return;
@@ -456,6 +492,8 @@ async function boot() {
       else timeline.setYear(timeline.currentYear());   // borders + events re-render via onChange
     },
   });
+  state.layers.cities.count = cities.length;
+  layersPanel.updateCounts();
 
   // Eagerly warm the USA territory cache in the background — by the time
   // the user searches "United States", the bulk data is already loaded.
