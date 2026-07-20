@@ -13,7 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll, searchPolities } from "./db.js";
+import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll, searchPolities, allThreadMembers, allNameResolutions } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
@@ -151,7 +151,7 @@ async function boot() {
     selection = null;
     selLabel = null;
     syncURL();
-    globe.setHighlights([]);          // also drops selectedKey via setHighlights
+    setSelection([]);                 // clears selection tint; layer tints re-apply
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
 
@@ -184,6 +184,69 @@ async function boot() {
     layersPanel?.updateCounts();
   };
 
+  // --- Composite globe highlights ---------------------------------------
+  // Several sources want to tint countries: the current selection, the Wars
+  // layer (belligerents active this year), and the Empires layer (thread
+  // polities active this year). They're merged here so they don't clobber
+  // each other — selection is applied last so it always wins overlaps.
+  let selHighlights = [];            // what the current selection wants tinted
+
+  const warLayerHighlights = year => {
+    if (!state.layers.wars.enabled) return [];
+    const out = [];
+    for (const w of activeWarsFor(year)) {
+      const sides = Object.values(w.sides);
+      if (sides[0]?.length) out.push({ names: sides[0], side: "A" });
+      if (sides[1]?.length) out.push({ names: sides[1], side: "B" });
+    }
+    return out;
+  };
+
+  // Empires layer data: every thread polity + its from/to span + every name
+  // string that might appear in the border layer (canonical, thread name,
+  // aliases, historical-basemaps resolutions). Loaded once, lazily.
+  let empireData = null;
+  async function loadEmpireData() {
+    if (empireData) return;
+    empireData = [];                 // guard re-entrancy while awaiting
+    try {
+      const [members, names] = await Promise.all([allThreadMembers(), allNameResolutions()]);
+      const resByPolity = new Map();
+      for (const n of names) {
+        if (!resByPolity.has(n.polity_id)) resByPolity.set(n.polity_id, []);
+        resByPolity.get(n.polity_id).push(n.source_string);
+      }
+      empireData = members.filter(m => m.polity).map(m => ({
+        names: [...new Set([
+          m.polity.canonical_name,
+          m.thread?.display_name,
+          ...((m.polity.polity_name || []).map(x => x.name)),
+          ...(resByPolity.get(m.polity.id) || [])
+        ].filter(Boolean))],
+        from: m.from_year ?? m.polity.start_year,
+        to: m.to_year ?? m.polity.end_year
+      }));
+    } catch { empireData = []; }
+  }
+  const empireLayerHighlights = year => {
+    if (!state.layers.empires.enabled || !empireData) return [];
+    const out = [];
+    for (const e of empireData)
+      if ((e.from == null || e.from <= year) && (e.to == null || e.to >= year))
+        out.push({ names: e.names, side: "E" });
+    return out;
+  };
+
+  const applyHighlights = () => {
+    if (state.mode !== "discovery") return;   // territory uses paths; quiz owns its own map
+    const emp = empireLayerHighlights(state.year);
+    const war = warLayerHighlights(state.year);
+    globe.setHighlights([...emp, ...war, ...selHighlights]);
+    state.layers.wars.count = state.layers.wars.enabled ? activeWarsFor(state.year).length : null;
+    state.layers.empires.count = state.layers.empires.enabled ? emp.length : null;
+    layersPanel?.updateCounts();
+  };
+  const setSelection = groups => { selHighlights = groups || []; applyHighlights(); };
 
   const timeline = createTimeline({
     onChange: async (year) => {
@@ -252,6 +315,9 @@ async function boot() {
       } catch (e) {
         timeline.setStatus(e.message);
       }
+      // Wars/Empires layers change with the year — recompute only when one is
+      // on (selection tint is static across years, so no per-tick cost when off).
+      if (state.layers.wars.enabled || state.layers.empires.enabled) applyHighlights();
       // Selected country: re-render its card for the year being viewed.
       if (selection) selection.render(year);
     },
@@ -298,7 +364,7 @@ async function boot() {
     const feats = globe.featuresForNames(names);
     const ll = entry.lat != null ? { lat: entry.lat, lng: entry.lng }
       : feats[0] ? featureCentroid(feats[0]) : null;
-    if (!isUSA) globe.setHighlights([{ names, side: "A" }]);
+    if (!isUSA) setSelection([{ names, side: "A" }]);
     selection = {
       names,
       render: y => card.openEntry(entry, y,
@@ -350,7 +416,7 @@ async function boot() {
     const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng }
       : feats[0] ? featureCentroid(feats[0]) : null;
     if (ll) globe.flyTo(ll.lat, ll.lng, 1.0);
-    globe.setHighlights([{ names, side: "A" }]);
+    setSelection([{ names, side: "A" }]);
     scopeSlider(names, p.start_year, p.end_year ?? p.start_year ?? 2025, p.canonical_name);
     let detail = null;
     try { detail = await polityDetail(p.id); } catch { /* basic */ }
@@ -401,7 +467,7 @@ async function boot() {
     setContext(name);
     const c = featureCentroid(f);
     if (c) globe.flyTo(c.lat, c.lng, 0.9);
-    globe.setHighlights([{ names: [name], side: "A" }]);
+    setSelection([{ names: [name], side: "A" }]);
     scopeSlider([name], null, null, name);
     selection = {
       names: [name],
@@ -417,7 +483,7 @@ async function boot() {
     wars,
     onSelectWar: w => {
       clearSelection();
-      globe.setHighlights(warHighlights(w));
+      setSelection(warHighlights(w));
       setContext("⚔ " + w.name);
       if (w.lat != null) globe.flyTo(w.lat, w.lng, 1.3);
       timeline.setSpan(w.start, w.end, w.name);
@@ -430,7 +496,7 @@ async function boot() {
     formations,
     onSelect: f => {
       clearSelection();
-      globe.setHighlights(formationHighlights(f));
+      setSelection(formationHighlights(f));
       setContext("⬡ " + f.name);
       if (f.lat != null) globe.flyTo(f.lat, f.lng, 1.3);
       timeline.setSpan(f.start, f.end, f.name);
@@ -446,7 +512,7 @@ async function boot() {
     onBeat: (bt, country, beats) => {
       const names = [country.name, ...(country.aliases || [])];
       timeline.setYear(bt.year);
-      globe.setHighlights([{ names, side: "A" }]);
+      setSelection([{ names, side: "A" }]);
       setContext("📖 " + country.name);
       timeline.setSpan(beats[0].year, beats[beats.length - 1].year, country.name);
       timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
@@ -455,7 +521,6 @@ async function boot() {
     },
     onExit: () => {
       clearSelection();
-      globe.setHighlights([]);
       timeline.clearOverlays();
       setContext(DEFAULT_CONTEXT, false);
     }
@@ -505,7 +570,7 @@ async function boot() {
       const ll = mp.lat != null ? { lat: mp.lat, lng: mp.lng }
         : feats[0] ? featureCentroid(feats[0]) : null;
       if (ll) globe.flyTo(ll.lat, ll.lng, 1.2);
-      globe.setHighlights([{ names, side: "A" }]);
+      setSelection([{ names, side: "A" }]);
       timeline.clearOverlays();
       timeline.setSpan(beats[0].year, beats[beats.length - 1].year, th.display_name);
       timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
@@ -600,6 +665,11 @@ async function boot() {
           state.layers.cities.count = 0;
           layersPanel.updateCounts();
         }
+      }
+      else if (id === "wars") applyHighlights();      // belligerents, no border reload
+      else if (id === "empires") {
+        if (enabled) loadEmpireData().then(applyHighlights);
+        else applyHighlights();
       }
       else timeline.setYear(timeline.currentYear());   // borders + events re-render via onChange
     },

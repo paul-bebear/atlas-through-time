@@ -76,6 +76,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       if (s === "B") return HILITE_B;
       if (s === "G") return "rgba(93, 255, 138, 0.60)";  // quiz: correct
       if (s === "R") return "rgba(255, 93, 93, 0.60)";   // quiz: wrong / reveal
+      if (s === "E") return "rgba(139, 92, 246, 0.45)";  // empires layer (purple)
       return "rgba(0,0,0,0)"; // fully transparent — satellite imagery stays crisp
     })
     .polygonStrokeColor(f => (norm(featureName(f)) === selectedKey ? STROKE_SEL : STROKE))

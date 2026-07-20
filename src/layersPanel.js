@@ -15,8 +15,8 @@ const LAYERS = [
   { id: "borders", label: "Borders" },
   { id: "cities",  label: "Cities" },
   { id: "events",  label: "Events" },
-  { id: "wars",    label: "Wars",         disabled: true },
-  { id: "empires", label: "Empires",      disabled: true },
+  { id: "wars",    label: "Wars" },
+  { id: "empires", label: "Empires" },
   { id: "trade",   label: "Trade routes", disabled: true },
 ];
 
