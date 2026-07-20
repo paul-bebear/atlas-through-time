@@ -46,6 +46,10 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   controls.autoRotateSpeed = 0.3;
   el.addEventListener("pointerdown", () => { controls.autoRotate = false; }, { once: true });
 
+  // Stop burning GPU when the tab is in the background.
+  document.addEventListener("visibilitychange", () =>
+    document.hidden ? world.pauseAnimation() : world.resumeAnimation());
+
   let highlightMap = new Map();
   let selectedKey = null;
 

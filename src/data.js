@@ -2,7 +2,10 @@
 // Border data comes from the open-source "historical-basemaps" project,
 // served via the jsDelivr CDN and cached in-memory per period.
 
+import { simplifyFC } from "./simplify.js";
+
 const CDN = "https://cdn.jsdelivr.net/gh/aourednik/historical-basemaps@master/geojson";
+const SIMPLIFY_TOL = 0.05;   // degrees; ~5 km — invisible at globe zoom, halves the vertex count
 
 // Periods (years) available in the dataset. Negative = BCE.
 export const PERIODS = [
@@ -111,14 +114,64 @@ export async function loadOptionalJSON(path, fallback = []) {
 }
 
 const geoCache = new Map();
+const geoInflight = new Map();
+
+// Fetch + parse + simplify run in a worker so the globe never stutters
+// during a snapshot switch. Falls back to the main thread if workers are
+// unavailable (still simplified — tessellation is the dominant cost).
+let borderWorker;                 // undefined = not tried, null = unavailable
+let workerSeq = 0;
+const workerJobs = new Map();
+
+function getWorker() {
+  if (borderWorker !== undefined) return borderWorker;
+  try {
+    borderWorker = new Worker(new URL("./borders-worker.js", import.meta.url), { type: "module" });
+    borderWorker.onmessage = e => {
+      const job = workerJobs.get(e.data.id);
+      if (!job) return;
+      workerJobs.delete(e.data.id);
+      e.data.error ? job.reject(new Error(e.data.error)) : job.resolve(e.data.gj);
+    };
+    borderWorker.onerror = () => {
+      for (const j of workerJobs.values()) j.reject(new Error("border worker failed"));
+      workerJobs.clear();
+      borderWorker = null;
+    };
+  } catch { borderWorker = null; }
+  return borderWorker;
+}
+
+async function fetchBorders(url) {
+  const w = getWorker();
+  if (w) {
+    try {
+      return await new Promise((resolve, reject) => {
+        const id = ++workerSeq;
+        workerJobs.set(id, { resolve, reject });
+        w.postMessage({ id, url, tol: SIMPLIFY_TOL });
+      });
+    } catch { /* worker died mid-job — retry below on the main thread */ }
+  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const gj = await res.json();
+  simplifyFC(gj, SIMPLIFY_TOL);
+  return gj;
+}
 
 export async function loadBorders(year) {
   if (geoCache.has(year)) return geoCache.get(year);
+  if (geoInflight.has(year)) return geoInflight.get(year);
   const tag = year < 0 ? "bc" + Math.abs(year) : String(year);
-  const res = await fetch(`${CDN}/world_${tag}.geojson`);
-  if (!res.ok) throw new Error(`No border data for ${yearLabel(year)} (HTTP ${res.status})`);
-  const gj = await res.json();
+  const p = fetchBorders(`${CDN}/world_${tag}.geojson`).catch(err => {
+    geoInflight.delete(year);
+    throw new Error(`No border data for ${yearLabel(year)} (${err.message})`);
+  });
+  geoInflight.set(year, p);
+  const gj = await p;
   geoCache.set(year, gj);
+  geoInflight.delete(year);
   return gj;
 }
 

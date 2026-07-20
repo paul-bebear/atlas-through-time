@@ -80,10 +80,15 @@ export function createTimeline({ onChange, onSurprise }) {
     if (timer) { clearInterval(timer); timer = null; playBtn.textContent = "▶"; }
   }
 
+  // Dragging fires input continuously. Keep the year readout live on every
+  // tick (cheap), but coalesce the heavy onChange (border fetch/tessellate)
+  // so a fast scrub renders the destination, not every snapshot en route.
+  let scrubTimer = null;
   slider.addEventListener("input", () => {
     year = posToYear(+slider.value / STEPS);
     yearLabelEl.textContent = yearLabel(year);
-    onChange(year);
+    clearTimeout(scrubTimer);
+    scrubTimer = setTimeout(() => onChange(year), 55);
   });
 
   document.getElementById("prev").onclick = () => { stop(); year -= step; apply(); };
