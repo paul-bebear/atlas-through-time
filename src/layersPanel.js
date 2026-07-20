@@ -7,7 +7,7 @@
 const MODES = [
   { id: "discovery",      label: "Discovery" },
   { id: "us-territorial", label: "US Territorial Growth" },
-  { id: "map-quiz",       label: "Map Quiz",      disabled: true },
+  { id: "map-quiz",       label: "Map Quiz" },
   { id: "empire-story",   label: "Empire Story",  disabled: true },
 ];
 

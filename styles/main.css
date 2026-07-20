@@ -324,3 +324,42 @@ input[type=range]::-webkit-slider-thumb {
 /* Flag in country card */
 #infoCard .cc-flag { height: 16px; width: auto; border-radius: 2px;
   vertical-align: middle; margin-left: 8px; border: 1px solid var(--border); }
+
+/* Map Quiz mode */
+body.quiz-active #timeline,
+body.quiz-active #storyBar,
+body.quiz-active #search { display: none; }
+
+#quizPanel {
+  position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
+  z-index: 15; width: 460px; max-width: calc(100vw - 36px);
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px; backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0,0,0,.5);
+}
+.qz-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.qz-round { font-weight: 700; font-size: 14px; }
+.qz-score { color: var(--muted); font-size: 13px; }
+.qz-exit { margin-left: auto; background: rgba(255,255,255,0.08);
+  color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+  width: 28px; height: 28px; font-size: 14px; cursor: pointer; }
+.qz-q { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+.qz-form { display: flex; gap: 8px; }
+.qz-input { flex: 1; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+  font-size: 14px; outline: none; }
+.qz-input:focus { border-color: var(--accent); }
+.qz-submit, .qz-next, .qz-again, .qz-done {
+  background: var(--accent); color: #06101c; border: 0; border-radius: 9px;
+  padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.qz-again { background: var(--accent); }
+.qz-done { background: rgba(255,255,255,0.10); color: var(--text); }
+.qz-next { background: rgba(255,255,255,0.12); color: var(--text); margin-left: 10px; }
+.qz-feedback { margin-top: 12px; font-size: 14px; min-height: 20px;
+  display: flex; align-items: center; gap: 8px; }
+.qz-feedback.ok { color: #5dff8a; }
+.qz-feedback.bad { color: #ff8a5d; }
+.qz-final { text-align: center; padding: 8px 0 16px; }
+.qz-final-score { font-size: 40px; font-weight: 800; }
+.qz-grade { color: var(--muted); font-size: 14px; margin-top: 4px; }
+@media (max-width: 520px) { #quizPanel { bottom: 20px; } }

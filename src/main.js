@@ -17,6 +17,7 @@ import { polityDetail, threadMembers, resolvedNames, territoryForYear, territory
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
+import { createQuiz } from "./quiz.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
@@ -118,6 +119,7 @@ async function boot() {
   let pickTerritory = () => {};    // us-territorial path click (late-bound like pickFeature)
   let pickCity = () => {};         // city label click (late-bound)
   let layersPanel = null;          // assigned at the end of boot; onChange fires before that
+  let quiz = null;                 // assigned at the end of boot
   // Exit us-territorial mode. Returns true if we were in it, so callers
   // can force a normal-border refresh.
   const exitTerritory = () => {
@@ -384,11 +386,13 @@ async function boot() {
   // runs against the on-screen border polygons — a live display lookup over
   // the GPL layer, never persisted or served (licensing guardrail).
   pickCity = d => {
+    if (state.mode === "map-quiz") return;
     const host = globe.allFeatures().find(f => featureContains(f, d.lng, d.lat));
     card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
   };
 
   pickFeature = f => {
+    if (state.mode === "map-quiz") return;
     const wasT = exitTerritory();
     const name = featureName(f);
     const entry = card.resolve(name);
@@ -527,6 +531,43 @@ async function boot() {
     }
   });
 
+  // --- Map Quiz mode ----------------------------------------------------
+  // exitQuiz is the single teardown path (quiz ✕/Done call it via onExit;
+  // switching modes calls quiz.exit() which routes here too). It restores the
+  // layer visibility the quiz temporarily overrode.
+  const exitQuiz = () => {
+    if (state.mode !== "map-quiz") return;
+    const prev = state.modeState?.prevLayers || { cities: true, events: true };
+    state.layers.cities.enabled = prev.cities;
+    state.layers.events.enabled = prev.events;
+    state.mode = "discovery";
+    state.modeState = null;
+    document.body.classList.remove("quiz-active");
+    globe.setHighlights([]);
+    citySig = null;
+    setContext(DEFAULT_CONTEXT, false);
+    layersPanel?.refresh();
+    timeline.setYear(timeline.currentYear());   // re-render borders/cities/events
+  };
+  quiz = createQuiz({ globe, flyTo: (lat, lng, alt) => globe.flyTo(lat, lng, alt), onExit: exitQuiz });
+  const enterQuiz = () => {
+    if (state.mode === "map-quiz") return;
+    story.exit?.();
+    clearSelection();                    // also exits territory mode
+    state.modeState = { prevLayers: {
+      cities: state.layers.cities.enabled, events: state.layers.events.enabled } };
+    state.layers.cities.enabled = false;
+    state.layers.events.enabled = false;
+    globe.setCities([]); globe.setEvents([]);
+    state.mode = "map-quiz";
+    document.body.classList.add("quiz-active");
+    setContext("🎯 Map Quiz");
+    timeline.clearOverlays();
+    timeline.setYear(2025);              // present-day borders as the quiz basis
+    layersPanel?.refresh();
+    quiz.start();
+  };
+
   // Modes & Layers panel — assigned AFTER selectCurated/clearSelection/globe/
   // timeline so the handlers can reference them directly. Declared up top as
   // `let` because onChange fires (and null-chains) before this line runs.
@@ -534,6 +575,8 @@ async function boot() {
     state,
     onModeChange: mode => {
       if (mode === state.mode) return;
+      if (state.mode === "map-quiz") quiz.exit();   // tear down quiz before any switch
+      if (mode === "map-quiz") { enterQuiz(); return; }
       if (mode === "us-territorial") {
         const usaEntry = card.resolve("United States");
         if (usaEntry) selectCurated(usaEntry);
