@@ -13,7 +13,7 @@ import { createWarsPanel, warHighlights } from "./wars.js";
 import { createFormationsPanel, formationHighlights } from "./formations.js";
 import { createInfoCard } from "./countryCard.js";
 import { createSearch } from "./search.js";
-import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll, searchPolities, allThreadMembers, allNameResolutions } from "./db.js";
+import { polityDetail, threadMembers, resolvedNames, territoryForYear, territoryAll, searchPolities, allThreads } from "./db.js";
 import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
@@ -34,7 +34,6 @@ const state = {
     cities:  { enabled: true },
     events:  { enabled: true, count: 0 },
     wars:    { enabled: false },
-    empires: { enabled: false },
     trade:   { enabled: false },
   },
   selection: null,
@@ -185,10 +184,10 @@ async function boot() {
   };
 
   // --- Composite globe highlights ---------------------------------------
-  // Several sources want to tint countries: the current selection, the Wars
-  // layer (belligerents active this year), and the Empires layer (thread
-  // polities active this year). They're merged here so they don't clobber
-  // each other — selection is applied last so it always wins overlaps.
+  // The current selection and the Wars layer both want to tint countries.
+  // They're merged here so they don't clobber each other — selection is
+  // applied last so it always wins overlaps. (Empires-as-a-layer was dropped
+  // in favour of the guided Empire Story mode; see playThread.)
   let selHighlights = [];            // what the current selection wants tinted
 
   const warLayerHighlights = year => {
@@ -202,48 +201,12 @@ async function boot() {
     return out;
   };
 
-  // Empires layer data: every thread polity + its from/to span + every name
-  // string that might appear in the border layer (canonical, thread name,
-  // aliases, historical-basemaps resolutions). Loaded once, lazily.
-  let empireData = null;
-  async function loadEmpireData() {
-    if (empireData) return;
-    empireData = [];                 // guard re-entrancy while awaiting
-    try {
-      const [members, names] = await Promise.all([allThreadMembers(), allNameResolutions()]);
-      const resByPolity = new Map();
-      for (const n of names) {
-        if (!resByPolity.has(n.polity_id)) resByPolity.set(n.polity_id, []);
-        resByPolity.get(n.polity_id).push(n.source_string);
-      }
-      empireData = members.filter(m => m.polity).map(m => ({
-        names: [...new Set([
-          m.polity.canonical_name,
-          m.thread?.display_name,
-          ...((m.polity.polity_name || []).map(x => x.name)),
-          ...(resByPolity.get(m.polity.id) || [])
-        ].filter(Boolean))],
-        from: m.from_year ?? m.polity.start_year,
-        to: m.to_year ?? m.polity.end_year
-      }));
-    } catch { empireData = []; }
-  }
-  const empireLayerHighlights = year => {
-    if (!state.layers.empires.enabled || !empireData) return [];
-    const out = [];
-    for (const e of empireData)
-      if ((e.from == null || e.from <= year) && (e.to == null || e.to >= year))
-        out.push({ names: e.names, side: "E" });
-    return out;
-  };
-
   const applyHighlights = () => {
-    if (state.mode !== "discovery") return;   // territory uses paths; quiz owns its own map
-    const emp = empireLayerHighlights(state.year);
-    const war = warLayerHighlights(state.year);
-    globe.setHighlights([...emp, ...war, ...selHighlights]);
+    // Both discovery and empire-story draw on the world polygon layer;
+    // us-territorial uses paths and map-quiz owns its own highlight map.
+    if (state.mode === "us-territorial" || state.mode === "map-quiz") return;
+    globe.setHighlights([...warLayerHighlights(state.year), ...selHighlights]);
     state.layers.wars.count = state.layers.wars.enabled ? activeWarsFor(state.year).length : null;
-    state.layers.empires.count = state.layers.empires.enabled ? emp.length : null;
     layersPanel?.updateCounts();
   };
   const setSelection = groups => { selHighlights = groups || []; applyHighlights(); };
@@ -315,9 +278,9 @@ async function boot() {
       } catch (e) {
         timeline.setStatus(e.message);
       }
-      // Wars/Empires layers change with the year — recompute only when one is
-      // on (selection tint is static across years, so no per-tick cost when off).
-      if (state.layers.wars.enabled || state.layers.empires.enabled) applyHighlights();
+      // Wars layer changes with the year — recompute only when it's on
+      // (selection tint is static across years, so no per-tick cost when off).
+      if (state.layers.wars.enabled) applyHighlights();
       // Selected country: re-render its card for the year being viewed.
       if (selection) selection.render(year);
     },
@@ -520,6 +483,8 @@ async function boot() {
         activeWarsFor(bt.year).filter(w => names.some(n => belligerent(w, n))));
     },
     onExit: () => {
+      document.getElementById("storyPicker").hidden = true;
+      if (state.mode === "empire-story") { state.mode = "discovery"; state.modeState = null; layersPanel?.refresh(); }
       clearSelection();
       timeline.clearOverlays();
       setContext(DEFAULT_CONTEXT, false);
@@ -535,6 +500,10 @@ async function boot() {
 
   async function playThread(th, atPolityId) {
     selLabel = null;                 // thread playback isn't URL-restorable yet
+    document.getElementById("storyPicker").hidden = true;
+    // Playing a thread IS Empire Story mode — reflect it on the mode radio
+    // whether we got here from the picker or the search bar.
+    if (state.mode !== "empire-story") { state.mode = "empire-story"; state.modeState = null; layersPanel?.refresh(); }
     const members = await threadMembers(th.id);
     const beats = members
       .filter(m => m.polity)
@@ -633,6 +602,53 @@ async function boot() {
     quiz.start();
   };
 
+  // --- Empire Story mode ------------------------------------------------
+  // Clicking the radio opens a thread picker; choosing an empire runs the
+  // existing playThread walkthrough. (Threads are also reachable from search;
+  // both paths land in this mode.)
+  let threadsCache = null;
+  async function showStoryPicker() {
+    const picker = document.getElementById("storyPicker");
+    picker.hidden = false;
+    picker.innerHTML = `
+      <div class="sp-head"><span class="sp-title">🧵 Empire Story</span>
+        <button class="sp-exit" title="Exit">✕</button></div>
+      <div class="sp-hint">Pick an empire to walk its story through time.</div>
+      <div class="sp-list">Loading threads…</div>`;
+    picker.querySelector(".sp-exit").onclick = () => story.exit();
+    if (!threadsCache) { try { threadsCache = await allThreads(); } catch { threadsCache = []; } }
+    const list = picker.querySelector(".sp-list");
+    if (!list) return;                  // picker was closed while loading
+    if (!threadsCache.length) {
+      list.innerHTML = `<div class="sp-empty">Couldn't load empires — the database may be unavailable. Try the search bar instead.</div>`;
+      return;
+    }
+    const byRegion = new Map();
+    for (const t of threadsCache) {
+      const r = t.region || "Other";
+      if (!byRegion.has(r)) byRegion.set(r, []);
+      byRegion.get(r).push(t);
+    }
+    list.innerHTML = [...byRegion].map(([region, ts]) =>
+      `<div class="sp-region">${region}</div>` +
+      ts.map(t => `<button class="sp-thread" data-id="${t.id}">${t.display_name}</button>`).join("")
+    ).join("");
+    list.querySelectorAll(".sp-thread").forEach(b => b.onclick = () => {
+      const th = threadsCache.find(t => String(t.id) === b.dataset.id);
+      if (th) playThread(th);           // hides the picker + enters the mode
+    });
+  }
+  const enterEmpireStory = () => {
+    if (state.mode === "empire-story") return;
+    story.exit?.();                     // clear any search-started story first
+    clearSelection();
+    state.mode = "empire-story";
+    state.modeState = null;
+    setContext("🧵 Empire Story");
+    layersPanel?.refresh();
+    showStoryPicker();
+  };
+
   // Modes & Layers panel — assigned AFTER selectCurated/clearSelection/globe/
   // timeline so the handlers can reference them directly. Declared up top as
   // `let` because onChange fires (and null-chains) before this line runs.
@@ -640,8 +656,10 @@ async function boot() {
     state,
     onModeChange: mode => {
       if (mode === state.mode) return;
-      if (state.mode === "map-quiz") quiz.exit();   // tear down quiz before any switch
+      if (state.mode === "map-quiz") quiz.exit();       // tear down quiz before any switch
+      if (state.mode === "empire-story") story.exit();  // hides picker/story, resets to discovery
       if (mode === "map-quiz") { enterQuiz(); return; }
+      if (mode === "empire-story") { enterEmpireStory(); return; }
       if (mode === "us-territorial") {
         const usaEntry = card.resolve("United States");
         if (usaEntry) selectCurated(usaEntry);
@@ -667,10 +685,6 @@ async function boot() {
         }
       }
       else if (id === "wars") applyHighlights();      // belligerents, no border reload
-      else if (id === "empires") {
-        if (enabled) loadEmpireData().then(applyHighlights);
-        else applyHighlights();
-      }
       else timeline.setYear(timeline.currentYear());   // borders + events re-render via onChange
     },
   });
@@ -684,6 +698,8 @@ async function boot() {
   if (qMode === "us-territorial") {
     const e = card.resolve("United States");
     if (e) selectCurated(e);
+  } else if (qMode === "empire-story") {
+    enterEmpireStory();
   } else if (qSel) {
     const e = card.resolve(qSel);
     if (e) selectCurated(e);

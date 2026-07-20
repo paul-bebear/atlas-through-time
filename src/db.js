@@ -142,18 +142,8 @@ export async function threadMembers(threadId) {
     `&order=from_year`);
 }
 
-// Every thread membership across all threads — for the Empires layer.
-// Embeds each polity's span + aliases and its thread's display name.
-export async function allThreadMembers() {
+// Every continuity thread (the picker list for Empire Story mode).
+export async function allThreads() {
   if (!dbEnabled()) return [];
-  return get(`thread_polity?select=from_year,to_year,` +
-    `polity:polity_id(id,canonical_name,start_year,end_year,polity_name(name)),` +
-    `thread:thread_id(display_name)&limit=2000`);
-}
-
-// All historical-basemaps name resolutions — the exact border-layer spellings
-// per polity, so the Empires layer can tint ancient polygons accurately.
-export async function allNameResolutions() {
-  if (!dbEnabled()) return [];
-  return get(`name_resolution?select=polity_id,source_string&limit=5000`);
+  return get(`thread?select=id,slug,display_name,region&order=region,display_name&limit=200`);
 }

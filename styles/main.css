@@ -383,3 +383,29 @@ body.quiz-active #search { display: none; }
 .qz-choice:hover:not(:disabled) { border-color: var(--accent); background: rgba(93,169,255,0.12); }
 .qz-choice.right { background: rgba(93,255,138,0.22); border-color: #5dff8a; color: #baffcf; }
 .qz-choice.wrong { background: rgba(255,93,93,0.22); border-color: #ff5d5d; color: #ffc2c2; }
+
+/* Empire Story — thread picker */
+#storyPicker {
+  position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
+  z-index: 15; width: 480px; max-width: calc(100vw - 36px);
+  max-height: 60vh; overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 18px; backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0,0,0,.5);
+}
+.sp-head { display: flex; align-items: center; margin-bottom: 8px; }
+.sp-title { font-weight: 700; font-size: 15px; }
+.sp-exit { margin-left: auto; background: rgba(255,255,255,0.08);
+  color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+  width: 28px; height: 28px; font-size: 14px; cursor: pointer; }
+.sp-hint { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+.sp-region { font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); margin: 12px 0 6px; }
+.sp-list { display: flex; flex-direction: column; }
+.sp-thread { display: block; width: 100%; text-align: left;
+  background: rgba(255,255,255,0.06); color: var(--text);
+  border: 1px solid var(--border); border-radius: 9px;
+  padding: 9px 12px; margin-bottom: 6px; font-size: 14px; font-weight: 600;
+  cursor: pointer; }
+.sp-thread:hover { background: rgba(139,92,246,0.18); border-color: var(--accent2); }
+.sp-empty { color: var(--muted); font-size: 13px; font-style: italic; padding: 8px 0; }

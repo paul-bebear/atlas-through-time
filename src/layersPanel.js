@@ -8,7 +8,7 @@ const MODES = [
   { id: "discovery",      label: "Discovery" },
   { id: "us-territorial", label: "US Territorial Growth" },
   { id: "map-quiz",       label: "Map Quiz" },
-  { id: "empire-story",   label: "Empire Story",  disabled: true },
+  { id: "empire-story",   label: "Empire Story" },
 ];
 
 const LAYERS = [
@@ -16,7 +16,6 @@ const LAYERS = [
   { id: "cities",  label: "Cities" },
   { id: "events",  label: "Events" },
   { id: "wars",    label: "Wars" },
-  { id: "empires", label: "Empires" },
   { id: "trade",   label: "Trade routes", disabled: true },
 ];
 
