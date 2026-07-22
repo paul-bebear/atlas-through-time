@@ -409,3 +409,21 @@ body.quiz-active #search { display: none; }
   cursor: pointer; }
 .sp-thread:hover { background: rgba(139,92,246,0.18); border-color: var(--accent2); }
 .sp-empty { color: var(--muted); font-size: 13px; font-style: italic; padding: 8px 0; }
+
+/* Map Quiz — regions, best scores, marathon */
+.qz-regions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.qz-region { background: rgba(255,255,255,0.06); color: var(--muted);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.qz-region:hover { color: var(--text); border-color: var(--accent); }
+.qz-region.on { background: var(--accent); color: #06101c; border-color: var(--accent); }
+.qz-game-top { display: flex; align-items: center; gap: 8px; width: 100%; }
+.qz-best { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--muted); }
+.qz-timer { font-variant-numeric: tabular-nums; }
+.qz-found { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px;
+  max-height: 108px; overflow-y: auto; }
+.qz-chip { background: rgba(93,255,138,0.15); border: 1px solid rgba(93,255,138,0.4);
+  color: #baffcf; border-radius: 999px; padding: 3px 9px; font-size: 11px; font-weight: 600; }
+.qz-missed { margin-top: 10px; font-size: 12px; line-height: 1.6; color: var(--muted);
+  max-height: 120px; overflow-y: auto; }
+.qz-missed b { color: var(--warn); }
