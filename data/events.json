@@ -1,51 +1,1315 @@
 [
-  { "id": "rome-founded", "title": "Founding of Rome", "lat": 41.9028, "lng": 12.4964, "startYear": -753, "category": "founding", "wikiTitle": "Founding of Rome" },
-  { "id": "alexander-empire", "title": "Empire of Alexander the Great", "lat": 33.3, "lng": 44.4, "startYear": -334, "endYear": -323, "category": "empire", "wikiTitle": "Wars of Alexander the Great" },
-  { "id": "qin-unify", "title": "Qin unification of China", "lat": 34.34, "lng": 108.94, "startYear": -221, "category": "empire", "wikiTitle": "Qin's wars of unification" },
-  { "id": "han-founded", "title": "Han dynasty founded", "lat": 34.27, "lng": 108.95, "startYear": -202, "endYear": 220, "category": "empire", "wikiTitle": "Han dynasty" },
-  { "id": "roman-empire", "title": "Roman Empire established", "lat": 41.9028, "lng": 12.4964, "startYear": -27, "endYear": 476, "category": "empire", "wikiTitle": "Roman Empire" },
-  { "id": "yellow-turban", "title": "Yellow Turban Rebellion", "lat": 34.76, "lng": 113.65, "startYear": 184, "endYear": 205, "category": "upheaval", "wikiTitle": "Yellow Turban Rebellion" },
-  { "id": "three-kingdoms", "title": "Three Kingdoms period", "lat": 30.59, "lng": 114.30, "startYear": 220, "endYear": 280, "category": "upheaval", "wikiTitle": "Three Kingdoms" },
-  { "id": "western-rome-fall", "title": "Fall of the Western Roman Empire", "lat": 41.9028, "lng": 12.4964, "startYear": 476, "category": "upheaval", "wikiTitle": "Fall of the Western Roman Empire" },
-  { "id": "tang", "title": "Tang dynasty", "lat": 34.27, "lng": 108.95, "startYear": 618, "endYear": 907, "category": "empire", "wikiTitle": "Tang dynasty" },
-  { "id": "an-lushan", "title": "An Lushan Rebellion", "lat": 39.90, "lng": 116.40, "startYear": 755, "endYear": 763, "category": "upheaval", "wikiTitle": "An Lushan Rebellion" },
-  { "id": "mongol-empire", "title": "Mongol Empire founded", "lat": 47.92, "lng": 106.92, "startYear": 1206, "endYear": 1368, "category": "empire", "wikiTitle": "Mongol Empire" },
-  { "id": "hundred-years", "title": "Hundred Years' War", "lat": 47.0, "lng": 1.5, "startYear": 1337, "endYear": 1453, "category": "war", "wikiTitle": "Hundred Years' War" },
-  { "id": "constantinople-1453", "title": "Fall of Constantinople", "lat": 41.0082, "lng": 28.9784, "startYear": 1453, "category": "war", "wikiTitle": "Fall of Constantinople" },
-  { "id": "columbus", "title": "Columbus reaches the Americas", "lat": 24.0, "lng": -74.5, "startYear": 1492, "category": "exploration", "wikiTitle": "Voyages of Christopher Columbus" },
-  { "id": "jamestown", "title": "Jamestown founded", "lat": 37.21, "lng": -76.78, "startYear": 1607, "category": "founding", "wikiTitle": "Jamestown, Virginia" },
-  { "id": "us-independence", "title": "US Declaration of Independence (13 colonies)", "lat": 39.95, "lng": -75.16, "startYear": 1776, "category": "founding", "wikiTitle": "United States Declaration of Independence" },
-  { "id": "louisiana-purchase", "title": "Louisiana Purchase", "lat": 38.63, "lng": -90.20, "startYear": 1803, "category": "treaty", "wikiTitle": "Louisiana Purchase" },
-  { "id": "napoleonic", "title": "Napoleonic Wars", "lat": 48.8566, "lng": 2.3522, "startYear": 1803, "endYear": 1815, "category": "war", "wikiTitle": "Napoleonic Wars" },
-  { "id": "mexican-cession", "title": "Mexican Cession", "lat": 34.05, "lng": -111.09, "startYear": 1848, "category": "treaty", "wikiTitle": "Mexican Cession" },
-  { "id": "taiping", "title": "Taiping Rebellion", "lat": 32.06, "lng": 118.80, "startYear": 1850, "endYear": 1864, "category": "upheaval", "wikiTitle": "Taiping Rebellion" },
-  { "id": "berlin-conference", "title": "Berlin Conference — Scramble for Africa", "lat": 52.52, "lng": 13.405, "startYear": 1884, "endYear": 1885, "category": "treaty", "wikiTitle": "Berlin Conference" },
-  { "id": "scramble-africa", "title": "Colonial partition of Africa", "lat": 1.0, "lng": 17.0, "startYear": 1881, "endYear": 1914, "category": "empire", "wikiTitle": "Scramble for Africa" },
-  { "id": "qing-fall", "title": "Fall of the Qing — Republic of China", "lat": 39.90, "lng": 116.40, "startYear": 1911, "endYear": 1912, "category": "upheaval", "wikiTitle": "Xinhai Revolution" },
-  { "id": "wwi", "title": "World War I", "lat": 50.85, "lng": 4.35, "startYear": 1914, "endYear": 1918, "category": "war", "wikiTitle": "World War I" },
-  { "id": "chinese-civil-war", "title": "Chinese Civil War", "lat": 31.23, "lng": 121.47, "startYear": 1927, "endYear": 1949, "category": "war", "wikiTitle": "Chinese Civil War" },
-  { "id": "wwii", "title": "World War II", "lat": 52.23, "lng": 21.01, "startYear": 1939, "endYear": 1945, "category": "war", "wikiTitle": "World War II" },
-  { "id": "prc-founded", "title": "People's Republic of China founded", "lat": 39.90, "lng": 116.40, "startYear": 1949, "category": "founding", "wikiTitle": "Proclamation of the People's Republic of China" },
-  { "id": "ghana-independence", "title": "Ghana independence — decolonization begins", "lat": 5.60, "lng": -0.19, "startYear": 1957, "category": "founding", "wikiTitle": "History of Ghana (1957–1966)" },
-  { "id": "year-of-africa", "title": "Year of Africa (17 nations independent)", "lat": 7.0, "lng": 21.0, "startYear": 1960, "category": "founding", "wikiTitle": "Year of Africa" },
-  { "id": "soviet-collapse", "title": "Dissolution of the Soviet Union", "lat": 55.7558, "lng": 37.6173, "startYear": 1991, "category": "upheaval", "wikiTitle": "Dissolution of the Soviet Union" },
-
-  { "id": "aksum", "title": "Kingdom of Aksum", "lat": 14.13, "lng": 38.72, "startYear": 100, "endYear": 940, "category": "empire", "wikiTitle": "Kingdom of Aksum" },
-  { "id": "ghana-empire", "title": "Ghana Empire (Wagadou)", "lat": 15.7, "lng": -7.0, "startYear": 300, "endYear": 1200, "category": "empire", "wikiTitle": "Ghana Empire" },
-  { "id": "great-zimbabwe", "title": "Kingdom of Great Zimbabwe", "lat": -20.27, "lng": 30.93, "startYear": 1100, "endYear": 1450, "category": "empire", "wikiTitle": "Kingdom of Zimbabwe" },
-  { "id": "mali-empire", "title": "Mali Empire", "lat": 12.0, "lng": -8.0, "startYear": 1235, "endYear": 1670, "category": "empire", "wikiTitle": "Mali Empire" },
-  { "id": "kongo", "title": "Kingdom of Kongo", "lat": -6.27, "lng": 14.24, "startYear": 1390, "endYear": 1914, "category": "empire", "wikiTitle": "Kingdom of Kongo" },
-  { "id": "songhai", "title": "Songhai Empire", "lat": 16.27, "lng": -0.05, "startYear": 1464, "endYear": 1591, "category": "empire", "wikiTitle": "Songhai Empire" },
-  { "id": "benin-empire", "title": "Benin Empire", "lat": 6.34, "lng": 5.63, "startYear": 1180, "endYear": 1897, "category": "empire", "wikiTitle": "Benin Empire" },
-  { "id": "ashanti", "title": "Ashanti Empire", "lat": 6.69, "lng": -1.62, "startYear": 1701, "endYear": 1901, "category": "empire", "wikiTitle": "Ashanti Empire" },
-  { "id": "zulu-kingdom", "title": "Zulu Kingdom", "lat": -28.5, "lng": 31.4, "startYear": 1816, "endYear": 1897, "category": "empire", "wikiTitle": "Zulu Kingdom" },
-  { "id": "adwa", "title": "Battle of Adwa — Ethiopia defeats Italy", "lat": 14.17, "lng": 38.9, "startYear": 1896, "category": "war", "wikiTitle": "Battle of Adwa" },
-  { "id": "algerian-war", "title": "Algerian War of Independence", "lat": 36.75, "lng": 3.06, "startYear": 1954, "endYear": 1962, "category": "war", "wikiTitle": "Algerian War" },
-  { "id": "congo-crisis", "title": "Congo Crisis (independence & turmoil)", "lat": -4.32, "lng": 15.31, "startYear": 1960, "endYear": 1965, "category": "upheaval", "wikiTitle": "Congo Crisis" },
-  { "id": "apartheid-end", "title": "End of apartheid in South Africa", "lat": -25.75, "lng": 28.19, "startYear": 1994, "category": "upheaval", "wikiTitle": "End of apartheid in South Africa" },
-
-  { "id": "warlord-era", "title": "Chinese Warlord Era", "lat": 35.0, "lng": 113.0, "startYear": 1916, "endYear": 1928, "category": "upheaval", "wikiTitle": "Warlord Era" },
-  { "id": "northern-expedition", "title": "Northern Expedition", "lat": 23.13, "lng": 113.26, "startYear": 1926, "endYear": 1928, "category": "war", "wikiTitle": "Northern Expedition" },
-  { "id": "long-march", "title": "The Long March", "lat": 26.0, "lng": 116.0, "startYear": 1934, "endYear": 1935, "category": "war", "wikiTitle": "Long March" },
-  { "id": "second-sino-japanese", "title": "Second Sino-Japanese War", "lat": 32.06, "lng": 118.80, "startYear": 1937, "endYear": 1945, "category": "war", "wikiTitle": "Second Sino-Japanese War" }
+  {
+    "id": "uruk",
+    "title": "First cities of Sumer",
+    "lat": 31.32,
+    "lng": 45.64,
+    "startYear": -3500,
+    "endYear": -3100,
+    "category": "founding",
+    "wikiTitle": "Uruk"
+  },
+  {
+    "id": "egypt-unified",
+    "title": "Unification of Upper and Lower Egypt",
+    "lat": 25.7,
+    "lng": 32.6,
+    "startYear": -3100,
+    "category": "founding",
+    "wikiTitle": "Early Dynastic Period (Egypt)"
+  },
+  {
+    "id": "indus-valley",
+    "title": "Indus Valley civilisation at its height",
+    "lat": 27.32,
+    "lng": 68.14,
+    "startYear": -2600,
+    "endYear": -1900,
+    "category": "empire",
+    "wikiTitle": "Indus Valley Civilisation"
+  },
+  {
+    "id": "great-pyramid",
+    "title": "Great Pyramid of Giza built",
+    "lat": 29.98,
+    "lng": 31.13,
+    "startYear": -2560,
+    "category": "founding",
+    "wikiTitle": "Great Pyramid of Giza"
+  },
+  {
+    "id": "hammurabi",
+    "title": "Hammurabi's Code",
+    "lat": 32.54,
+    "lng": 44.42,
+    "startYear": -1754,
+    "category": "treaty",
+    "wikiTitle": "Code of Hammurabi"
+  },
+  {
+    "id": "shang",
+    "title": "Shang dynasty",
+    "lat": 36.1,
+    "lng": 114.35,
+    "startYear": -1600,
+    "endYear": -1046,
+    "category": "empire",
+    "wikiTitle": "Shang dynasty"
+  },
+  {
+    "id": "egypt-new-kingdom",
+    "title": "Egyptian New Kingdom",
+    "lat": 25.7,
+    "lng": 32.6,
+    "startYear": -1550,
+    "endYear": -1077,
+    "category": "empire",
+    "wikiTitle": "New Kingdom of Egypt"
+  },
+  {
+    "id": "olmec",
+    "title": "Olmec civilisation",
+    "lat": 17.95,
+    "lng": -94.5,
+    "startYear": -1200,
+    "endYear": -400,
+    "category": "empire",
+    "wikiTitle": "Olmec"
+  },
+  {
+    "id": "bronze-collapse",
+    "title": "Late Bronze Age collapse",
+    "lat": 35.0,
+    "lng": 33.0,
+    "startYear": -1177,
+    "category": "upheaval",
+    "wikiTitle": "Late Bronze Age collapse"
+  },
+  {
+    "id": "zhou",
+    "title": "Zhou dynasty",
+    "lat": 34.27,
+    "lng": 108.93,
+    "startYear": -1046,
+    "endYear": -256,
+    "category": "empire",
+    "wikiTitle": "Zhou dynasty"
+  },
+  {
+    "id": "neo-assyrian",
+    "title": "Neo-Assyrian Empire",
+    "lat": 36.36,
+    "lng": 43.15,
+    "startYear": -911,
+    "endYear": -609,
+    "category": "empire",
+    "wikiTitle": "Neo-Assyrian Empire"
+  },
+  {
+    "id": "rome-founded",
+    "title": "Founding of Rome",
+    "lat": 41.9028,
+    "lng": 12.4964,
+    "startYear": -753,
+    "category": "founding",
+    "wikiTitle": "Founding of Rome"
+  },
+  {
+    "id": "carthage-power",
+    "title": "Carthaginian Empire",
+    "lat": 36.85,
+    "lng": 10.32,
+    "startYear": -650,
+    "endYear": -146,
+    "category": "empire",
+    "wikiTitle": "Ancient Carthage"
+  },
+  {
+    "id": "buddha",
+    "title": "Life of the Buddha",
+    "lat": 27.47,
+    "lng": 83.28,
+    "startYear": -563,
+    "category": "founding",
+    "wikiTitle": "Gautama Buddha"
+  },
+  {
+    "id": "confucius",
+    "title": "Confucius teaches",
+    "lat": 35.6,
+    "lng": 116.98,
+    "startYear": -551,
+    "category": "founding",
+    "wikiTitle": "Confucius"
+  },
+  {
+    "id": "achaemenid",
+    "title": "Achaemenid Persian Empire",
+    "lat": 29.94,
+    "lng": 52.89,
+    "startYear": -550,
+    "endYear": -330,
+    "category": "empire",
+    "wikiTitle": "Achaemenid Empire"
+  },
+  {
+    "id": "roman-republic",
+    "title": "Roman Republic",
+    "lat": 41.9,
+    "lng": 12.5,
+    "startYear": -509,
+    "endYear": -27,
+    "category": "empire",
+    "wikiTitle": "Roman Republic"
+  },
+  {
+    "id": "greco-persian",
+    "title": "Greco-Persian Wars",
+    "lat": 38.0,
+    "lng": 23.7,
+    "startYear": -499,
+    "endYear": -449,
+    "category": "war",
+    "wikiTitle": "Greco-Persian Wars"
+  },
+  {
+    "id": "athens-golden",
+    "title": "Athenian golden age",
+    "lat": 37.97,
+    "lng": 23.73,
+    "startYear": -447,
+    "endYear": -404,
+    "category": "founding",
+    "wikiTitle": "History of Athens"
+  },
+  {
+    "id": "alexander-empire",
+    "title": "Empire of Alexander the Great",
+    "lat": 33.3,
+    "lng": 44.4,
+    "startYear": -334,
+    "endYear": -323,
+    "category": "empire",
+    "wikiTitle": "Wars of Alexander the Great"
+  },
+  {
+    "id": "maurya",
+    "title": "Mauryan Empire",
+    "lat": 25.6,
+    "lng": 85.1,
+    "startYear": -322,
+    "endYear": -185,
+    "category": "empire",
+    "wikiTitle": "Maurya Empire"
+  },
+  {
+    "id": "punic-wars",
+    "title": "Punic Wars",
+    "lat": 36.85,
+    "lng": 10.32,
+    "startYear": -264,
+    "endYear": -146,
+    "category": "war",
+    "wikiTitle": "Punic Wars"
+  },
+  {
+    "id": "ashoka",
+    "title": "Ashoka turns to Buddhism after Kalinga",
+    "lat": 20.19,
+    "lng": 85.84,
+    "startYear": -261,
+    "category": "upheaval",
+    "wikiTitle": "Ashoka"
+  },
+  {
+    "id": "parthian",
+    "title": "Parthian Empire",
+    "lat": 33.1,
+    "lng": 44.58,
+    "startYear": -247,
+    "endYear": 224,
+    "category": "empire",
+    "wikiTitle": "Parthian Empire"
+  },
+  {
+    "id": "qin-unify",
+    "title": "Qin unification of China",
+    "lat": 34.34,
+    "lng": 108.94,
+    "startYear": -221,
+    "category": "empire",
+    "wikiTitle": "Qin's wars of unification"
+  },
+  {
+    "id": "great-wall",
+    "title": "Great Wall joined under the Qin",
+    "lat": 40.43,
+    "lng": 116.57,
+    "startYear": -214,
+    "category": "founding",
+    "wikiTitle": "Great Wall of China"
+  },
+  {
+    "id": "han-founded",
+    "title": "Han dynasty founded",
+    "lat": 34.27,
+    "lng": 108.95,
+    "startYear": -202,
+    "endYear": 220,
+    "category": "empire",
+    "wikiTitle": "Han dynasty"
+  },
+  {
+    "id": "silk-road-opens",
+    "title": "The Silk Road opens",
+    "lat": 40.14,
+    "lng": 94.66,
+    "startYear": -130,
+    "category": "exploration",
+    "wikiTitle": "Silk Road"
+  },
+  {
+    "id": "cleopatra",
+    "title": "Death of Cleopatra ends Ptolemaic Egypt",
+    "lat": 31.2,
+    "lng": 29.92,
+    "startYear": -30,
+    "category": "upheaval",
+    "wikiTitle": "Cleopatra"
+  },
+  {
+    "id": "roman-empire",
+    "title": "Roman Empire established",
+    "lat": 41.9028,
+    "lng": 12.4964,
+    "startYear": -27,
+    "endYear": 476,
+    "category": "empire",
+    "wikiTitle": "Roman Empire"
+  },
+  {
+    "id": "kushan",
+    "title": "Kushan Empire",
+    "lat": 34.0,
+    "lng": 71.5,
+    "startYear": 30,
+    "endYear": 375,
+    "category": "empire",
+    "wikiTitle": "Kushan Empire"
+  },
+  {
+    "id": "aksum",
+    "title": "Kingdom of Aksum",
+    "lat": 14.13,
+    "lng": 38.72,
+    "startYear": 100,
+    "endYear": 940,
+    "category": "empire",
+    "wikiTitle": "Kingdom of Aksum"
+  },
+  {
+    "id": "teotihuacan",
+    "title": "Teotihuacan rises",
+    "lat": 19.69,
+    "lng": -98.84,
+    "startYear": 100,
+    "endYear": 550,
+    "category": "founding",
+    "wikiTitle": "Teotihuacan"
+  },
+  {
+    "id": "yellow-turban",
+    "title": "Yellow Turban Rebellion",
+    "lat": 34.76,
+    "lng": 113.65,
+    "startYear": 184,
+    "endYear": 205,
+    "category": "upheaval",
+    "wikiTitle": "Yellow Turban Rebellion"
+  },
+  {
+    "id": "three-kingdoms",
+    "title": "Three Kingdoms period",
+    "lat": 30.59,
+    "lng": 114.3,
+    "startYear": 220,
+    "endYear": 280,
+    "category": "upheaval",
+    "wikiTitle": "Three Kingdoms"
+  },
+  {
+    "id": "sasanian",
+    "title": "Sasanian Empire",
+    "lat": 33.1,
+    "lng": 44.58,
+    "startYear": 224,
+    "endYear": 651,
+    "category": "empire",
+    "wikiTitle": "Sasanian Empire"
+  },
+  {
+    "id": "maya-classic",
+    "title": "Maya Classic period",
+    "lat": 17.22,
+    "lng": -89.62,
+    "startYear": 250,
+    "endYear": 900,
+    "category": "empire",
+    "wikiTitle": "Maya civilization"
+  },
+  {
+    "id": "ghana-empire",
+    "title": "Ghana Empire (Wagadou)",
+    "lat": 15.7,
+    "lng": -7.0,
+    "startYear": 300,
+    "endYear": 1200,
+    "category": "empire",
+    "wikiTitle": "Ghana Empire"
+  },
+  {
+    "id": "edict-milan",
+    "title": "Constantine legalises Christianity",
+    "lat": 41.01,
+    "lng": 28.98,
+    "startYear": 313,
+    "category": "upheaval",
+    "wikiTitle": "Edict of Milan"
+  },
+  {
+    "id": "gupta",
+    "title": "Gupta Empire — a golden age in India",
+    "lat": 25.6,
+    "lng": 85.1,
+    "startYear": 320,
+    "endYear": 550,
+    "category": "empire",
+    "wikiTitle": "Gupta Empire"
+  },
+  {
+    "id": "byzantine",
+    "title": "Byzantine Empire",
+    "lat": 41.01,
+    "lng": 28.98,
+    "startYear": 330,
+    "endYear": 1453,
+    "category": "empire",
+    "wikiTitle": "Byzantine Empire"
+  },
+  {
+    "id": "attila",
+    "title": "Attila and the Huns",
+    "lat": 47.5,
+    "lng": 19.0,
+    "startYear": 434,
+    "endYear": 453,
+    "category": "war",
+    "wikiTitle": "Attila"
+  },
+  {
+    "id": "western-rome-fall",
+    "title": "Fall of the Western Roman Empire",
+    "lat": 41.9028,
+    "lng": 12.4964,
+    "startYear": 476,
+    "category": "upheaval",
+    "wikiTitle": "Fall of the Western Roman Empire"
+  },
+  {
+    "id": "justinian",
+    "title": "Justinian's reconquest and Hagia Sophia",
+    "lat": 41.01,
+    "lng": 28.98,
+    "startYear": 527,
+    "endYear": 565,
+    "category": "empire",
+    "wikiTitle": "Justinian I"
+  },
+  {
+    "id": "tang",
+    "title": "Tang dynasty",
+    "lat": 34.27,
+    "lng": 108.95,
+    "startYear": 618,
+    "endYear": 907,
+    "category": "empire",
+    "wikiTitle": "Tang dynasty"
+  },
+  {
+    "id": "hijra",
+    "title": "The Hijra — the Islamic calendar begins",
+    "lat": 24.47,
+    "lng": 39.61,
+    "startYear": 622,
+    "category": "founding",
+    "wikiTitle": "Hijra"
+  },
+  {
+    "id": "muslim-conquests",
+    "title": "Early Muslim conquests",
+    "lat": 33.51,
+    "lng": 36.28,
+    "startYear": 632,
+    "endYear": 661,
+    "category": "war",
+    "wikiTitle": "Early Muslim conquests"
+  },
+  {
+    "id": "umayyad",
+    "title": "Umayyad Caliphate",
+    "lat": 33.51,
+    "lng": 36.28,
+    "startYear": 661,
+    "endYear": 750,
+    "category": "empire",
+    "wikiTitle": "Umayyad Caliphate"
+  },
+  {
+    "id": "silla",
+    "title": "Silla unifies the Korean peninsula",
+    "lat": 35.83,
+    "lng": 129.21,
+    "startYear": 668,
+    "category": "empire",
+    "wikiTitle": "Later Silla"
+  },
+  {
+    "id": "srivijaya",
+    "title": "Srivijaya rules the sea lanes",
+    "lat": -2.99,
+    "lng": 104.76,
+    "startYear": 671,
+    "endYear": 1288,
+    "category": "empire",
+    "wikiTitle": "Srivijaya"
+  },
+  {
+    "id": "tours",
+    "title": "Battle of Tours halts the Umayyad advance",
+    "lat": 46.58,
+    "lng": 0.34,
+    "startYear": 732,
+    "category": "war",
+    "wikiTitle": "Battle of Tours"
+  },
+  {
+    "id": "abbasid",
+    "title": "Abbasid Caliphate",
+    "lat": 33.32,
+    "lng": 44.37,
+    "startYear": 750,
+    "endYear": 1258,
+    "category": "empire",
+    "wikiTitle": "Abbasid Caliphate"
+  },
+  {
+    "id": "an-lushan",
+    "title": "An Lushan Rebellion",
+    "lat": 39.9,
+    "lng": 116.4,
+    "startYear": 755,
+    "endYear": 763,
+    "category": "upheaval",
+    "wikiTitle": "An Lushan Rebellion"
+  },
+  {
+    "id": "abbasid-baghdad",
+    "title": "Abbasids found Baghdad",
+    "lat": 33.32,
+    "lng": 44.37,
+    "startYear": 762,
+    "category": "founding",
+    "wikiTitle": "Baghdad"
+  },
+  {
+    "id": "lindisfarne",
+    "title": "Viking Age begins",
+    "lat": 55.68,
+    "lng": -1.8,
+    "startYear": 793,
+    "endYear": 1066,
+    "category": "war",
+    "wikiTitle": "Viking Age"
+  },
+  {
+    "id": "heian",
+    "title": "Heian court founded at Kyoto",
+    "lat": 35.01,
+    "lng": 135.77,
+    "startYear": 794,
+    "category": "founding",
+    "wikiTitle": "Heian period"
+  },
+  {
+    "id": "charlemagne",
+    "title": "Charlemagne crowned Emperor",
+    "lat": 50.78,
+    "lng": 6.08,
+    "startYear": 800,
+    "category": "empire",
+    "wikiTitle": "Charlemagne"
+  },
+  {
+    "id": "khmer",
+    "title": "Khmer Empire founded",
+    "lat": 13.41,
+    "lng": 103.87,
+    "startYear": 802,
+    "endYear": 1431,
+    "category": "empire",
+    "wikiTitle": "Khmer Empire"
+  },
+  {
+    "id": "house-wisdom",
+    "title": "House of Wisdom — the Islamic Golden Age",
+    "lat": 33.32,
+    "lng": 44.37,
+    "startYear": 830,
+    "category": "founding",
+    "wikiTitle": "House of Wisdom"
+  },
+  {
+    "id": "kievan-rus",
+    "title": "Kievan Rus' centred on Kyiv",
+    "lat": 50.45,
+    "lng": 30.52,
+    "startYear": 882,
+    "category": "founding",
+    "wikiTitle": "Kievan Rus'"
+  },
+  {
+    "id": "song",
+    "title": "Song dynasty — printing, gunpowder, paper money",
+    "lat": 34.8,
+    "lng": 114.3,
+    "startYear": 960,
+    "endYear": 1279,
+    "category": "empire",
+    "wikiTitle": "Song dynasty"
+  },
+  {
+    "id": "holy-roman-empire",
+    "title": "Holy Roman Empire",
+    "lat": 50.0,
+    "lng": 10.0,
+    "startYear": 962,
+    "endYear": 1806,
+    "category": "empire",
+    "wikiTitle": "Holy Roman Empire"
+  },
+  {
+    "id": "schism",
+    "title": "East–West Schism",
+    "lat": 41.9,
+    "lng": 12.45,
+    "startYear": 1054,
+    "category": "upheaval",
+    "wikiTitle": "East–West Schism"
+  },
+  {
+    "id": "hastings",
+    "title": "Norman conquest of England",
+    "lat": 50.91,
+    "lng": 0.49,
+    "startYear": 1066,
+    "category": "war",
+    "wikiTitle": "Norman Conquest"
+  },
+  {
+    "id": "first-crusade",
+    "title": "First Crusade",
+    "lat": 31.78,
+    "lng": 35.21,
+    "startYear": 1096,
+    "endYear": 1099,
+    "category": "war",
+    "wikiTitle": "First Crusade"
+  },
+  {
+    "id": "great-zimbabwe",
+    "title": "Kingdom of Great Zimbabwe",
+    "lat": -20.27,
+    "lng": 30.93,
+    "startYear": 1100,
+    "endYear": 1450,
+    "category": "empire",
+    "wikiTitle": "Kingdom of Zimbabwe"
+  },
+  {
+    "id": "angkor-wat",
+    "title": "Angkor Wat built",
+    "lat": 13.41,
+    "lng": 103.87,
+    "startYear": 1113,
+    "category": "founding",
+    "wikiTitle": "Angkor Wat"
+  },
+  {
+    "id": "benin-empire",
+    "title": "Benin Empire",
+    "lat": 6.34,
+    "lng": 5.63,
+    "startYear": 1180,
+    "endYear": 1897,
+    "category": "empire",
+    "wikiTitle": "Benin Empire"
+  },
+  {
+    "id": "mongol-empire",
+    "title": "Mongol Empire founded",
+    "lat": 47.92,
+    "lng": 106.92,
+    "startYear": 1206,
+    "endYear": 1368,
+    "category": "empire",
+    "wikiTitle": "Mongol Empire"
+  },
+  {
+    "id": "delhi-sultanate",
+    "title": "Delhi Sultanate",
+    "lat": 28.7,
+    "lng": 77.1,
+    "startYear": 1206,
+    "endYear": 1526,
+    "category": "empire",
+    "wikiTitle": "Delhi Sultanate"
+  },
+  {
+    "id": "magna-carta",
+    "title": "Magna Carta",
+    "lat": 51.44,
+    "lng": -0.56,
+    "startYear": 1215,
+    "category": "treaty",
+    "wikiTitle": "Magna Carta"
+  },
+  {
+    "id": "mali-empire",
+    "title": "Mali Empire",
+    "lat": 12.0,
+    "lng": -8.0,
+    "startYear": 1235,
+    "endYear": 1670,
+    "category": "empire",
+    "wikiTitle": "Mali Empire"
+  },
+  {
+    "id": "majapahit",
+    "title": "Majapahit Empire",
+    "lat": -7.55,
+    "lng": 112.4,
+    "startYear": 1293,
+    "endYear": 1527,
+    "category": "empire",
+    "wikiTitle": "Majapahit"
+  },
+  {
+    "id": "ottoman-empire",
+    "title": "Ottoman Empire",
+    "lat": 41.01,
+    "lng": 28.98,
+    "startYear": 1299,
+    "endYear": 1922,
+    "category": "empire",
+    "wikiTitle": "Ottoman Empire"
+  },
+  {
+    "id": "tenochtitlan",
+    "title": "Tenochtitlan founded",
+    "lat": 19.43,
+    "lng": -99.13,
+    "startYear": 1325,
+    "category": "founding",
+    "wikiTitle": "Tenochtitlan"
+  },
+  {
+    "id": "hundred-years",
+    "title": "Hundred Years' War",
+    "lat": 47.0,
+    "lng": 1.5,
+    "startYear": 1337,
+    "endYear": 1453,
+    "category": "war",
+    "wikiTitle": "Hundred Years' War"
+  },
+  {
+    "id": "black-death",
+    "title": "The Black Death",
+    "lat": 43.0,
+    "lng": 12.0,
+    "startYear": 1347,
+    "endYear": 1351,
+    "category": "upheaval",
+    "wikiTitle": "Black Death"
+  },
+  {
+    "id": "timurid",
+    "title": "Timur's conquests",
+    "lat": 39.65,
+    "lng": 66.96,
+    "startYear": 1370,
+    "endYear": 1507,
+    "category": "empire",
+    "wikiTitle": "Timurid Empire"
+  },
+  {
+    "id": "kongo",
+    "title": "Kingdom of Kongo",
+    "lat": -6.27,
+    "lng": 14.24,
+    "startYear": 1390,
+    "endYear": 1914,
+    "category": "empire",
+    "wikiTitle": "Kingdom of Kongo"
+  },
+  {
+    "id": "zheng-he",
+    "title": "Zheng He's treasure voyages",
+    "lat": 32.06,
+    "lng": 118.8,
+    "startYear": 1405,
+    "endYear": 1433,
+    "category": "exploration",
+    "wikiTitle": "Ming treasure voyages"
+  },
+  {
+    "id": "inca",
+    "title": "Inca Empire expands under Pachacuti",
+    "lat": -13.53,
+    "lng": -71.97,
+    "startYear": 1438,
+    "endYear": 1533,
+    "category": "empire",
+    "wikiTitle": "Inca Empire"
+  },
+  {
+    "id": "gutenberg",
+    "title": "Gutenberg's printing press",
+    "lat": 50.0,
+    "lng": 8.27,
+    "startYear": 1440,
+    "category": "founding",
+    "wikiTitle": "Printing press"
+  },
+  {
+    "id": "constantinople-1453",
+    "title": "Fall of Constantinople",
+    "lat": 41.0082,
+    "lng": 28.9784,
+    "startYear": 1453,
+    "category": "war",
+    "wikiTitle": "Fall of Constantinople"
+  },
+  {
+    "id": "songhai",
+    "title": "Songhai Empire",
+    "lat": 16.27,
+    "lng": -0.05,
+    "startYear": 1464,
+    "endYear": 1591,
+    "category": "empire",
+    "wikiTitle": "Songhai Empire"
+  },
+  {
+    "id": "columbus",
+    "title": "Columbus reaches the Americas",
+    "lat": 24.0,
+    "lng": -74.5,
+    "startYear": 1492,
+    "category": "exploration",
+    "wikiTitle": "Voyages of Christopher Columbus"
+  },
+  {
+    "id": "safavid",
+    "title": "Safavid Persia",
+    "lat": 38.08,
+    "lng": 46.29,
+    "startYear": 1501,
+    "endYear": 1736,
+    "category": "empire",
+    "wikiTitle": "Safavid Iran"
+  },
+  {
+    "id": "reformation",
+    "title": "Protestant Reformation",
+    "lat": 51.87,
+    "lng": 12.65,
+    "startYear": 1517,
+    "category": "upheaval",
+    "wikiTitle": "Reformation"
+  },
+  {
+    "id": "cortes",
+    "title": "Spanish conquest of the Aztec Empire",
+    "lat": 19.43,
+    "lng": -99.13,
+    "startYear": 1519,
+    "endYear": 1521,
+    "category": "war",
+    "wikiTitle": "Spanish conquest of the Aztec Empire"
+  },
+  {
+    "id": "suleiman",
+    "title": "Ottoman zenith under Suleiman",
+    "lat": 41.01,
+    "lng": 28.98,
+    "startYear": 1520,
+    "endYear": 1566,
+    "category": "empire",
+    "wikiTitle": "Suleiman the Magnificent"
+  },
+  {
+    "id": "mughal",
+    "title": "Mughal Empire",
+    "lat": 27.18,
+    "lng": 78.01,
+    "startYear": 1526,
+    "endYear": 1857,
+    "category": "empire",
+    "wikiTitle": "Mughal Empire"
+  },
+  {
+    "id": "pizarro",
+    "title": "Spanish conquest of the Inca Empire",
+    "lat": -7.16,
+    "lng": -78.51,
+    "startYear": 1532,
+    "endYear": 1533,
+    "category": "war",
+    "wikiTitle": "Spanish conquest of the Inca Empire"
+  },
+  {
+    "id": "tokugawa",
+    "title": "Tokugawa shogunate and Japan's seclusion",
+    "lat": 35.68,
+    "lng": 139.65,
+    "startYear": 1603,
+    "endYear": 1868,
+    "category": "empire",
+    "wikiTitle": "Tokugawa shogunate"
+  },
+  {
+    "id": "jamestown",
+    "title": "Jamestown founded",
+    "lat": 37.21,
+    "lng": -76.78,
+    "startYear": 1607,
+    "category": "founding",
+    "wikiTitle": "Jamestown, Virginia"
+  },
+  {
+    "id": "thirty-years",
+    "title": "Thirty Years' War",
+    "lat": 50.09,
+    "lng": 14.42,
+    "startYear": 1618,
+    "endYear": 1648,
+    "category": "war",
+    "wikiTitle": "Thirty Years' War"
+  },
+  {
+    "id": "qing",
+    "title": "Qing dynasty conquers China",
+    "lat": 39.9,
+    "lng": 116.41,
+    "startYear": 1644,
+    "endYear": 1912,
+    "category": "empire",
+    "wikiTitle": "Qing dynasty"
+  },
+  {
+    "id": "westphalia",
+    "title": "Peace of Westphalia",
+    "lat": 51.96,
+    "lng": 7.63,
+    "startYear": 1648,
+    "category": "treaty",
+    "wikiTitle": "Peace of Westphalia"
+  },
+  {
+    "id": "ashanti",
+    "title": "Ashanti Empire",
+    "lat": 6.69,
+    "lng": -1.62,
+    "startYear": 1701,
+    "endYear": 1901,
+    "category": "empire",
+    "wikiTitle": "Ashanti Empire"
+  },
+  {
+    "id": "industrial-rev",
+    "title": "Industrial Revolution begins",
+    "lat": 53.48,
+    "lng": -2.24,
+    "startYear": 1760,
+    "endYear": 1840,
+    "category": "upheaval",
+    "wikiTitle": "Industrial Revolution"
+  },
+  {
+    "id": "us-independence",
+    "title": "US Declaration of Independence (13 colonies)",
+    "lat": 39.95,
+    "lng": -75.16,
+    "startYear": 1776,
+    "category": "founding",
+    "wikiTitle": "United States Declaration of Independence"
+  },
+  {
+    "id": "french-rev",
+    "title": "French Revolution",
+    "lat": 48.85,
+    "lng": 2.35,
+    "startYear": 1789,
+    "endYear": 1799,
+    "category": "upheaval",
+    "wikiTitle": "French Revolution"
+  },
+  {
+    "id": "haitian-rev",
+    "title": "Haitian Revolution",
+    "lat": 18.59,
+    "lng": -72.31,
+    "startYear": 1791,
+    "endYear": 1804,
+    "category": "upheaval",
+    "wikiTitle": "Haitian Revolution"
+  },
+  {
+    "id": "louisiana-purchase",
+    "title": "Louisiana Purchase",
+    "lat": 38.63,
+    "lng": -90.2,
+    "startYear": 1803,
+    "category": "treaty",
+    "wikiTitle": "Louisiana Purchase"
+  },
+  {
+    "id": "napoleonic",
+    "title": "Napoleonic Wars",
+    "lat": 48.8566,
+    "lng": 2.3522,
+    "startYear": 1803,
+    "endYear": 1815,
+    "category": "war",
+    "wikiTitle": "Napoleonic Wars"
+  },
+  {
+    "id": "zulu-kingdom",
+    "title": "Zulu Kingdom",
+    "lat": -28.5,
+    "lng": 31.4,
+    "startYear": 1816,
+    "endYear": 1897,
+    "category": "empire",
+    "wikiTitle": "Zulu Kingdom"
+  },
+  {
+    "id": "opium-war",
+    "title": "First Opium War",
+    "lat": 23.13,
+    "lng": 113.26,
+    "startYear": 1839,
+    "endYear": 1842,
+    "category": "war",
+    "wikiTitle": "First Opium War"
+  },
+  {
+    "id": "mexican-cession",
+    "title": "Mexican Cession",
+    "lat": 34.05,
+    "lng": -111.09,
+    "startYear": 1848,
+    "category": "treaty",
+    "wikiTitle": "Mexican Cession"
+  },
+  {
+    "id": "taiping",
+    "title": "Taiping Rebellion",
+    "lat": 32.06,
+    "lng": 118.8,
+    "startYear": 1850,
+    "endYear": 1864,
+    "category": "upheaval",
+    "wikiTitle": "Taiping Rebellion"
+  },
+  {
+    "id": "indian-rebellion",
+    "title": "Indian Rebellion of 1857",
+    "lat": 28.65,
+    "lng": 77.23,
+    "startYear": 1857,
+    "endYear": 1858,
+    "category": "upheaval",
+    "wikiTitle": "Indian Rebellion of 1857"
+  },
+  {
+    "id": "italian-unification",
+    "title": "Unification of Italy",
+    "lat": 41.9,
+    "lng": 12.5,
+    "startYear": 1861,
+    "category": "founding",
+    "wikiTitle": "Italian unification"
+  },
+  {
+    "id": "meiji",
+    "title": "Meiji Restoration",
+    "lat": 35.68,
+    "lng": 139.65,
+    "startYear": 1868,
+    "category": "upheaval",
+    "wikiTitle": "Meiji Restoration"
+  },
+  {
+    "id": "german-unification",
+    "title": "Unification of Germany",
+    "lat": 52.52,
+    "lng": 13.41,
+    "startYear": 1871,
+    "category": "founding",
+    "wikiTitle": "Unification of Germany"
+  },
+  {
+    "id": "scramble-africa",
+    "title": "Colonial partition of Africa",
+    "lat": 1.0,
+    "lng": 17.0,
+    "startYear": 1881,
+    "endYear": 1914,
+    "category": "empire",
+    "wikiTitle": "Scramble for Africa"
+  },
+  {
+    "id": "berlin-conference",
+    "title": "Berlin Conference — Scramble for Africa",
+    "lat": 52.52,
+    "lng": 13.405,
+    "startYear": 1884,
+    "endYear": 1885,
+    "category": "treaty",
+    "wikiTitle": "Berlin Conference"
+  },
+  {
+    "id": "adwa",
+    "title": "Battle of Adwa — Ethiopia defeats Italy",
+    "lat": 14.17,
+    "lng": 38.9,
+    "startYear": 1896,
+    "category": "war",
+    "wikiTitle": "Battle of Adwa"
+  },
+  {
+    "id": "qing-fall",
+    "title": "Fall of the Qing — Republic of China",
+    "lat": 39.9,
+    "lng": 116.4,
+    "startYear": 1911,
+    "endYear": 1912,
+    "category": "upheaval",
+    "wikiTitle": "Xinhai Revolution"
+  },
+  {
+    "id": "wwi",
+    "title": "World War I",
+    "lat": 50.85,
+    "lng": 4.35,
+    "startYear": 1914,
+    "endYear": 1918,
+    "category": "war",
+    "wikiTitle": "World War I"
+  },
+  {
+    "id": "warlord-era",
+    "title": "Chinese Warlord Era",
+    "lat": 35.0,
+    "lng": 113.0,
+    "startYear": 1916,
+    "endYear": 1928,
+    "category": "upheaval",
+    "wikiTitle": "Warlord Era"
+  },
+  {
+    "id": "russian-rev",
+    "title": "Russian Revolution",
+    "lat": 59.93,
+    "lng": 30.36,
+    "startYear": 1917,
+    "endYear": 1923,
+    "category": "upheaval",
+    "wikiTitle": "Russian Revolution"
+  },
+  {
+    "id": "northern-expedition",
+    "title": "Northern Expedition",
+    "lat": 23.13,
+    "lng": 113.26,
+    "startYear": 1926,
+    "endYear": 1928,
+    "category": "war",
+    "wikiTitle": "Northern Expedition"
+  },
+  {
+    "id": "chinese-civil-war",
+    "title": "Chinese Civil War",
+    "lat": 31.23,
+    "lng": 121.47,
+    "startYear": 1927,
+    "endYear": 1949,
+    "category": "war",
+    "wikiTitle": "Chinese Civil War"
+  },
+  {
+    "id": "long-march",
+    "title": "The Long March",
+    "lat": 26.0,
+    "lng": 116.0,
+    "startYear": 1934,
+    "endYear": 1935,
+    "category": "war",
+    "wikiTitle": "Long March"
+  },
+  {
+    "id": "second-sino-japanese",
+    "title": "Second Sino-Japanese War",
+    "lat": 32.06,
+    "lng": 118.8,
+    "startYear": 1937,
+    "endYear": 1945,
+    "category": "war",
+    "wikiTitle": "Second Sino-Japanese War"
+  },
+  {
+    "id": "wwii",
+    "title": "World War II",
+    "lat": 52.23,
+    "lng": 21.01,
+    "startYear": 1939,
+    "endYear": 1945,
+    "category": "war",
+    "wikiTitle": "World War II"
+  },
+  {
+    "id": "partition-india",
+    "title": "Indian independence and Partition",
+    "lat": 28.61,
+    "lng": 77.21,
+    "startYear": 1947,
+    "category": "founding",
+    "wikiTitle": "Partition of India"
+  },
+  {
+    "id": "israel-1948",
+    "title": "Founding of Israel and the 1948 war",
+    "lat": 31.77,
+    "lng": 35.21,
+    "startYear": 1948,
+    "endYear": 1949,
+    "category": "founding",
+    "wikiTitle": "1948 Arab–Israeli War"
+  },
+  {
+    "id": "prc-founded",
+    "title": "People's Republic of China founded",
+    "lat": 39.9,
+    "lng": 116.4,
+    "startYear": 1949,
+    "category": "founding",
+    "wikiTitle": "Proclamation of the People's Republic of China"
+  },
+  {
+    "id": "korean-war",
+    "title": "Korean War",
+    "lat": 38.0,
+    "lng": 127.0,
+    "startYear": 1950,
+    "endYear": 1953,
+    "category": "war",
+    "wikiTitle": "Korean War"
+  },
+  {
+    "id": "algerian-war",
+    "title": "Algerian War of Independence",
+    "lat": 36.75,
+    "lng": 3.06,
+    "startYear": 1954,
+    "endYear": 1962,
+    "category": "war",
+    "wikiTitle": "Algerian War"
+  },
+  {
+    "id": "vietnam-war",
+    "title": "Vietnam War",
+    "lat": 16.0,
+    "lng": 108.0,
+    "startYear": 1955,
+    "endYear": 1975,
+    "category": "war",
+    "wikiTitle": "Vietnam War"
+  },
+  {
+    "id": "ghana-independence",
+    "title": "Ghana independence — decolonization begins",
+    "lat": 5.6,
+    "lng": -0.19,
+    "startYear": 1957,
+    "category": "founding",
+    "wikiTitle": "History of Ghana (1957–1966)"
+  },
+  {
+    "id": "year-of-africa",
+    "title": "Year of Africa (17 nations independent)",
+    "lat": 7.0,
+    "lng": 21.0,
+    "startYear": 1960,
+    "category": "founding",
+    "wikiTitle": "Year of Africa"
+  },
+  {
+    "id": "congo-crisis",
+    "title": "Congo Crisis (independence & turmoil)",
+    "lat": -4.32,
+    "lng": 15.31,
+    "startYear": 1960,
+    "endYear": 1965,
+    "category": "upheaval",
+    "wikiTitle": "Congo Crisis"
+  },
+  {
+    "id": "cultural-rev",
+    "title": "Cultural Revolution",
+    "lat": 39.9,
+    "lng": 116.41,
+    "startYear": 1966,
+    "endYear": 1976,
+    "category": "upheaval",
+    "wikiTitle": "Cultural Revolution"
+  },
+  {
+    "id": "berlin-wall",
+    "title": "Fall of the Berlin Wall",
+    "lat": 52.52,
+    "lng": 13.38,
+    "startYear": 1989,
+    "category": "upheaval",
+    "wikiTitle": "Fall of the Berlin Wall"
+  },
+  {
+    "id": "soviet-collapse",
+    "title": "Dissolution of the Soviet Union",
+    "lat": 55.7558,
+    "lng": 37.6173,
+    "startYear": 1991,
+    "category": "upheaval",
+    "wikiTitle": "Dissolution of the Soviet Union"
+  },
+  {
+    "id": "apartheid-end",
+    "title": "End of apartheid in South Africa",
+    "lat": -25.75,
+    "lng": 28.19,
+    "startYear": 1994,
+    "category": "upheaval",
+    "wikiTitle": "End of apartheid in South Africa"
+  }
 ]
