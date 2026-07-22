@@ -94,13 +94,14 @@ function buildLegend() {
 async function boot() {
   // Snapshot the URL params before anything can replaceState over them.
   const bootParams = new URLSearchParams(location.search);
-  const [wars, formations, countries, cities, seedEvents, genEvents] = await Promise.all([
+  const [wars, formations, countries, cities, seedEvents, genEvents, tradeRoutes] = await Promise.all([
     loadJSON("data/wars.json"),
     loadJSON("data/formations.json"),
     loadJSON("data/countries.json"),
     loadJSON("data/cities.json"),
     loadJSON("data/events.json"),
-    loadOptionalJSON("data/events.generated.json", [])
+    loadOptionalJSON("data/events.generated.json", []),
+    loadOptionalJSON("data/trade-routes.json", [])
   ]);
   warsData = wars;
 
@@ -127,6 +128,7 @@ async function boot() {
     state.modeState = null;
     state.lastSig = null;
     globe.clearTerritoryOutlines();
+    tradeSig = null;                  // territory just wiped the shared paths layer
     layersPanel?.refresh();
     return true;
   };
@@ -187,6 +189,23 @@ async function boot() {
     citySig = sig;
     globe.setCities(vis);
     state.layers.cities.count = vis.length;
+    layersPanel?.updateCounts();
+  };
+
+  // Trade routes: Atlas-curated schematic corridors, shown for the years they
+  // were actually in use. Shares the globe's paths layer with territory mode,
+  // which is fine — the two modes are mutually exclusive.
+  let tradeSig = null;
+  const refreshTrade = y => {
+    if (state.mode !== "discovery") return;      // territory owns the paths layer
+    if (!state.layers.trade.enabled) return;
+    const active = tradeRoutes.filter(r =>
+      (r.from == null || y >= r.from) && (r.to == null || y <= r.to));
+    const sig = active.map(r => r.id).join("|");
+    if (sig === tradeSig) return;
+    tradeSig = sig;
+    globe.setTradeRoutes(active);
+    state.layers.trade.count = active.length;
     layersPanel?.updateCounts();
   };
 
@@ -254,6 +273,7 @@ async function boot() {
       }
 
       refreshCities(year);
+      refreshTrade(year);
 
       // Events layer (gated). Disabled → render empty so existing points clear.
       const vis = state.layers.events.enabled ? events.forYear(year) : [];
@@ -706,6 +726,15 @@ async function boot() {
         }
       }
       else if (id === "wars") applyHighlights();      // belligerents, no border reload
+      else if (id === "trade") {
+        tradeSig = null;
+        if (enabled) refreshTrade(state.year);
+        else {
+          globe.setTradeRoutes([]);
+          state.layers.trade.count = null;
+          layersPanel.updateCounts();
+        }
+      }
       else timeline.setYear(timeline.currentYear());   // borders + events re-render via onChange
     },
   });

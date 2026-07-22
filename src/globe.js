@@ -60,11 +60,12 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pathPoints(d => d.points)
     .pathPointLat(p => p[0])
     .pathPointLng(p => p[1])
-    .pathColor(() => STROKE)
-    .pathStroke(1.2)                   // ≥1 px gives a usable hover hit-box; 0.6 was effectively unreachable
+    .pathColor(d => d.color || STROKE)
+    .pathStroke(d => d.stroke ?? 1.2)   // ≥1 px gives a usable hover hit-box; 0.6 was effectively unreachable
     .pathLabel(d => d.name ? `<b>${d.name}</b>` : "")
     .onPathHover(p => { el.style.cursor = p ? "pointer" : "grab"; })
-    .onPathClick(d => { if (d?.name) onTerritoryClick?.(d.name); })
+    // Only territory outlines resolve to a polity card; trade routes are display-only.
+    .onPathClick(d => { if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name); })
     .pathTransitionDuration(0);
 
   world
@@ -114,7 +115,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
           : f.geometry.type === "MultiPolygon" ? f.geometry.coordinates : [];
         for (const poly of polys)
           for (const ring of poly)
-            paths.push({ name: f.properties?.NAME || "",
+            paths.push({ kind: "territory", name: f.properties?.NAME || "",
               points: ring.map(([lng, lat]) => [lat, lng]) });
       }
       // Reset selection visuals so polygons come back clean on territory exit.
@@ -124,6 +125,17 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       world.pathsData(paths);
     },
     clearTerritoryOutlines() { world.pathsData([]); },
+    // Trade routes ride the same paths layer as territory outlines, but the
+    // two are never on together (territory is its own mode), so sharing is safe.
+    setTradeRoutes(routes) {
+      world.pathsData((routes || []).map(r => ({
+        kind: "trade",
+        name: `${r.name} · ${yr(r.from)} – ${yr(r.to)}`,
+        color: r.color || STROKE,
+        stroke: 1.6,
+        points: r.points.map(([lng, lat]) => [lat, lng])
+      })));
+    },
     // Features in the current border set whose name matches any of `names`
     // (dash/diacritic/punctuation-insensitive).
     featuresForNames(names) {

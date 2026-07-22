@@ -16,7 +16,7 @@ const LAYERS = [
   { id: "cities",  label: "Cities" },
   { id: "events",  label: "Events" },
   { id: "wars",    label: "Wars" },
-  { id: "trade",   label: "Trade routes", disabled: true },
+  { id: "trade",   label: "Trade routes" },
 ];
 
 export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
@@ -64,7 +64,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
         <div class="lp-heading">Layers</div>
         ${layers}
       </div>
-      <p class="lp-note">Borders · Cities · Events are live. Greyed-out modes & layers land in later phases.</p>
+      <p class="lp-note">Layers stack; modes are exclusive. Trade routes are schematic corridors, shown for the years they were in use.</p>
     `;
     root.querySelectorAll('input[name="lp-mode"]').forEach(el => {
       el.onchange = () => onModeChange?.(el.value);

@@ -1,0 +1,104 @@
+[
+  {
+    "id": "silk-road",
+    "name": "Silk Road",
+    "from": -130,
+    "to": 1450,
+    "color": "#ffd27a",
+    "summary": "Overland caravan corridor linking Han China to the Mediterranean via the Tarim Basin and Transoxiana. Carried silk west, and glass, horses, Buddhism and plague east.",
+    "points": [
+      [108.94, 34.34], [103.8, 36.06], [98.5, 39.75], [94.66, 40.14], [89.2, 42.95],
+      [82.0, 41.7], [75.99, 39.47], [69.24, 41.31], [66.96, 39.65], [64.42, 39.77],
+      [62.19, 37.66], [57.3, 36.3], [51.4, 35.7], [47.1, 34.3], [44.37, 33.32],
+      [40.2, 34.7], [38.28, 34.55], [36.16, 36.2], [32.5, 37.9], [28.98, 41.01]
+    ]
+  },
+  {
+    "id": "incense-route",
+    "name": "Incense Route",
+    "from": -700,
+    "to": 300,
+    "color": "#c08bff",
+    "summary": "Caravan road carrying frankincense and myrrh from South Arabia to the Mediterranean. Made Petra and the Nabataeans rich.",
+    "points": [
+      [47.0, 15.37], [45.3, 16.2], [44.13, 17.49], [41.7, 19.6], [39.83, 21.42],
+      [39.61, 24.47], [38.4, 27.5], [36.6, 29.0], [35.44, 30.32], [34.47, 31.5]
+    ]
+  },
+  {
+    "id": "amber-road",
+    "name": "Amber Road",
+    "from": -1900,
+    "to": 500,
+    "color": "#ffb84d",
+    "summary": "Baltic amber travelled south to the Adriatic and on to Rome, exchanged for bronze, wine and glass.",
+    "points": [
+      [18.65, 54.35], [17.03, 51.11], [17.55, 49.6], [16.61, 49.2], [16.37, 48.21],
+      [15.44, 47.07], [14.51, 46.06], [13.37, 45.77]
+    ]
+  },
+  {
+    "id": "trans-saharan",
+    "name": "Trans-Saharan route",
+    "from": 700,
+    "to": 1600,
+    "color": "#ff8a5d",
+    "summary": "Camel caravans crossed the Sahara carrying West African gold and salt north, funding Ghana, Mali and Songhai.",
+    "points": [
+      [-3.0, 16.77], [-3.5, 19.0], [-4.0, 23.5], [-4.5, 27.0], [-4.28, 31.28],
+      [-5.0, 33.0], [-5.0, 34.03]
+    ]
+  },
+  {
+    "id": "varangian-route",
+    "name": "Varangians to the Greeks",
+    "from": 800,
+    "to": 1200,
+    "color": "#5dffa0",
+    "summary": "Norse river route from the Baltic down the Dnieper to Constantinople — the artery that made Kievan Rus'.",
+    "points": [
+      [17.9, 59.3], [23.0, 59.6], [32.3, 59.99], [31.28, 58.52], [32.05, 54.78],
+      [30.99, 52.1], [30.52, 50.45], [32.0, 47.5], [31.0, 46.0], [28.98, 41.01]
+    ]
+  },
+  {
+    "id": "grand-trunk-road",
+    "name": "Grand Trunk Road",
+    "from": -300,
+    "to": 2025,
+    "color": "#5da9ff",
+    "summary": "South Asia's great east–west highway, laid out under the Mauryas and rebuilt by Sher Shah Suri and the British.",
+    "points": [
+      [69.17, 34.53], [71.58, 34.01], [73.09, 33.6], [74.34, 31.55], [75.85, 30.9],
+      [77.1, 28.7], [78.01, 27.18], [80.35, 26.46], [82.97, 25.32], [85.14, 25.59],
+      [87.0, 24.2], [88.36, 22.57]
+    ]
+  },
+  {
+    "id": "cape-route",
+    "name": "Cape Route to the Indies",
+    "from": 1498,
+    "to": 1869,
+    "color": "#8fe9ff",
+    "summary": "Portuguese sea road round the Cape of Good Hope to India and the spice islands — it broke the overland spice monopoly, and the Suez Canal ended it.",
+    "points": [
+      [-9.14, 38.72], [-13.0, 32.0], [-17.5, 20.0], [-17.0, 10.0], [-8.0, 0.0],
+      [2.0, -12.0], [11.0, -25.0], [18.42, -33.92], [30.0, -33.0], [42.0, -22.0],
+      [55.0, -8.0], [66.0, 6.0], [73.83, 15.5], [79.0, 8.0], [88.0, 5.0],
+      [96.0, 4.0], [102.25, 2.19]
+    ]
+  },
+  {
+    "id": "atlantic-crossing",
+    "name": "Atlantic crossing",
+    "from": 1492,
+    "to": 1800,
+    "color": "#ff8ad0",
+    "summary": "The Columbian route from Andalusia via the Canaries to the Caribbean, riding the trade winds west and the Gulf Stream home.",
+    "points": [
+      [-6.0, 37.4], [-9.5, 33.0], [-15.6, 28.1], [-25.0, 24.0], [-40.0, 21.0],
+      [-55.0, 19.5], [-66.0, 18.5], [-70.0, 19.0], [-77.0, 20.0], [-86.0, 20.5],
+      [-96.13, 19.19]
+    ]
+  }
+]
