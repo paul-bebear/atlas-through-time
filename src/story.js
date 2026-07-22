@@ -41,7 +41,7 @@ export function createStory({ wars, formations, onBeat, onExit }) {
       <button class="sb-prev" ${idx <= 0 ? "disabled" : ""}>◀</button>
       <div class="sb-main">
         <div class="sb-title">${title}<span class="sb-count">${idx + 1} / ${beats.length}</span></div>
-        <div class="sb-label"><span class="sb-kind">${bt.kind}</span>${yr(bt.year)} · ${bt.label}</div>
+        <div class="sb-label">${bt.kind ? `<span class="sb-kind">${bt.kind}</span>` : ""}${yr(bt.year)} · ${bt.label}</div>
       </div>
       <button class="sb-next" ${idx >= beats.length - 1 ? "disabled" : ""}>▶</button>
       <button class="sb-exit" title="Exit story">✕</button>`;

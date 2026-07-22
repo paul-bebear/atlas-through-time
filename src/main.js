@@ -134,6 +134,7 @@ async function boot() {
   // moment on the globe can be sent as a link. Debounced — scrubbing
   // shouldn't write history on every tick.
   let selLabel = null;
+  let storyThread = null, storyBeat = 0;   // active Empire Story, for permalinks
   let urlTimer = null;
   const syncURL = () => {
     clearTimeout(urlTimer);
@@ -141,7 +142,12 @@ async function boot() {
       const q = new URLSearchParams();
       q.set("year", String(state.year));
       if (state.mode !== "discovery") q.set("mode", state.mode);
-      if (selLabel) q.set("sel", selLabel);
+      // A running thread supersedes a plain selection — ?thread=&beat= restores
+      // the exact stage of the walkthrough.
+      if (storyThread) {
+        q.set("thread", storyThread);
+        if (storyBeat) q.set("beat", String(storyBeat));
+      } else if (selLabel) q.set("sel", selLabel);
       history.replaceState(null, "", "?" + q.toString());
     }, 300);
   };
@@ -149,6 +155,7 @@ async function boot() {
   const clearSelection = () => {
     selection = null;
     selLabel = null;
+    storyThread = null; storyBeat = 0;
     syncURL();
     setSelection([]);                 // clears selection tint; layer tints re-apply
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
@@ -498,8 +505,14 @@ async function boot() {
     ? (p.start_year ?? (p.end_year - 200))   // unknown start (e.g. Roman Empire): park ~midpoint
     : (p.start_year != null && p.start_year > 1700 ? p.start_year : 2015);
 
-  async function playThread(th, atPolityId) {
-    selLabel = null;                 // thread playback isn't URL-restorable yet
+  // Thread member roles read badly as story labels ("MEMBER"); curated stories
+  // use words like Era/War, so map roles onto the same register.
+  const ROLE_LABEL = { core: "Core", shared: "Shared", member: "Stage" };
+
+  async function playThread(th, atPolityId, startBeat) {
+    selLabel = null;                 // the thread, not a selection, owns the URL
+    storyThread = th.slug || null;
+    storyBeat = 0;
     document.getElementById("storyPicker").hidden = true;
     // Playing a thread IS Empire Story mode — reflect it on the mode radio
     // whether we got here from the picker or the search bar.
@@ -509,18 +522,21 @@ async function boot() {
       .filter(m => m.polity)
       .map(m => ({
         year: repYear(m.polity),
-        kind: m.role,
+        kind: ROLE_LABEL[m.role] || "Stage",
         label: m.polity.canonical_name,
         polity: m.polity
       }))
       .sort((a, b) => a.year - b.year || (a.polity.start_year ?? 0) - (b.polity.start_year ?? 0));
-    const startIndex = atPolityId
-      ? Math.max(0, beats.findIndex(b => b.polity.id === atPolityId)) : 0;
+    const startIndex = Number.isFinite(startBeat)
+      ? Math.max(0, Math.min(beats.length - 1, startBeat))
+      : atPolityId ? Math.max(0, beats.findIndex(b => b.polity.id === atPolityId)) : 0;
     const detailCache = new Map();
     const nameCache = new Map();
     let beatSeq = 0;                            // bail stale beat async work
-    story.startCustom("🧵 " + th.display_name, beats, async bt => {
+    story.startCustom("🧵 " + th.display_name, beats, async (bt, beatIdx) => {
       const mine = ++beatSeq;
+      storyBeat = beatIdx || 0;
+      syncURL();
       const mp = bt.polity;
       if (!nameCache.has(mp.id)) {
         let resolved = [];
@@ -700,7 +716,16 @@ async function boot() {
   const qMode = bootParams.get("mode");
   const qSel = bootParams.get("sel");
   const qYear = parseInt(bootParams.get("year"), 10);
-  if (qMode === "us-territorial") {
+  const qThread = bootParams.get("thread");
+  const qBeat = parseInt(bootParams.get("beat"), 10);
+  if (qThread) {
+    // Shared Empire Story: resolve the slug, then jump straight to that stage.
+    allThreads().then(ts => {
+      const th = ts.find(t => t.slug === qThread);
+      if (th) playThread(th, null, Number.isFinite(qBeat) ? qBeat : 0);
+      else enterEmpireStory();          // unknown slug — fall back to the picker
+    }).catch(() => { /* DB down — leave the globe in discovery */ });
+  } else if (qMode === "us-territorial") {
     const e = card.resolve("United States");
     if (e) selectCurated(e);
   } else if (qMode === "empire-story") {
@@ -713,7 +738,8 @@ async function boot() {
       if (p) selectDbPolity(p);
     }).catch(() => { /* bad sel param — ignore */ });
   }
-  if (Number.isFinite(qYear)) timeline.setYear(qYear);
+  // A restored thread drives its own year from the beat — don't fight it.
+  if (Number.isFinite(qYear) && !qThread) timeline.setYear(qYear);
 
   // Eagerly warm the USA territory cache in the background — by the time
   // the user searches "United States", the bulk data is already loaded.
