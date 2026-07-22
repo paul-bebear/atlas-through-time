@@ -583,7 +583,12 @@ async function boot() {
     layersPanel?.refresh();
     timeline.setYear(timeline.currentYear());   // re-render borders/cities/events
   };
-  quiz = createQuiz({ globe, flyTo: (lat, lng, alt) => globe.flyTo(lat, lng, alt), onExit: exitQuiz });
+  quiz = createQuiz({
+    globe,
+    flyTo: (lat, lng, alt) => globe.flyTo(lat, lng, alt),
+    onExit: exitQuiz,
+    events: events.all()        // curated ones drive the chronology game
+  });
   const enterQuiz = () => {
     if (state.mode === "map-quiz") return;
     story.exit?.();

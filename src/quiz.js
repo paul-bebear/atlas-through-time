@@ -89,6 +89,88 @@ const POOL = [
   { hl: "Fiji", accept: ["fiji"], lat: -17.8, lng: 178, iso: "fj", pop: 0.9, region: "Oceania" }
 ];
 
+// Capitals, keyed by the pool's `hl`. `note` surfaces a historical name
+// change on the reveal — ties the quiz back to the time dimension.
+const CAPITALS = {
+  "United States": { name: "Washington, D.C.", accept: ["washington dc", "washington d c", "washington"] },
+  "Canada": { name: "Ottawa", accept: ["ottawa"] },
+  "Mexico": { name: "Mexico City", accept: ["mexico city"], note: "Founded as Tenochtitlan in 1325." },
+  "Brazil": { name: "Brasília", accept: ["brasilia"], note: "Purpose-built; replaced Rio as capital in 1960." },
+  "Argentina": { name: "Buenos Aires", accept: ["buenos aires"] },
+  "Chile": { name: "Santiago", accept: ["santiago"] },
+  "Peru": { name: "Lima", accept: ["lima"] },
+  "Colombia": { name: "Bogotá", accept: ["bogota"] },
+  "Venezuela": { name: "Caracas", accept: ["caracas"] },
+  "Cuba": { name: "Havana", accept: ["havana", "la habana"] },
+  "United Kingdom": { name: "London", accept: ["london"], note: "Roman Londinium until about 410." },
+  "Ireland": { name: "Dublin", accept: ["dublin"] },
+  "France": { name: "Paris", accept: ["paris"], note: "Known as Lutetia in Roman times." },
+  "Spain": { name: "Madrid", accept: ["madrid"], note: "Founded as the Moorish fort Mayrit." },
+  "Portugal": { name: "Lisbon", accept: ["lisbon", "lisboa"] },
+  "Germany": { name: "Berlin", accept: ["berlin"] },
+  "Italy": { name: "Rome", accept: ["rome", "roma"] },
+  "Netherlands": { name: "Amsterdam", accept: ["amsterdam"] },
+  "Belgium": { name: "Brussels", accept: ["brussels", "bruxelles"] },
+  "Switzerland": { name: "Bern", accept: ["bern", "berne"] },
+  "Austria": { name: "Vienna", accept: ["vienna", "wien"], note: "Roman Vindobona." },
+  "Poland": { name: "Warsaw", accept: ["warsaw", "warszawa"] },
+  "Ukraine": { name: "Kyiv", accept: ["kyiv", "kiev"] },
+  "Sweden": { name: "Stockholm", accept: ["stockholm"] },
+  "Norway": { name: "Oslo", accept: ["oslo"], note: "Called Christiania from 1624 to 1924." },
+  "Finland": { name: "Helsinki", accept: ["helsinki"] },
+  "Denmark": { name: "Copenhagen", accept: ["copenhagen", "kobenhavn"] },
+  "Iceland": { name: "Reykjavik", accept: ["reykjavik"] },
+  "Greece": { name: "Athens", accept: ["athens", "athina"] },
+  "Romania": { name: "Bucharest", accept: ["bucharest", "bucuresti"] },
+  "Hungary": { name: "Budapest", accept: ["budapest"], note: "Buda and Pest merged in 1873." },
+  "Czech Republic": { name: "Prague", accept: ["prague", "praha"] },
+  "Serbia": { name: "Belgrade", accept: ["belgrade", "beograd"], note: "Roman Singidunum." },
+  "Croatia": { name: "Zagreb", accept: ["zagreb"] },
+  "Bulgaria": { name: "Sofia", accept: ["sofia"], note: "Known as Serdica in antiquity." },
+  "Russia": { name: "Moscow", accept: ["moscow", "moskva"] },
+  "Turkey": { name: "Ankara", accept: ["ankara"], note: "Replaced Istanbul as capital in 1923." },
+  "Egypt": { name: "Cairo", accept: ["cairo"] },
+  "Morocco": { name: "Rabat", accept: ["rabat"] },
+  "Algeria": { name: "Algiers", accept: ["algiers", "alger"] },
+  "Tunisia": { name: "Tunis", accept: ["tunis"] },
+  "Libya": { name: "Tripoli", accept: ["tripoli"], note: "Founded by Phoenicians as Oea." },
+  "Nigeria": { name: "Abuja", accept: ["abuja"], note: "Replaced Lagos as capital in 1991." },
+  "Ethiopia": { name: "Addis Ababa", accept: ["addis ababa", "addis"] },
+  "Kenya": { name: "Nairobi", accept: ["nairobi"] },
+  "Ghana": { name: "Accra", accept: ["accra"] },
+  "South Africa": { name: "Pretoria", accept: ["pretoria", "cape town", "bloemfontein"], note: "Three capitals: Pretoria, Cape Town and Bloemfontein." },
+  "Tanzania, United Republic of": { name: "Dodoma", accept: ["dodoma", "dar es salaam"] },
+  "Saudi Arabia": { name: "Riyadh", accept: ["riyadh"] },
+  "Iran": { name: "Tehran", accept: ["tehran", "teheran"] },
+  "Iraq": { name: "Baghdad", accept: ["baghdad"] },
+  "Israel": { name: "Jerusalem", accept: ["jerusalem"] },
+  "Syria": { name: "Damascus", accept: ["damascus"] },
+  "Jordan": { name: "Amman", accept: ["amman"] },
+  "Afghanistan": { name: "Kabul", accept: ["kabul"] },
+  "Pakistan": { name: "Islamabad", accept: ["islamabad"] },
+  "India": { name: "New Delhi", accept: ["new delhi", "delhi"] },
+  "Bangladesh": { name: "Dhaka", accept: ["dhaka", "dacca"] },
+  "Nepal": { name: "Kathmandu", accept: ["kathmandu"] },
+  "Sri Lanka": { name: "Colombo", accept: ["colombo", "sri jayawardenepura kotte"] },
+  "China": { name: "Beijing", accept: ["beijing", "peking"], note: "Called Khanbaliq under the Mongols." },
+  "Mongolia": { name: "Ulaanbaatar", accept: ["ulaanbaatar", "ulan bator"] },
+  "Kazakhstan": { name: "Astana", accept: ["astana", "nur sultan"] },
+  "Japan": { name: "Tokyo", accept: ["tokyo"], note: "Known as Edo until 1868." },
+  "Korea, Republic of": { name: "Seoul", accept: ["seoul"] },
+  "Korea, Democratic People's Republic of": { name: "Pyongyang", accept: ["pyongyang"] },
+  "Thailand": { name: "Bangkok", accept: ["bangkok"] },
+  "Vietnam": { name: "Hanoi", accept: ["hanoi"] },
+  "Cambodia": { name: "Phnom Penh", accept: ["phnom penh"] },
+  "Burma": { name: "Naypyidaw", accept: ["naypyidaw", "yangon", "rangoon"], note: "Capital moved from Yangon in 2006." },
+  "Malaysia": { name: "Kuala Lumpur", accept: ["kuala lumpur"] },
+  "Indonesia": { name: "Jakarta", accept: ["jakarta", "batavia"] },
+  "Philippines": { name: "Manila", accept: ["manila"] },
+  "Australia": { name: "Canberra", accept: ["canberra"], note: "Purpose-built compromise between Sydney and Melbourne." },
+  "New Zealand": { name: "Wellington", accept: ["wellington"] },
+  "Papua New Guinea": { name: "Port Moresby", accept: ["port moresby"] },
+  "Fiji": { name: "Suva", accept: ["suva"] }
+};
+
 const REGIONS = ["All", "Europe", "Asia", "Africa", "Americas", "Oceania"];
 const FLAG = "https://flagcdn.com/w320/";
 
@@ -149,7 +231,9 @@ const MAX_ROUNDS = 10;
 const GAMES = {
   locate:     { label: "📍 Name the country", blurb: "A country lights up — name it" },
   flags:      { label: "🏳️ Guess the flag",   blurb: "See a flag — name the country" },
+  capitals:   { label: "🏛 Capitals",          blurb: "Name the capital city" },
   population: { label: "👥 Population",        blurb: "Pick the right size bracket" },
+  chronology: { label: "⏳ Which came first?", blurb: "Order two moments in history" },
   marathon:   { label: "⚡ Name them all",     blurb: "How many can you list? Fills in the map" }
 };
 
@@ -164,8 +248,11 @@ const setBest = (game, region, v) => {
   try { localStorage.setItem(bestKey(game, region), String(v)); } catch { /* ignore */ }
 };
 
-export function createQuiz({ globe, flyTo, onExit }) {
+export function createQuiz({ globe, flyTo, onExit, events = [] }) {
   const panel = document.getElementById("quizPanel");
+  // Chronology draws on curated events only — the auto-harvested battles are
+  // too obscure to make a fair "which came first".
+  const chronoPool = events.filter(e => e.curated && Number.isFinite(e.startYear));
   let game = "locate", region = "All";
   let queue = [], idx = 0, score = 0, streak = 0, best = 0, answered = false;
   const results = new Map();          // hl → "G" | "R"
@@ -173,12 +260,25 @@ export function createQuiz({ globe, flyTo, onExit }) {
   let remaining = [], found = [], seconds = 0, timer = null;
 
   const pool = () => region === "All" ? POOL : POOL.filter(c => c.region === region);
+  const capitalPool = () => pool().filter(c => CAPITALS[c.hl]);
+
+  // Two curated events far enough apart that the answer isn't a coin flip.
+  const chronoPair = () => {
+    for (let i = 0; i < 60; i++) {
+      const a = chronoPool[Math.floor(Math.random() * chronoPool.length)];
+      const b = chronoPool[Math.floor(Math.random() * chronoPool.length)];
+      if (!a || !b || a === b) continue;
+      if (Math.abs(a.startYear - b.startYear) < 25) continue;
+      return Math.random() < 0.5 ? [a, b] : [b, a];
+    }
+    return null;
+  };
   const stopTimer = () => { if (timer) { clearInterval(timer); timer = null; } };
 
   const highlights = () => {
     const hs = [...results].map(([names, side]) => ({ names: [names], side }));
     // Flags never pre-reveal the country; locate/population light it up.
-    if (game !== "marathon" && !answered && game !== "flags" && queue[idx])
+    if (game !== "marathon" && game !== "chronology" && !answered && game !== "flags" && queue[idx])
       hs.push({ names: [queue[idx].hl], side: "A" });
     return hs;
   };
@@ -206,7 +306,10 @@ export function createQuiz({ globe, flyTo, onExit }) {
       + Object.entries(GAMES).map(([k, g]) => {
           const b = getBest(k, region);
           const n = pool().length;
-          const target = k === "marathon" ? n : Math.min(MAX_ROUNDS, n);
+          const target = k === "marathon" ? n
+            : k === "chronology" ? MAX_ROUNDS
+            : k === "capitals" ? Math.min(MAX_ROUNDS, capitalPool().length)
+            : Math.min(MAX_ROUNDS, n);
           return `<button class="qz-game" data-game="${k}">
             <span class="qz-game-top">${g.label}${b ? `<span class="qz-best">Best ${b}/${target}</span>` : ""}</span>
             <small>${g.blurb}</small></button>`;
@@ -223,7 +326,22 @@ export function createQuiz({ globe, flyTo, onExit }) {
     globe.setHighlights([]);
     score = 0; streak = 0; best = 0; idx = 0;
     if (type === "marathon") return startMarathon();
-    queue = shuffle(pool()).slice(0, Math.min(MAX_ROUNDS, pool().length));
+    if (type === "chronology") {
+      queue = [];
+      const seen = new Set();
+      for (let i = 0; i < MAX_ROUNDS * 4 && queue.length < MAX_ROUNDS; i++) {
+        const p = chronoPair();
+        if (!p) break;
+        const k = [p[0].title, p[1].title].sort().join("|");
+        if (seen.has(k)) continue;      // no repeated matchups in one run
+        seen.add(k);
+        queue.push(p);
+      }
+      if (!queue.length) return renderMenu();
+      return showRound();
+    }
+    const src = type === "capitals" ? capitalPool() : pool();
+    queue = shuffle(src).slice(0, Math.min(MAX_ROUNDS, src.length));
     showRound();
   }
 
@@ -231,11 +349,41 @@ export function createQuiz({ globe, flyTo, onExit }) {
 
   function showRound() {
     answered = false;
+    const label = `Round ${idx + 1}/${rounds()}`;
+    const right = `Score ${score} · 🔥 ${streak}`;
+
+    // Chronology is event-based, not country-based — no globe highlight.
+    if (game === "chronology") {
+      const [a, b] = queue[idx];
+      panel.innerHTML = headHTML(label, right)
+        + `<div class="qz-q">Which came first?</div>
+           <div class="qz-chrono">
+             <button class="qz-event" data-i="0">${a.title}</button>
+             <button class="qz-event" data-i="1">${b.title}</button>
+           </div><div class="qz-feedback"></div>`;
+      panel.querySelectorAll(".qz-event").forEach(el =>
+        el.onclick = () => { if (!answered) pickEarlier(+el.dataset.i); });
+      panel.querySelector(".qz-exit").onclick = exit;
+      return;
+    }
+
     const c = queue[idx];
     globe.setHighlights(highlights());
     if (game !== "flags") flyTo(c.lat, c.lng, 1.4);
-    const label = `Round ${idx + 1}/${rounds()}`;
-    const right = `Score ${score} · 🔥 ${streak}`;
+
+    if (game === "capitals") {
+      panel.innerHTML = headHTML(label, right)
+        + `<div class="qz-q">What is the capital of <b>${cap(c.accept[0])}</b>?</div>
+           <form class="qz-form">
+             <input class="qz-input" type="text" placeholder="Type a city…" autocomplete="off" autofocus>
+             <button class="qz-submit" type="submit">Guess</button>
+           </form><div class="qz-feedback"></div>`;
+      panel.querySelector(".qz-form").onsubmit = e => { e.preventDefault(); answered ? next() : submitCapital(); };
+      panel.querySelector(".qz-input").focus();
+      panel.querySelector(".qz-exit").onclick = exit;
+      return;
+    }
+
     if (game === "population") {
       panel.innerHTML = headHTML(label, right)
         + `<div class="qz-q">Population of <b>${cap(c.accept[0])}</b>?</div>`
@@ -261,7 +409,7 @@ export function createQuiz({ globe, flyTo, onExit }) {
     panel.querySelector(".qz-exit").onclick = exit;
   }
 
-  function resolve(ok, revealHTML) {
+  function resolve(ok, revealHTML, note) {
     const c = queue[idx];
     answered = true;
     results.set(c.hl, ok ? "G" : "R");
@@ -273,6 +421,7 @@ export function createQuiz({ globe, flyTo, onExit }) {
     const fb = panel.querySelector(".qz-feedback");
     fb.className = "qz-feedback " + (ok ? "ok" : "bad");
     fb.innerHTML = (ok ? "✓ Correct!" : "✗ " + revealHTML)
+      + (note ? ` <span class="qz-note">${note}</span>` : "")
       + ` <button class="qz-next">${idx + 1 < rounds() ? "Next →" : "See results →"}</button>`;
     const nb = fb.querySelector(".qz-next");
     nb.onclick = next; nb.focus();
@@ -295,6 +444,40 @@ export function createQuiz({ globe, flyTo, onExit }) {
       else if (i === b) el.classList.add("wrong");
     });
     resolve(ok, `${cap(c.accept[0])} has <b>${popText(c.pop)}</b>`);
+  }
+
+  function submitCapital() {
+    const c = queue[idx];
+    const cp = CAPITALS[c.hl];
+    const ok = matches(panel.querySelector(".qz-input").value, [...cp.accept, cp.name]);
+    panel.querySelector(".qz-input").disabled = true;
+    panel.querySelector(".qz-submit").disabled = true;
+    resolve(ok, `It was <b>${cp.name}</b>`, cp.note);
+  }
+
+  const yrLabel = y => y < 0 ? `${Math.abs(y)} BCE` : `${y} CE`;
+
+  function pickEarlier(i) {
+    const pair = queue[idx];
+    const first = pair[0].startYear <= pair[1].startYear ? 0 : 1;
+    const ok = i === first;
+    answered = true;
+    if (ok) { score++; streak++; best = Math.max(best, streak); } else { streak = 0; }
+    const sc = panel.querySelector(".qz-score");
+    if (sc) sc.textContent = `Score ${score} · 🔥 ${streak}`;
+    panel.querySelectorAll(".qz-event").forEach((el, j) => {
+      el.disabled = true;
+      el.classList.add(j === first ? "right" : "wrong");
+      el.innerHTML = `${pair[j].title} <span class="qz-yr">${yrLabel(pair[j].startYear)}</span>`;
+    });
+    const fb = panel.querySelector(".qz-feedback");
+    fb.className = "qz-feedback " + (ok ? "ok" : "bad");
+    fb.innerHTML = (ok ? "✓ Correct!" : `✗ <b>${pair[first].title}</b> came first`)
+      + ` <button class="qz-next">${idx + 1 < rounds() ? "Next →" : "See results →"}</button>`;
+    const nb = fb.querySelector(".qz-next");
+    nb.onclick = next; nb.focus();
+    const e = pair[first];
+    if (Number.isFinite(e.lat) && Number.isFinite(e.lng)) flyTo(e.lat, e.lng, 1.6);
   }
 
   function next() {

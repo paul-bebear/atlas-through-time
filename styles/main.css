@@ -427,3 +427,16 @@ body.quiz-active #search { display: none; }
 .qz-missed { margin-top: 10px; font-size: 12px; line-height: 1.6; color: var(--muted);
   max-height: 120px; overflow-y: auto; }
 .qz-missed b { color: var(--warn); }
+
+/* Map Quiz — chronology + capital notes */
+.qz-chrono { display: flex; flex-direction: column; gap: 8px; }
+.qz-event { display: flex; align-items: center; gap: 8px; text-align: left;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 9px;
+  padding: 12px 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.qz-event:hover:not(:disabled) { border-color: var(--accent); background: rgba(93,169,255,0.12); }
+.qz-event.right { background: rgba(93,255,138,0.20); border-color: #5dff8a; color: #baffcf; }
+.qz-event.wrong { background: rgba(255,93,93,0.18); border-color: #ff5d5d; color: #ffc2c2; }
+.qz-yr { margin-left: auto; font-size: 12px; font-weight: 700;
+  opacity: 0.85; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qz-note { color: var(--muted); font-size: 12px; font-style: italic; }
