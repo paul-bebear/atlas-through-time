@@ -50,12 +50,11 @@ export async function polityDetail(id) {
 // (it's static), then filter client-side — every subsequent year change is
 // free (no network).
 //
-// Fast path: a regenerated-from-DB static JSON shipped with the site (served
-// from the CDN edge — much faster than a Supabase REST roundtrip). The
-// Supabase territory table remains the canonical source for the public API;
-// this is just the app's fast-path cache. Falls back to Supabase if the
-// static file is missing (e.g. while a fresh source is being added).
-const STATIC_BY_SOURCE = { "ohm-usa": "data/db/territory.usa.json" };
+// Fast path: a lean static display copy shipped with the site (served from
+// the CDN edge — much faster than a Supabase REST roundtrip). The Supabase
+// territory table remains the canonical source for the public API. Falls back
+// to Supabase if the static file is missing. Built by tools/shrink-territory.mjs.
+const STATIC_BY_SOURCE = { "ohm-usa": "data/db/territory.usa.app.json" };
 const territoryAllCache = new Map();
 const territoryAllInflight = new Map();
 

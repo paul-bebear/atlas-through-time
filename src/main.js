@@ -237,6 +237,7 @@ async function boot() {
   };
   const setSelection = groups => { selHighlights = groups || []; applyHighlights(); };
 
+  let usaPrefetched = false;       // idle-warm the USA territory once, after the first borders render
   const timeline = createTimeline({
     onChange: async (year) => {
       state.year = year;
@@ -291,6 +292,11 @@ async function boot() {
           if (sig !== state.lastSig) {
             state.lastSig = sig;
             globe.setBorders({ features });
+            if (!usaPrefetched && !navigator.connection?.saveData) {
+              usaPrefetched = true;
+              const warm = () => territoryAll("ohm-usa").catch(() => { /* non-fatal */ });
+              window.requestIdleCallback ? requestIdleCallback(warm) : setTimeout(warm, 4000);
+            }
           }
           state.layers.borders.count = features.length;
           layersPanel?.updateCounts();
@@ -769,10 +775,6 @@ async function boot() {
   }
   // A restored thread drives its own year from the beat — don't fight it.
   if (Number.isFinite(qYear) && !qThread) timeline.setYear(qYear);
-
-  // Eagerly warm the USA territory cache in the background — by the time
-  // the user searches "United States", the bulk data is already loaded.
-  territoryAll("ohm-usa").catch(() => { /* non-fatal */ });
 }
 
 boot().catch(err => {
