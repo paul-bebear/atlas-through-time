@@ -1,0 +1,54 @@
+<!doctype html>
+<!--
+  Renders assets/globe-placeholder-600-v1.webp: the globe at globe.gl's initial view
+  (lat 0, lng 0, altitude 2.5, fov 50) from the shipped texture, shaded like the live scene.
+  Run: serve the repo (node tools/serve.mjs 8000), open /tools/render-placeholder.html,
+  wait for document.title === "done", then write window.PLACEHOLDER (a data URL) to the file.
+-->
+<meta charset="utf-8">
+<title>rendering</title>
+<script type="module">
+const S = 600, R = 100, D = 350, T = Math.tan(25 * Math.PI / 180), NDC = Math.tan(Math.asin(R / D)) / T;
+const img = new Image();
+img.src = "../assets/earth-blue-marble-2048-v1.webp";
+await img.decode();
+const tw = img.naturalWidth, th = img.naturalHeight;
+const tc = new OffscreenCanvas(tw, th), tx = tc.getContext("2d");
+tx.drawImage(img, 0, 0);
+const tex = tx.getImageData(0, 0, tw, th).data;
+const L = (() => { const v = [-0.4, 0.8, 0.45], m = Math.hypot(...v); return v.map(c => c / m); })();
+const out = document.createElement("canvas");
+out.width = out.height = S;
+const ox = out.getContext("2d"), od = ox.createImageData(S, S), o = od.data;
+const texel = (x, y, c) => tex[(((y + th) % th) * tw + ((x % tw) + tw) % tw) * 4 + c];
+const half = S / 2;
+for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+  const sx = px + 0.5 - half, sy = half - py - 0.5, rp = Math.hypot(sx, sy);
+  const alpha = Math.min(1, Math.max(0, half - rp + 0.5));
+  if (alpha <= 0) continue;
+  const k = rp > half - 0.5 ? (half - 0.5) / rp : 1;
+  const nx = sx * k / half * NDC, ny = sy * k / half * NDC;
+  let dx = nx * T, dy = ny * T, dz = -1;
+  const m = Math.hypot(dx, dy, dz); dx /= m; dy /= m; dz /= m;
+  const b = D * dz, disc = Math.max(0, b * b - (D * D - R * R)), t = -b - Math.sqrt(disc);
+  const hx = dx * t / R, hy = dy * t / R, hz = (D + dz * t) / R;
+  const lat = Math.asin(Math.max(-1, Math.min(1, hy))), lng = Math.atan2(hx, hz);
+  const u = (lng / Math.PI + 1) / 2 * tw - 0.5, v = (0.5 - lat / Math.PI) * th - 0.5;
+  const x0 = Math.floor(u), y0 = Math.max(0, Math.min(th - 2, Math.floor(v))), fx = u - x0, fy = Math.max(0, Math.min(1, v - y0));
+  const shade = 0.6 + 0.4 * Math.max(0, hx * L[0] + hy * L[1] + hz * L[2]);
+  const i = (py * S + px) * 4;
+  for (let c = 0; c < 3; c++) {
+    const a = texel(x0, y0, c) * (1 - fx) + texel(x0 + 1, y0, c) * fx;
+    const bb = texel(x0, y0 + 1, c) * (1 - fx) + texel(x0 + 1, y0 + 1, c) * fx;
+    o[i + c] = Math.min(255, (a * (1 - fy) + bb * fy) * shade);
+  }
+  o[i + 3] = Math.round(alpha * 255);
+}
+ox.putImageData(od, 0, 0);
+document.body.append(out);
+out.toBlob(blob => {
+  const r = new FileReader();
+  r.onload = () => { window.PLACEHOLDER = r.result; document.title = "done"; };
+  r.readAsDataURL(blob);
+}, "image/webp", 0.8);
+</script>
