@@ -1,10 +1,12 @@
 // Data layer: historical border GeoJSON + curated JSON datasets.
 // Border data comes from the open-source "historical-basemaps" project,
 // served via the jsDelivr CDN and cached in-memory per period.
+// Pinned to a commit so the CDN caches it immutably for a year and upstream edits
+// cannot change the rendering under us; bump the SHA to pull newer borders.
 
 import { simplifyFC } from "./simplify.js";
 
-const CDN = "https://cdn.jsdelivr.net/gh/aourednik/historical-basemaps@master/geojson";
+const CDN = "https://cdn.jsdelivr.net/gh/aourednik/historical-basemaps@da7a4b735ecef70aebdc9c73e409d8a2500d50f3/geojson";
 const SIMPLIFY_TOL = 0.05;   // degrees; ~5 km — invisible at globe zoom, halves the vertex count
 
 // Periods (years) available in the dataset. Negative = BCE.
