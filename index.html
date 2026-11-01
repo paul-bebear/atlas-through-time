@@ -5,18 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Atlas Through Time</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-<link rel="preconnect" href="https://esm.sh" crossorigin />
 <link rel="preconnect" href="https://unpkg.com" crossorigin />
 <link rel="preconnect" href="https://cbvkgcvngigjvodnxgxg.supabase.co" crossorigin />
 <link rel="preconnect" href="https://flagcdn.com" crossorigin />
 <link rel="stylesheet" href="styles/main.css" />
-<script type="importmap">
-{
-  "imports": {
-    "globe.gl": "https://esm.sh/globe.gl@2.34.4"
-  }
-}
-</script>
+<script defer src="vendor/globe.gl-2.34.4.min.js"></script>
+<link rel="modulepreload" href="src/data.js" />
+<link rel="modulepreload" href="src/borders.js" />
+<link rel="modulepreload" href="src/globe.js" />
+<link rel="modulepreload" href="src/timeline.js" />
+<link rel="modulepreload" href="src/events.js" />
+<link rel="modulepreload" href="src/wars.js" />
+<link rel="modulepreload" href="src/formations.js" />
+<link rel="modulepreload" href="src/countryCard.js" />
+<link rel="modulepreload" href="src/search.js" />
+<link rel="modulepreload" href="src/db.js" />
+<link rel="modulepreload" href="src/story.js" />
+<link rel="modulepreload" href="src/panel.js" />
+<link rel="modulepreload" href="src/layersPanel.js" />
+<link rel="modulepreload" href="src/quiz.js" />
+<link rel="modulepreload" href="src/simplify.js" />
+<link rel="modulepreload" href="src/db-config.js" />
 </head>
 <body>
   <div id="globe"></div>

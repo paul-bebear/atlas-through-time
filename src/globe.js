@@ -1,8 +1,10 @@
 // 3D globe via globe.gl (Three.js). Satellite imagery + border polygons
 // + time-keyed event points + city labels.
 
-import Globe from "globe.gl";
 import { featureName } from "./data.js";
+
+// UMD build loaded by index.html from vendor/.
+const Globe = window.Globe;
 
 const HILITE_A = "rgba(93, 169, 255, 0.85)";
 const HILITE_B = "rgba(255, 138, 93, 0.85)";
