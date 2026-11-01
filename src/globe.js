@@ -12,16 +12,15 @@ const STROKE = "#8fe9ff";          // crisp cyan border, high contrast on satell
 const STROKE_SEL = "#ffffff";      // selected country border
 const SEL_FILL = "rgba(143, 233, 255, 0.30)"; // selected country tint
 
-// Free Earth textures shipped with three-globe (MIT). No API key.
-const TEX = "https://unpkg.com/three-globe/example/img/";
+// NASA Blue Marble colour + topography (public domain, from three-globe's examples), resized to 2048 px / 1024 px.
 
 export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick }) {
   let lastPointClick = 0;
 
   const world = Globe()(el)
     .backgroundColor("#06101c")
-    .globeImageUrl(TEX + "earth-blue-marble.jpg")
-    .bumpImageUrl(TEX + "earth-topology.png")
+    .globeImageUrl("assets/earth-blue-marble-2048-v1.webp")
+    .bumpImageUrl("assets/earth-topology-1024-v1.png")
     .showAtmosphere(true)
     .atmosphereColor("#5da9ff")
     .atmosphereAltitude(0.16)
