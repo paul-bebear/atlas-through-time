@@ -443,10 +443,10 @@ body.quiz-active #search { display: none; }
 
 #globePlaceholder {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  display: grid; place-items: center;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
 }
 #globePlaceholder img {
-  width: min(64vh, 90vw); height: auto; border-radius: 50%;
+  flex: none; width: 64vh; height: auto; border-radius: 50%;
   box-shadow: 0 0 40px 6px rgba(93,169,255,0.35), 0 0 120px 20px rgba(93,169,255,0.15);
 }
 #globePlaceholder.ready { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }
