@@ -440,3 +440,17 @@ body.quiz-active #search { display: none; }
 .qz-yr { margin-left: auto; font-size: 12px; font-weight: 700;
   opacity: 0.85; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .qz-note { color: var(--muted); font-size: 12px; font-style: italic; }
+
+#globePlaceholder {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  display: grid; place-items: center;
+}
+#globePlaceholder::before {
+  content: ""; width: min(66vh, 90vw); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #5f93c4 0%, #2a5f96 28%, #123a66 58%, #08213f 82%, #05101e 100%);
+  box-shadow: 0 0 40px 6px rgba(93,169,255,0.35), 0 0 120px 20px rgba(93,169,255,0.15);
+  animation: globePulse 2.4s ease-in-out infinite;
+}
+@keyframes globePulse { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #globePlaceholder::before { animation: none; } }
+#globePlaceholder.ready { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }

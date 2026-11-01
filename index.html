@@ -30,6 +30,7 @@
 </head>
 <body>
   <div id="globe"></div>
+  <div id="globePlaceholder" aria-hidden="true"></div>
 
   <header id="topbar">
     <div id="brand">🌍 Atlas Through Time</div>
@@ -168,7 +169,7 @@ GET /fact?subject_type=eq.polity&amp;key=eq.head_of_state&amp;subject_id=eq.21</
         <button data-step="100">100y</button>
       </div>
       <button id="surprise" title="Jump somewhere &amp; somewhen random">🎲 Surprise me</button>
-      <div id="status">loading…</div>
+      <div id="status">loading globe engine…</div>
     </div>
     <div id="trackMarks"></div>
     <input id="slider" type="range" min="-3000" max="2025" value="1900" step="1" />

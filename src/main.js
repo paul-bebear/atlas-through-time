@@ -167,8 +167,10 @@ async function boot() {
     onCountryClick: f => pickFeature(f),
     onEventClick: ev => { clearSelection(); card.openEvent(ev); },
     onTerritoryClick: name => pickTerritory(name),
-    onCityClick: d => pickCity(d)
+    onCityClick: d => pickCity(d),
+    onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
   });
+  document.getElementById("status").textContent = "loading textures & borders…";
 
   // Cities through time: a city dot is permanent once founded (gone if the
   // city dies — Babylon, Carthage), and its LABEL is period-correct

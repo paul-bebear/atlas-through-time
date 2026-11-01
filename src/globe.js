@@ -14,7 +14,7 @@ const SEL_FILL = "rgba(143, 233, 255, 0.30)"; // selected country tint
 
 // NASA Blue Marble colour + topography (public domain, from three-globe's examples), resized to 2048 px / 1024 px.
 
-export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick }) {
+export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onReady }) {
   let lastPointClick = 0;
 
   const world = Globe()(el)
@@ -24,6 +24,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .showAtmosphere(true)
     .atmosphereColor("#5da9ff")
     .atmosphereAltitude(0.16)
+    .onGlobeReady(() => onReady?.())
     .polygonsTransitionDuration(0)
     .polygonSideColor(() => "rgba(0,0,0,0)")
     .labelLat(d => d.lat).labelLng(d => d.lng).labelText(d => d.name)
