@@ -7,7 +7,7 @@ import { SLIDER_MIN, SLIDER_MAX, yearLabel, yearToPos, posToYear } from "./data.
 
 const STEPS = 4000; // slider resolution (fine near present, coarse in antiquity)
 
-export function createTimeline({ onChange, onSurprise }) {
+export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   const slider = document.getElementById("slider");
   const yearLabelEl = document.getElementById("yearLabel");
   const status = document.getElementById("status");
@@ -26,7 +26,7 @@ export function createTimeline({ onChange, onSurprise }) {
     ticks.appendChild(s);
   });
 
-  let year = 1900;
+  let year = initialYear;
   let step = 5;
   let timer = null;
 

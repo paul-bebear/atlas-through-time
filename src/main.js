@@ -3,7 +3,8 @@
 // events fade in/out by year proximity.
 
 import {
-  loadJSON, loadOptionalJSON, eraFor, yearLabel, featureName, CATEGORIES
+  loadJSON, loadOptionalJSON, loadBorders, nearestPeriod, eraFor, yearLabel, featureName, CATEGORIES,
+  SLIDER_MIN, SLIDER_MAX
 } from "./data.js";
 import { bordersForYear } from "./borders.js";
 import { createGlobe } from "./globe.js";
@@ -94,7 +95,13 @@ function buildLegend() {
 async function boot() {
   // Snapshot the URL params before anything can replaceState over them.
   const bootParams = new URLSearchParams(location.search);
-  const [wars, formations, countries, cities, seedEvents, genEvents, tradeRoutes] = await Promise.all([
+  const qYear = parseInt(bootParams.get("year"), 10);
+  const bootYear = Number.isFinite(qYear) ? Math.max(SLIDER_MIN, Math.min(SLIDER_MAX, qYear)) : 1900;
+  // The globe needs none of the JSON below, so it starts before it lands.
+  // The boot year's borders (the slowest fetch) go out first; the timeline's
+  // first onChange picks up this same in-flight request.
+  loadBorders(nearestPeriod(bootYear)).catch(() => {});
+  const dataP = Promise.all([
     loadJSON("data/wars.json"),
     loadJSON("data/formations.json"),
     loadJSON("data/countries.json"),
@@ -103,12 +110,9 @@ async function boot() {
     loadOptionalJSON("data/events.generated.json", []),
     loadOptionalJSON("data/trade-routes.json", [])
   ]);
-  warsData = wars;
-
-  const events = createEvents([...seedEvents, ...genEvents]);
-  const card = createInfoCard({ countries });
-  buildLegend();
-  initPanel();
+  // Assigned when dataP lands. Until then the globe and timeline run with
+  // empty data layers, and anything that needs these no-ops.
+  let events = null, card = null, cities = null, tradeRoutes = null;
 
   // Country selection is unified: clicking a polygon or picking from search
   // produce the SAME scoped state — name on the slider, major-event marks,
@@ -139,6 +143,7 @@ async function boot() {
   let storyThread = null, storyBeat = 0;   // active Empire Story, for permalinks
   let urlTimer = null;
   const syncURL = () => {
+    if (!events) return;             // permalink restore hasn't run yet — keep ?sel=/?mode=
     clearTimeout(urlTimer);
     urlTimer = setTimeout(() => {
       const q = new URLSearchParams();
@@ -165,7 +170,7 @@ async function boot() {
 
   const globe = createGlobe(document.getElementById("globe"), {
     onCountryClick: f => pickFeature(f),
-    onEventClick: ev => { clearSelection(); card.openEvent(ev); },
+    onEventClick: ev => { clearSelection(); card?.openEvent(ev); },
     onTerritoryClick: name => pickTerritory(name),
     onCityClick: d => pickCity(d),
     onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
@@ -182,7 +187,7 @@ async function boot() {
     return p ? p.name : c.name;
   };
   const refreshCities = y => {
-    if (!state.layers.cities.enabled) return;
+    if (!cities || !state.layers.cities.enabled) return;
     const vis = cities
       .filter(c => (c.founded == null || y >= c.founded) && (c.until == null || y <= c.until))
       .map(c => ({ name: cityNameAt(c, y), lat: c.lat, lng: c.lng, city: c }));
@@ -200,7 +205,7 @@ async function boot() {
   let tradeSig = null;
   const refreshTrade = y => {
     if (state.mode !== "discovery") return;      // territory owns the paths layer
-    if (!state.layers.trade.enabled) return;
+    if (!tradeRoutes || !state.layers.trade.enabled) return;
     const active = tradeRoutes.filter(r =>
       (r.from == null || y >= r.from) && (r.to == null || y <= r.to));
     const sig = active.map(r => r.id).join("|");
@@ -241,6 +246,7 @@ async function boot() {
 
   let usaPrefetched = false;       // idle-warm the USA territory once, after the first borders render
   const timeline = createTimeline({
+    initialYear: bootYear,
     onChange: async (year) => {
       state.year = year;
       syncURL();
@@ -279,7 +285,7 @@ async function boot() {
       refreshTrade(year);
 
       // Events layer (gated). Disabled → render empty so existing points clear.
-      const vis = state.layers.events.enabled ? events.forYear(year) : [];
+      const vis = events && state.layers.events.enabled ? events.forYear(year) : [];
       globe.setEvents(vis);
       state.layers.events.count = vis.length;
       layersPanel?.updateCounts();
@@ -321,13 +327,21 @@ async function boot() {
     },
     onSurprise: () => {
       clearSelection();
-      const ev = events.randomEvent();
+      const ev = events?.randomEvent();
       if (!ev) return;
       timeline.setYear(ev.startYear);
       globe.flyTo(ev.lat, ev.lng);
       setTimeout(() => card.openEvent(ev), 700);
     }
   });
+
+  let wars, formations, countries, seedEvents, genEvents;
+  [wars, formations, countries, cities, seedEvents, genEvents, tradeRoutes] = await dataP;
+  warsData = wars;
+  events = createEvents([...seedEvents, ...genEvents]);
+  card = createInfoCard({ countries });
+  buildLegend();
+  initPanel();
 
   // --- Unified country selection ----------------------------------------
   // Major-event marks: curated events whose coordinates fall inside the
@@ -749,10 +763,10 @@ async function boot() {
   layersPanel.updateCounts();
 
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
-  // Selection first (it may move the year), then the shared year wins.
+  // The shared year is already on the slider (initialYear); a selection may
+  // still move it (the USA clamps to 1776+).
   const qMode = bootParams.get("mode");
   const qSel = bootParams.get("sel");
-  const qYear = parseInt(bootParams.get("year"), 10);
   const qThread = bootParams.get("thread");
   const qBeat = parseInt(bootParams.get("beat"), 10);
   if (qThread) {
@@ -775,8 +789,10 @@ async function boot() {
       if (p) selectDbPolity(p);
     }).catch(() => { /* bad sel param — ignore */ });
   }
-  // A restored thread drives its own year from the beat — don't fight it.
-  if (Number.isFinite(qYear) && !qThread) timeline.setYear(qYear);
+  // Render the data layers for the current year (borders reuse the cached or
+  // in-flight snapshot and the sig is unchanged, so no second tessellate). A
+  // restored thread resolves later and drives its own year from the beat.
+  timeline.setYear(timeline.currentYear());
 }
 
 boot().catch(err => {
