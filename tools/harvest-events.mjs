@@ -71,11 +71,10 @@ const main = async () => {
     events.push({
       id,
       title: label,
-      lat: pt.lat,
-      lng: pt.lng,
+      lat: Math.round(pt.lat * 1000) / 1000,
+      lng: Math.round(pt.lng * 1000) / 1000,
       startYear: year,
-      category: "war",
-      wikiTitle: label
+      category: "war"
     });
   }
 
