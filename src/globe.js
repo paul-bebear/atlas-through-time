@@ -15,7 +15,7 @@ const SEL_FILL = "rgba(143, 233, 255, 0.30)"; // selected country tint
 // NASA Blue Marble colour + topography (public domain, from three-globe's examples), resized to 2048 px / 1024 px.
 
 export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onReady }) {
-  let lastPointClick = 0;
+  let lastPointClick = -1, lastPress = 0;
 
   const world = Globe()(el)
     .backgroundColor("#06101c")
@@ -27,12 +27,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .onGlobeReady(() => onReady?.())
     .polygonsTransitionDuration(0)
     .polygonSideColor(() => "rgba(0,0,0,0)")
-    .labelLat(d => d.lat).labelLng(d => d.lng).labelText(d => d.name)
-    .labelSize(0.4).labelDotRadius(0.14)
-    .labelAltitude(0.033)              // above the polygon caps (0.006–0.03) or they occlude the labels
-    .labelColor(() => "rgba(255, 220, 150, 0.65)").labelResolution(2)
-    .onLabelHover(l => { el.style.cursor = l ? "pointer" : "grab"; })
-    .onLabelClick(d => { lastPointClick = Date.now(); onCityClick?.(d); })
+    .htmlElement(cityEl)
     .pointLat(d => d.lat).pointLng(d => d.lng)
     .pointColor(d => d._color)
     .pointAltitude(0.006)
@@ -43,10 +38,39 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
 
   world.globeMaterial().shininess = 5;
 
+  // City labels are DOM nodes (CSS2DRenderer), one per name, reused across refreshes.
+  // globe.gl hides those behind the globe (display: none).
+  const canvas = world.renderer().domElement;
+  const cityEls = new Map();
+  function cityEl(d) {
+    let e = cityEls.get(d.name);
+    if (!e) {
+      cityEls.set(d.name, e = document.createElement("div"));
+      e.className = "city-label";
+      e.dataset.name = d.name;
+      // Hand the press to the orbit controls so a drag starting on a label still turns the globe;
+      // a release within a few px of the press is a click.
+      e.addEventListener("pointerdown", ev => {
+        ev.stopPropagation();
+        canvas.dispatchEvent(new PointerEvent("pointerdown", ev));
+        addEventListener("pointerup", up => {
+          if (Math.hypot(up.clientX - ev.clientX, up.clientY - ev.clientY) > 5) return;
+          lastPointClick = Date.now();
+          onCityClick?.(e.__d);
+        }, { once: true });
+      });
+      e.addEventListener("wheel", ev => { ev.preventDefault(); canvas.dispatchEvent(new WheelEvent("wheel", ev)); }, { passive: false });
+    }
+    e.__d = d;
+    return e;
+  }
+
   const controls = world.controls();
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.3;
   el.addEventListener("pointerdown", () => { controls.autoRotate = false; }, { once: true });
+  el.addEventListener("pointerdown", () => { lastPress = Date.now(); });
+  controls.addEventListener("change", sizeCities);
 
   // Stop burning GPU when the tab is in the background.
   document.addEventListener("visibilitychange", () =>
@@ -90,7 +114,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .polygonLabel(f => `<b>${featureName(f)}</b>`)
     .onPolygonHover(f => { el.style.cursor = f ? "pointer" : "grab"; })
     .onPolygonClick(f => {
-      if (Date.now() - lastPointClick < 350) return; // an event point handled it
+      if (lastPointClick >= lastPress) return; // this press already opened an event point or city
       if (!f) return;
       onCountryClick(f);                       // selectCurated etc. run their setHighlights (which clears selectedKey)
       selectedKey = norm(featureName(f));      // then re-mark the clicked one
@@ -99,7 +123,16 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
 
   const refresh = () => world.polygonsData(world.polygonsData());
 
-  function resize() { world.width(el.clientWidth).height(el.clientHeight); }
+  function resize() { world.width(el.clientWidth).height(el.clientHeight); sizeCities(); }
+  // Labels scale with zoom like the old 3D text (capped in CSS); zoomed out, only the dots show.
+  let citySize = 0;
+  function sizeCities() {
+    const s = Math.round(el.clientHeight / 45 / world.pointOfView().altitude) / 2;
+    if (s === citySize) return;
+    citySize = s;
+    el.style.setProperty("--city-size", s + "px");
+    el.classList.toggle("cities-far", s < 7);
+  }
   window.addEventListener("resize", resize);
   resize();
 
@@ -144,7 +177,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       const set = new Set((names || []).map(norm));
       return currentFeatures.filter(f => set.has(norm(featureName(f))));
     },
-    setCities: c => world.labelsData(c || []),
+    setCities: c => world.htmlElementsData(c || []),
     allFeatures: () => currentFeatures,
     setEvents: e => world.pointsData(e || []),
     setHighlights(highlights) {

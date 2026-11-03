@@ -14,8 +14,14 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   color: var(--text); }
 
-#globe { position: absolute; inset: 0; cursor: grab; }
+#globe { position: absolute; inset: 0; cursor: grab; isolation: isolate; } /* keeps label z-indexes under the UI */
 #globe:active { cursor: grabbing; }
+.city-label { width: clamp(2px, calc(var(--city-size) * .45), 6px); aspect-ratio: 1; border-radius: 50%;
+  background: rgba(255, 220, 150, 0.75); pointer-events: auto; cursor: pointer; touch-action: none; }
+.city-label::after { content: attr(data-name); position: absolute; left: calc(100% + 3px); top: 50%; translate: 0 -50%;
+  font-size: clamp(9px, var(--city-size), 13px); line-height: 1; white-space: nowrap;
+  color: rgba(255, 220, 150, 0.8); text-shadow: 0 0 2px rgba(0, 0, 0, 0.8); }
+.cities-far .city-label::after { display: none; }
 
 #topbar {
   position: absolute; top: 16px; left: 18px; right: 18px; z-index: 10;
