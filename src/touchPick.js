@@ -68,7 +68,7 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity
     return best;
   }
 
-  // City labels ignore touches (styles/main.css) so a drag that starts on one
+  // City labels ignore touches (src/globe.js) so a drag that starts on one
   // turns the globe; a tap on a dot or its name is matched here instead.
   function cityAt(x, y) {
     const box = el.getBoundingClientRect();

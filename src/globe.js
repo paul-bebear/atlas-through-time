@@ -13,6 +13,11 @@ const STROKE = "#8fe9ff";          // crisp cyan border, high contrast on satell
 const STROKE_SEL = "#ffffff";      // selected country border
 const SEL_FILL = "rgba(143, 233, 255, 0.30)"; // selected country tint
 
+// globe.gl's hover tooltip follows the pointer; under a finger it sticks at the last
+// touch point. Touch-only screens get no tooltip text (the cards are the touch affordance).
+const NO_HOVER = matchMedia("(hover: none)").matches;
+const tip = fn => NO_HOVER ? null : fn;
+
 // NASA Blue Marble colour + topography (public domain, from three-globe's examples), resized to 2048 px / 1024 px.
 
 export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onReady }) {
@@ -34,7 +39,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pointAltitude(0.006)
     .pointRadius(d => 0.10 + 0.16 * (d._alpha ?? 1))
     .pointResolution(6)
-    .pointLabel(d => `${d.title} · ${yr(d.startYear)}`)
+    .pointLabel(tip(d => `${d.title} · ${yr(d.startYear)}`))
     .onPointClick(d => { if (touch.isTouch()) return; lastPointClick = Date.now(); onEventClick(d); });
 
   world.globeMaterial().shininess = 5;
@@ -49,6 +54,10 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       cityEls.set(d.name, e = document.createElement("div"));
       e.className = "city-label";
       e.dataset.name = d.name;
+      // Touch-only screens: let presses through to the canvas so a drag that starts on a
+      // label turns the globe natively (Safari drops the forwarded press below); taps are
+      // matched to cities by touchPick. Inline so it beats .city-label's pointer-events.
+      if (NO_HOVER) e.style.pointerEvents = "none";
       // Hand the press to the orbit controls so a drag starting on a label still turns the globe;
       // a release within a few px of the press is a click.
       e.addEventListener("pointerdown", ev => {
@@ -89,7 +98,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pathPointLng(p => p[1])
     .pathColor(d => d.color || STROKE)
     .pathStroke(d => d.stroke ?? 1.2)   // ≥1 px gives a usable hover hit-box; 0.6 was effectively unreachable
-    .pathLabel(d => d.name ? `<b>${d.name}</b>` : "")
+    .pathLabel(tip(d => d.name ? `<b>${d.name}</b>` : ""))
     .onPathHover(p => { el.style.cursor = p ? "pointer" : "grab"; })
     // Only territory outlines resolve to a polity card; trade routes are display-only.
     .onPathClick(d => { if (touch.isTouch()) return; if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name); })
@@ -112,7 +121,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       if (k === selectedKey) return 0.03;
       return highlightMap.has(k) ? 0.014 : 0.006;
     })
-    .polygonLabel(f => `<b>${featureName(f)}</b>`)
+    .polygonLabel(tip(f => `<b>${featureName(f)}</b>`))
     .onPolygonHover(f => { el.style.cursor = f ? "pointer" : "grab"; })
     .onPolygonClick(f => {
       if (touch.isTouch()) return;             // taps are resolved by touchPick below
