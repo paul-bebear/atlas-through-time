@@ -38,11 +38,22 @@ export function createInfoCard({ countries }) {
     return url;
   }
 
+  // One × for the card's lifetime. A re-render (the Wikipedia summary landing) used
+  // to replace it, so a finger already on it lifted off a detached node: no touchend
+  // reached the page and iOS withheld the click, and × needed a second tap.
+  // Touch closes on touchend; preventDefault stops the click that would otherwise
+  // land on whatever was under the × once the card hides.
+  const x = document.createElement("span");
+  x.className = "cc-close";
+  x.textContent = "×";
+  x.onclick = close;
+  x.addEventListener("touchend", e => { e.preventDefault(); close(); });
+
   function shell(titleHtml, sub, body) {
     card.hidden = false;
-    card.innerHTML = `<span class="cc-close">×</span>
-      <h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`;
-    card.querySelector(".cc-close").onclick = close;
+    for (const n of [...card.childNodes]) if (n !== x) n.remove();
+    if (x.parentNode !== card) card.prepend(x);
+    card.insertAdjacentHTML("beforeend", `<h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`);
   }
 
   // Core renderer shared by click + search/story paths.
