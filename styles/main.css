@@ -7,7 +7,12 @@
   --accent: #5da9ff;
   --accent2: #8b5cf6;
   --warn: #ff8a5d;
+  --timeline-bottom: 22px;  /* #timeline's bottom offset; --timeline-h is set live by timeline.js */
 }
+
+/* Panels below set their own display, which would override the hidden attribute
+   and paint empty boxes (the story bar ghost over the timeline). */
+[hidden] { display: none !important; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
@@ -227,7 +232,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 
 /* Timeline */
 #timeline {
-  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: var(--timeline-bottom); transform: translateX(-50%);
   width: min(900px, 94vw); z-index: 10;
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 14px 18px 16px; backdrop-filter: blur(8px);
@@ -308,7 +313,9 @@ input[type=range]::-webkit-slider-thumb {
 #searchResults .sr-exp:hover { color: #fff; }
 
 /* Guided story bar */
-#storyBar { position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
+/* Sits just above the timeline, however tall it has wrapped. */
+#storyBar { position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--timeline-bottom) + var(--timeline-h, 120px) + 12px);
   z-index: 13; width: min(680px, 94vw);
   display: flex; align-items: center; gap: 12px;
   background: rgba(14,24,38,0.95); border: 1px solid rgba(93,169,255,0.35);

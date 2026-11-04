@@ -15,6 +15,12 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   const playBtn = document.getElementById("play");
   const stepGroup = document.getElementById("stepGroup");
 
+  // Panels that sit above the timeline (the story bar) position off its live
+  // height, which changes as #timeRow wraps.
+  const root = document.getElementById("timeline");
+  new ResizeObserver(() => document.documentElement.style.setProperty("--timeline-h", root.offsetHeight + "px"))
+    .observe(root);
+
   slider.min = 0;
   slider.max = STEPS;
   slider.step = 1;
