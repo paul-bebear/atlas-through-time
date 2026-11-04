@@ -459,3 +459,86 @@ body.quiz-active #search { display: none; }
   box-shadow: 0 0 40px 6px rgba(93,169,255,0.35), 0 0 120px 20px rgba(93,169,255,0.15);
 }
 #globePlaceholder.ready { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }
+
+/* ---------- Phone layout (portrait phones up to the 440 pt Pro Max) ----------
+   Everything below is scoped to this query, so desktop is untouched.
+   Rows from the top: ☰ · 🌍 · context · year/era  |  search  |  modes pill.
+   The country card drops in under the search row; the timeline is pinned
+   to the bottom safe area. */
+@media (max-width: 480px) {
+  :root {
+    --top: calc(env(safe-area-inset-top, 0px) + 8px);
+    --l: max(8px, env(safe-area-inset-left, 0px));
+    --r: max(8px, env(safe-area-inset-right, 0px));
+    --b: max(8px, env(safe-area-inset-bottom, 0px));
+  }
+  html, body { height: 100%; height: -webkit-fill-available; height: 100dvh; }
+  body { position: relative; -webkit-text-size-adjust: 100%; }
+  button, input, label, .cc-close { touch-action: manipulation; }
+
+  /* Row 1 */
+  #menuBtn { top: var(--top); left: var(--l); width: 44px; height: 44px;
+    padding: 0; font-size: 18px; }
+  #menuBtn .btn-label { display: none; }
+  #topbar { top: var(--top); left: calc(var(--l) + 50px); right: var(--r);
+    height: 44px; gap: 6px; justify-content: flex-start; }
+  #brand, #context { height: 44px; border-radius: 10px; }
+  #brand { flex: none; padding: 0 10px; font-size: 18px; line-height: 42px; }
+  #brand .brand-name { display: none; }
+  #context { flex: 1 1 auto; min-width: 0; max-width: none;
+    font-size: 13px; line-height: 42px; padding: 0 10px; }
+  /* Two clamped lines. The vertical padding is a transparent border so the
+     clamp's overflow clip (at the padding box) hides any third line; the
+     outline is a box-shadow outside it. */
+  #era { flex: none; max-width: 44%; padding: 0 9px; border-radius: 10px;
+    border: solid transparent; border-width: 7px 0; box-shadow: 0 0 0 1px var(--border);
+    font-size: 11px; line-height: 14.5px;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; }
+
+  /* Row 2: search, full width; 16px text so iOS doesn't zoom on focus */
+  #search { top: calc(var(--top) + 52px); left: var(--l); right: var(--r);
+    width: auto; transform: none; }
+  #searchInput { height: 44px; font-size: 16px; }
+  #searchResults { max-height: 50dvh; overflow-y: auto; }
+  #searchResults .sr { padding: 12px 14px; font-size: 15px; }
+  #searchResults .sr-member { padding-left: 30px; font-size: 14px; }
+
+  /* Row 3: modes & layers, a pill when collapsed, full width when open */
+  #modesPanel { top: calc(var(--top) + 104px); left: var(--l); width: auto;
+    padding: 0 12px; max-height: calc(100dvh - var(--top) - 330px); }
+  #modesPanel .modes-title { min-height: 40px; margin: 0; gap: 10px; }
+  #modesPanel.collapsed { padding-bottom: 0; }
+  #modesPanel:not(.collapsed) { right: var(--r); padding-bottom: 10px; }
+  #layersPanel .lp-row { min-height: 44px; font-size: 15px; }
+
+  /* Country / event card: full width under the search row, globe stays
+     visible below it; big close target in the corner */
+  #infoCard { top: calc(var(--top) + 104px); left: var(--l); right: var(--r);
+    width: auto; padding: 14px;
+    max-height: min(38dvh, calc(100dvh - var(--top) - 380px)); }
+  #infoCard .cc-close { top: 0; right: 0; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  #infoCard h2 { font-size: 18px; padding-right: 34px; }
+  #infoCard img.cc-thumb { max-height: 120px; object-fit: cover; }
+
+  /* Drawer */
+  #drawer { padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  #drawerClose { width: 44px; height: 44px; font-size: 20px; }
+  .acc-h { min-height: 44px; font-size: 14px; }
+
+  /* Story bar, quiz, story picker: full width, finger-sized controls */
+  #storyBar { left: var(--l); right: var(--r); width: auto; transform: none;
+    gap: 8px; padding: 6px 8px; }
+  #storyBar button, #storyBar .sb-exit { width: 44px; height: 44px; }
+  #quizPanel, #storyPicker { left: var(--l); right: var(--r); width: auto;
+    max-width: none; transform: none; bottom: var(--b); padding: 14px; }
+  #quizPanel { max-height: calc(100dvh - var(--top) - 60px); overflow-y: auto; }
+  #storyPicker { max-height: 60dvh; }
+  .qz-exit, .sp-exit { width: 44px; height: 44px; font-size: 16px; }
+  .qz-input { font-size: 16px; min-width: 0; }
+  .qz-submit, .qz-next, .qz-again, .qz-done, .qz-region { min-height: 44px; }
+  .sp-thread { padding: 12px; }
+}
