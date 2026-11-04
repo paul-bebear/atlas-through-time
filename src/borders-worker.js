@@ -7,7 +7,7 @@
 // lives in the visitor's browser and nowhere else. Never upload, re-serve,
 // export or commit simplified snapshots (see borders.js).
 
-import { simplifyFC } from "./simplify.js";
+import { simplifyFC, SIMPLIFY_VERSION } from "./simplify.js";
 
 const DB = "atlas-borders", STORE = "snapshots";
 
@@ -42,8 +42,8 @@ async function cachePut(key, gj, url, tol) {
     store.put(gj, key);
     if (pruned) return;
     pruned = true;
-    // Once per session: drop snapshots of an older pinned commit or another tolerance.
-    const dir = url.slice(0, url.lastIndexOf("/") + 1), tail = `@${tol}`;
+    // Once per session: drop snapshots of an older pinned commit, tolerance or simplifier.
+    const dir = url.slice(0, url.lastIndexOf("/") + 1), tail = `@${tol}v${SIMPLIFY_VERSION}`;
     for (const k of await done(store.getAllKeys()))
       if (!k.startsWith(dir) || !k.endsWith(tail)) store.delete(k);
   } catch { /* quota or blocked storage: the snapshot is still returned */ }
@@ -53,7 +53,7 @@ self.onmessage = async e => {
   const { id, url, tol } = e.data;
   try {
     // The URL carries the pinned commit, so a bumped SHA misses the cache.
-    const key = `${url}@${tol}`;
+    const key = `${url}@${tol}v${SIMPLIFY_VERSION}`;
     let gj = await cacheGet(key);
     if (!gj) {
       const res = await fetch(url);

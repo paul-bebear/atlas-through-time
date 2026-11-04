@@ -35,10 +35,50 @@ export function simplifyRing(ring, tol) {
   return out.length >= 4 ? out : null;
 }
 
+// Bump when the output changes, so the worker's on-device cache is rebuilt.
+export const SIMPLIFY_VERSION = 2;
+
+// Spherical area of a ring in steradians, summed exactly as d3-geo does
+// (geoArea / geoBounds): positive when d3 reads the ring as enclosing the
+// small region it outlines, negative when it reads "everything but".
+function ringArea(ring) {
+  const rad = Math.PI / 180, n = ring.length;
+  let sum = 0, l0 = ring[0][0] * rad, p = ring[0][1] * rad / 2 + Math.PI / 4;
+  let cos0 = Math.cos(p), sin0 = Math.sin(p);
+  for (let i = 1; i <= n; i++) {          // i = n closes an unclosed ring (a no-op when closed)
+    const l = ring[i % n][0] * rad;
+    p = ring[i % n][1] * rad / 2 + Math.PI / 4;
+    const d = l - l0, s = d >= 0 ? 1 : -1, cos = Math.cos(p), sin = Math.sin(p), k = sin0 * sin;
+    sum += Math.atan2(k * s * Math.sin(s * d), cos0 * cos + k * Math.cos(s * d));
+    l0 = l; cos0 = cos; sin0 = sin;
+  }
+  return 2 * sum;
+}
+
+const MIN_AREA = 1e-9;   // sr, ~0.04 km²: slivers and self-crossing figure-8s
+
+// The globe's triangulator asks d3-geo for a polygon's bounds; a ring wound
+// the wrong way means "the whole sphere except this", so its invisible cap
+// covers the globe and wins every hover and click (Chile's Navarino ring in
+// 1920–2010, and hundreds of islands that Douglas-Peucker reversed or
+// flattened). Rewind such rings (outer rings positive, holes negative) and
+// drop slivers whose winding is noise.
+function orientRing(ring, outer) {
+  const a = ringArea(ring);
+  if (Math.abs(a) < MIN_AREA) return null;
+  return (a > 0) === outer ? ring : ring.slice().reverse();
+}
+
+// Simplified ring, or the original when simplifying ruined it; null if neither renders.
+const fitRing = (ring, tol, outer) => {
+  const r = simplifyRing(ring, tol);
+  return (r && orientRing(r, outer)) || orientRing(ring, outer);
+};
+
 const simplifyPoly = (poly, tol) => {
   const rings = [];
   for (let i = 0; i < poly.length; i++) {
-    const r = simplifyRing(poly[i], tol);
+    const r = fitRing(poly[i], tol, i === 0);
     if (i === 0 && !r) return null;   // outer ring collapsed → drop the poly
     if (r) rings.push(r);             // collapsed holes just disappear
   }
