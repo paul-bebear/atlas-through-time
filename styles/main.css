@@ -10,6 +10,9 @@
 }
 
 * { box-sizing: border-box; }
+/* Panels toggled with the hidden attribute often also set display (e.g.
+   #storyBar is flex), which would override hidden and paint an empty box. */
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   color: var(--text); }

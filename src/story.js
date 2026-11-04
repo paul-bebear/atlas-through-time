@@ -32,11 +32,21 @@ export function createStory({ wars, formations, onBeat, onExit }) {
 
   const timelineEl = document.getElementById("timeline");
 
+  // Sit just above the timeline's real top edge, whatever its (wrapping)
+  // height or bottom offset; re-run when the timeline or viewport resizes.
+  function place() {
+    if (bar.hidden || !timelineEl) return;
+    const top = timelineEl.getBoundingClientRect().top;
+    const h = document.documentElement.clientHeight;
+    bar.style.bottom = Math.max(0, h - top + 12) + "px";
+  }
+  if (timelineEl && "ResizeObserver" in window) new ResizeObserver(place).observe(timelineEl);
+  window.addEventListener("resize", place);
+
   function show() {
     const bt = beats[idx];
     bar.hidden = false;
-    // Sit just above the timeline regardless of its (wrapping) height.
-    if (timelineEl) bar.style.bottom = (timelineEl.offsetHeight + 34) + "px";
+    place();
     bar.innerHTML = `
       <button class="sb-prev" ${idx <= 0 ? "disabled" : ""}>◀</button>
       <div class="sb-main">
