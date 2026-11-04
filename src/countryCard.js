@@ -9,7 +9,10 @@ const FLAG = "https://flagcdn.com/w80/";
 
 export function createInfoCard({ countries }) {
   const card = document.getElementById("infoCard");
-  const close = () => { card.hidden = true; };
+  // Bumped by every open and by close, so a Wikipedia fetch that lands late can't
+  // overwrite a newer card or reopen a closed one (a tap on × "not working").
+  let openSeq = 0;
+  const close = () => { card.hidden = true; openSeq++; };
 
   const data = (countries && countries.countries) || {};
   const byAlias = new Map();
@@ -23,7 +26,6 @@ export function createInfoCard({ countries }) {
     (c.eras || []).find(e => year >= e.from && year <= (e.to ?? 9999)) || null;
 
   const thumbCache = new Map();
-  let openSeq = 0;
 
   async function fetchThumb(title) {
     if (thumbCache.has(title)) return thumbCache.get(title);
@@ -36,11 +38,22 @@ export function createInfoCard({ countries }) {
     return url;
   }
 
+  // One × for the card's lifetime. A re-render (the Wikipedia summary landing) used
+  // to replace it, so a finger already on it lifted off a detached node: no touchend
+  // reached the page and iOS withheld the click, and × needed a second tap.
+  // Touch closes on touchend; preventDefault stops the click that would otherwise
+  // land on whatever was under the × once the card hides.
+  const x = document.createElement("span");
+  x.className = "cc-close";
+  x.textContent = "×";
+  x.onclick = close;
+  x.addEventListener("touchend", e => { e.preventDefault(); close(); });
+
   function shell(titleHtml, sub, body) {
     card.hidden = false;
-    card.innerHTML = `<span class="cc-close">×</span>
-      <h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`;
-    card.querySelector(".cc-close").onclick = close;
+    for (const n of [...card.childNodes]) if (n !== x) n.remove();
+    if (x.parentNode !== card) card.prepend(x);
+    card.insertAdjacentHTML("beforeend", `<h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`);
   }
 
   // Core renderer shared by click + search/story paths.
@@ -101,12 +114,14 @@ export function createInfoCard({ countries }) {
   }
 
   async function openEvent(ev) {
+    const myseq = ++openSeq;
     shell(ev.title, `${yr(ev.startYear)}${ev.endYear ? " – " + yr(ev.endYear) : ""} · ${ev.category}`,
       `<div class="cc-loading">Fetching from Wikipedia…</div>`);
     try {
       const res = await fetch(WIKI + encodeURIComponent(ev.wikiTitle));
       if (!res.ok) throw new Error("not found");
       const d = await res.json();
+      if (openSeq !== myseq) return;
       const thumb = d.thumbnail?.source ? `<img class="cc-thumb" src="${d.thumbnail.source}" alt="">` : "";
       const link = d.content_urls?.desktop?.page;
       shell(ev.title, `${yr(ev.startYear)}${ev.endYear ? " – " + yr(ev.endYear) : ""} · ${ev.category}`,
@@ -114,6 +129,7 @@ export function createInfoCard({ countries }) {
         + `<div class="cc-extract">${d.extract || "No summary available."}</div>`
         + (link ? `<a class="cc-link" href="${link}" target="_blank" rel="noopener">Read on Wikipedia →</a>` : ""));
     } catch {
+      if (openSeq !== myseq) return;
       shell(ev.title, `${yr(ev.startYear)} · ${ev.category}`,
         `<div class="cc-note">Couldn't fetch a description for this event.</div>`);
     }
@@ -123,6 +139,7 @@ export function createInfoCard({ countries }) {
   // ruler / population relevant to `year` (the viewed moment) rather than
   // dumping every fact. `detail` = { facts, refs } from db.polityDetail().
   function openDbPolity(p, detail, year) {
+    openSeq++;
     const span = `${p.start_year != null ? yr(p.start_year) : "?"} – ${
       p.end_year != null ? yr(p.end_year) : "present"}`;
     const facts = detail?.facts || [];
