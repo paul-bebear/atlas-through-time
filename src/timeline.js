@@ -15,12 +15,6 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   const playBtn = document.getElementById("play");
   const stepGroup = document.getElementById("stepGroup");
 
-  // Panels that sit above the timeline (the story bar) position off its live
-  // height, which changes as #timeRow wraps.
-  const root = document.getElementById("timeline");
-  new ResizeObserver(() => document.documentElement.style.setProperty("--timeline-h", root.offsetHeight + "px"))
-    .observe(root);
-
   slider.min = 0;
   slider.max = STEPS;
   slider.step = 1;
@@ -109,15 +103,11 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
     }, 400);
   };
 
-  // Phones show only the active step (styles/main.css); tapping it cycles to the next.
-  const phone = matchMedia("(max-width: 430px)");
-  const stepBtns = [...stepGroup.querySelectorAll("button")];
-  stepBtns.forEach((b, i) => {
+  stepGroup.querySelectorAll("button").forEach(b => {
     b.onclick = () => {
-      const pick = phone.matches && b.classList.contains("on") ? stepBtns[(i + 1) % stepBtns.length] : b;
-      step = +pick.dataset.step;
-      stepBtns.forEach(x => x.classList.remove("on"));
-      pick.classList.add("on");
+      step = +b.dataset.step;
+      stepGroup.querySelectorAll("button").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
     };
   });
 

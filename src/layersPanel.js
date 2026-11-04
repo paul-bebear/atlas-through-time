@@ -67,11 +67,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
       <p class="lp-note">Layers stack; modes are exclusive. Trade routes are schematic corridors, shown for the years they were in use.</p>
     `;
     root.querySelectorAll('input[name="lp-mode"]').forEach(el => {
-      el.onchange = () => {
-        // Small screens: get the panel out of the way of the mode's own UI (quiz, story picker).
-        if (window.innerWidth < 720) aside?.classList.add("collapsed");
-        onModeChange?.(el.value);
-      };
+      el.onchange = () => onModeChange?.(el.value);
     });
     root.querySelectorAll('input[name="lp-layer"]').forEach(el => {
       el.onchange = () => onLayerToggle?.(el.value, el.checked);

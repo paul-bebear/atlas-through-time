@@ -7,12 +7,7 @@
   --accent: #5da9ff;
   --accent2: #8b5cf6;
   --warn: #ff8a5d;
-  --timeline-bottom: 22px;  /* #timeline's bottom offset; --timeline-h is set live by timeline.js */
 }
-
-/* Panels below set their own display, which would override the hidden attribute
-   and paint empty boxes (the story bar ghost over the timeline). */
-[hidden] { display: none !important; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
@@ -235,7 +230,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 
 /* Timeline */
 #timeline {
-  position: absolute; left: 50%; bottom: var(--timeline-bottom); transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
   width: min(900px, 94vw); z-index: 10;
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 14px 18px 16px; backdrop-filter: blur(8px);
@@ -316,9 +311,7 @@ input[type=range]::-webkit-slider-thumb {
 #searchResults .sr-exp:hover { color: #fff; }
 
 /* Guided story bar */
-/* Sits just above the timeline, however tall it has wrapped. */
-#storyBar { position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: calc(var(--timeline-bottom) + var(--timeline-h, 120px) + 12px);
+#storyBar { position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
   z-index: 13; width: min(680px, 94vw);
   display: flex; align-items: center; gap: 12px;
   background: rgba(14,24,38,0.95); border: 1px solid rgba(93,169,255,0.35);
@@ -469,81 +462,3 @@ body.quiz-active #search { display: none; }
   box-shadow: 0 0 40px 6px rgba(93,169,255,0.35), 0 0 120px 20px rgba(93,169,255,0.15);
 }
 #globePlaceholder.ready { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }
-
-/* ---- Phone layout (≤ 430 px). Desktop and tablet are untouched. ----------
-   One compact top row (menu, globe/name or selection, year · era), search
-   under it, modes as a chip, the info card full width under the top row,
-   a two-line timeline above the home indicator. 44 px touch targets. */
-@media (max-width: 430px) {
-  :root {
-    --safe-t: env(safe-area-inset-top, 0px);
-    --safe-b: env(safe-area-inset-bottom, 0px);
-    --timeline-bottom: calc(var(--safe-b) + 8px);
-  }
-  html, body { height: 100%; height: -webkit-fill-available; height: 100dvh; }
-  body { -webkit-tap-highlight-color: transparent; }
-  button, input[type=range] { touch-action: manipulation; }
-
-  #menuBtn { top: calc(var(--safe-t) + 8px); left: 10px; width: 44px; height: 44px;
-    padding: 0; font-size: 0; }
-  #menuBtn::before { content: "☰"; font-size: 20px; }
-
-  #topbar { top: calc(var(--safe-t) + 8px); left: 60px; right: 10px; gap: 6px; height: 44px; }
-  #brand, #context, #era { height: 44px; border-radius: 12px; }
-  #brand { display: flex; align-items: center; padding: 0 12px; font-size: 14px; white-space: nowrap; }
-  #topbar:has(#context.sel) .brand-name { display: none; }
-  #context { display: none; }
-  #context.sel { display: block; flex: 1; min-width: 0; max-width: none;
-    padding: 0 12px; font-size: 14px; line-height: 42px; }
-  /* Two clamped lines exactly fill the 42 px content box, so a third never peeks out. */
-  #era { margin-left: auto; flex: none; max-width: 132px; padding: 2px 10px;
-    font-size: 12px; line-height: 19px; overflow: hidden;
-    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-
-  #search { top: calc(var(--safe-t) + 60px); left: 10px; right: 10px; width: auto; transform: none; }
-  #searchInput { height: 44px; font-size: 16px; }   /* < 16 px makes iOS zoom on focus */
-  #searchResults .sr { padding: 12px 14px; font-size: 15px; }
-
-  #modesPanel { top: calc(var(--safe-t) + 112px); left: 10px; right: 10px; width: auto; max-height: 50dvh; }
-  #modesPanel.collapsed { right: auto; padding: 0 14px; }
-  #modesPanel.collapsed .modes-title { margin: 0; }
-  #modesPanel .modes-title { min-height: 40px; gap: 10px; }
-  #layersPanel .lp-row { min-height: 40px; font-size: 15px; }
-
-  #drawer { padding-top: calc(16px + var(--safe-t)); padding-bottom: calc(16px + var(--safe-b)); }
-  #drawerClose { width: 44px; height: 44px; font-size: 20px; }
-
-  /* Info card: full width under the top row, clear of the story bar and timeline. */
-  #infoCard { top: calc(var(--safe-t) + 60px); left: 10px; right: 10px; width: auto; z-index: 13;
-    max-height: min(44dvh, calc(100dvh - var(--safe-t) - 80px - var(--timeline-bottom) - var(--timeline-h, 140px)));
-    padding: 14px 16px; }
-  #infoCard .cc-close { top: 0; right: 0; width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center; font-size: 26px; }
-  #infoCard h2 { font-size: 18px; padding-right: 32px; }
-
-  /* Timeline: [play][back][year][fwd][step][dice], then the slider. */
-  #timeline { left: 10px; right: 10px; width: auto; transform: none; padding: 10px 12px 8px; }
-  #timeRow { gap: 6px; margin-bottom: 4px; flex-wrap: nowrap; }
-  #timeline button { width: 44px; height: 44px; font-size: 15px; flex: none; }
-  #yearLabel { flex: 1; min-width: 0; font-size: 19px; text-align: center; white-space: nowrap; }
-  #stepGroup { margin-left: 0; }
-  #stepGroup button { display: none; }
-  #stepGroup button.on, #stepGroup button.on:hover { display: block; width: 48px; background: rgba(93,169,255,0.22); }
-  #surprise { padding: 0 !important; width: 44px !important; font-size: 18px !important; }
-  .surprise-label, #status { display: none; }
-  #slider { height: 32px; background: linear-gradient(90deg, var(--accent), var(--accent2)) center / 100% 6px no-repeat; }
-  #slider::-webkit-slider-thumb { width: 28px; height: 28px; }
-  #ticks { margin-top: 2px; font-size: 10px; }
-  /* Keep 3000 BCE, 1 CE, 1500 CE, 2000 CE; the log scale crowds the rest at the left. */
-  #ticks span:nth-child(2), #ticks span:nth-child(4), #ticks span:nth-child(6) { display: none; }
-
-  #storyBar { left: 10px; right: 10px; width: auto; transform: none; gap: 8px; padding: 8px 10px; }
-  #storyBar button { width: 44px; height: 44px; }
-  #storyBar .sb-exit { width: 44px; }
-
-  #quizPanel, #storyPicker { left: 10px; right: 10px; width: auto; max-width: none; transform: none;
-    bottom: calc(var(--safe-b) + 10px); max-height: 70dvh; overflow-y: auto; }
-  #storyPicker { max-height: 60dvh; }
-  .qz-input { font-size: 16px; }
-  .qz-exit, .sp-exit { width: 44px; height: 44px; }
-}
