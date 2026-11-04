@@ -2,6 +2,7 @@
 // + time-keyed event points + city labels.
 
 import { featureName } from "./data.js";
+import { installTouchPick } from "./touchPick.js";
 
 // UMD build loaded by index.html from vendor/.
 const Globe = window.Globe;
@@ -34,7 +35,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pointRadius(d => 0.10 + 0.16 * (d._alpha ?? 1))
     .pointResolution(6)
     .pointLabel(d => `${d.title} · ${yr(d.startYear)}`)
-    .onPointClick(d => { lastPointClick = Date.now(); onEventClick(d); });
+    .onPointClick(d => { if (touch.isTouch()) return; lastPointClick = Date.now(); onEventClick(d); });
 
   world.globeMaterial().shininess = 5;
 
@@ -91,7 +92,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pathLabel(d => d.name ? `<b>${d.name}</b>` : "")
     .onPathHover(p => { el.style.cursor = p ? "pointer" : "grab"; })
     // Only territory outlines resolve to a polity card; trade routes are display-only.
-    .onPathClick(d => { if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name); })
+    .onPathClick(d => { if (touch.isTouch()) return; if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name); })
     .pathTransitionDuration(0);
 
   world
@@ -114,12 +115,24 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .polygonLabel(f => `<b>${featureName(f)}</b>`)
     .onPolygonHover(f => { el.style.cursor = f ? "pointer" : "grab"; })
     .onPolygonClick(f => {
+      if (touch.isTouch()) return;             // taps are resolved by touchPick below
       if (lastPointClick >= lastPress) return; // this press already opened an event point or city
-      if (!f) return;
-      onCountryClick(f);                       // selectCurated etc. run their setHighlights (which clears selectedKey)
-      selectedKey = norm(featureName(f));      // then re-mark the clicked one
-      refresh();
+      if (f) clickPolygon(f);
     });
+
+  function clickPolygon(f) {
+    onCountryClick(f);                       // selectCurated etc. run their setHighlights (which clears selectedKey)
+    selectedKey = norm(featureName(f));      // then re-mark the clicked one
+    refresh();
+  }
+
+  // Mobile: globe.gl's click acts on a stale hover raycast under a finger, so touch
+  // taps get their own hit test at the finger (src/touchPick.js).
+  const touch = installTouchPick(world, el, {
+    onPoint: onEventClick,
+    onPath: d => { if (d.name) onTerritoryClick?.(d.name); },
+    onPolygon: clickPolygon
+  });
 
   const refresh = () => world.polygonsData(world.polygonsData());
 
