@@ -19,9 +19,12 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   slider.max = STEPS;
   slider.step = 1;
 
+  // Minor ticks crowd the left end of the log scale; phones hide them (CSS).
+  const MINOR_TICKS = new Set([-1000, 1]);
   [-3000, -1000, 1, 800, 1500, 1850, 2000].forEach(y => {
     const s = document.createElement("span");
     s.textContent = yearLabel(y);
+    if (MINOR_TICKS.has(y)) s.className = "tick-minor";
     s.style.left = yearToPos(y) * 100 + "%";
     ticks.appendChild(s);
   });

@@ -7,9 +7,19 @@
   --accent: #5da9ff;
   --accent2: #8b5cf6;
   --warn: #ff8a5d;
+  /* viewport-fit=cover lets the page draw under the notch / Dynamic Island
+     and home indicator; every edge-pinned panel adds these. 0 on desktop. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sax: max(var(--sal), var(--sar)); /* for centred panels */
 }
 
 * { box-sizing: border-box; }
+/* Panels toggled with the hidden attribute often also set display (e.g.
+   #storyBar is flex), which would override hidden and paint an empty box. */
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   color: var(--text); }
@@ -24,7 +34,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .cities-far .city-label::after { display: none; }
 
 #topbar {
-  position: absolute; top: 16px; left: 18px; right: 18px; z-index: 10;
+  position: absolute; top: calc(16px + var(--sat)); z-index: 10;
+  left: calc(18px + var(--sal)); right: calc(18px + var(--sar));
   display: flex; justify-content: space-between; align-items: center;
   pointer-events: none;
 }
@@ -48,7 +59,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 
 /* Menu button + slide-out drawer */
 #menuBtn {
-  position: absolute; top: 64px; left: 18px; z-index: 11;
+  position: absolute; top: calc(64px + var(--sat)); left: calc(18px + var(--sal)); z-index: 11;
   background: var(--panel); color: var(--text);
   border: 1px solid var(--border); border-radius: 10px;
   padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
@@ -59,8 +70,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 /* Always-visible left sidebar for the modes/layers picker.
    Drawer (z=20) overlays this when opened (z=9) — intentional. */
 #modesPanel {
-  position: absolute; top: 110px; left: 18px; z-index: 9;
-  width: 244px; max-height: calc(100vh - 250px);
+  position: absolute; top: calc(110px + var(--sat)); left: calc(18px + var(--sal)); z-index: 9;
+  width: 244px; max-height: calc(100vh - 250px - var(--sat) - var(--sab));
   background: var(--panel); color: var(--text);
   border: 1px solid var(--border); border-radius: 12px;
   padding: 12px 14px; overflow-y: auto;
@@ -79,14 +90,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 #modesPanel.collapsed { padding-bottom: 10px; }
 #modesPanel .lp-count { margin-left: auto; color: var(--muted); font-size: 11px; }
 @media (max-width: 720px) {
-  #modesPanel { width: calc(100vw - 36px); top: 110px; max-height: 50vh; }
+  #modesPanel { width: calc(100vw - 36px - var(--sal) - var(--sar));
+    top: calc(110px + var(--sat)); max-height: 50vh; }
 }
 
 #drawer {
   position: absolute; top: 0; left: 0; bottom: 0; z-index: 20;
   width: 330px; max-width: 86vw;
   background: rgba(10, 18, 30, 0.97); border-right: 1px solid var(--border);
-  padding: 16px; overflow-y: auto; backdrop-filter: blur(10px);
+  padding: calc(16px + var(--sat)) 16px calc(16px + var(--sab)) calc(16px + var(--sal));
+  overflow-y: auto; backdrop-filter: blur(10px);
   transition: transform .28s ease; box-shadow: 6px 0 30px rgba(0,0,0,.45);
 }
 #drawer.closed { transform: translateX(-105%); }
@@ -194,8 +207,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 
 /* Info card (country + event) */
 #infoCard {
-  position: absolute; top: 72px; right: 18px; z-index: 10;
-  width: 320px; max-height: calc(100vh - 200px); overflow-y: auto;
+  position: absolute; top: calc(72px + var(--sat)); right: calc(18px + var(--sar)); z-index: 10;
+  width: 320px; max-height: calc(100vh - 200px - var(--sat) - var(--sab)); overflow-y: auto;
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 16px; backdrop-filter: blur(8px);
 }
@@ -224,8 +237,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 
 /* Timeline */
 #timeline {
-  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
-  width: min(900px, 94vw); z-index: 10;
+  position: absolute; left: 50%; bottom: calc(22px + var(--sab)); transform: translateX(-50%);
+  width: min(900px, calc(94vw - 2 * var(--sax))); z-index: 10;
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 14px 18px 16px; backdrop-filter: blur(8px);
 }
@@ -281,7 +294,7 @@ input[type=range]::-webkit-slider-thumb {
 #ticks span:last-child { transform: translateX(-100%); }
 
 /* Country search */
-#search { position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+#search { position: absolute; top: calc(60px + var(--sat)); left: 50%; transform: translateX(-50%);
   z-index: 12; width: min(360px, 80vw); }
 #searchInput { width: 100%; box-sizing: border-box; padding: 10px 14px;
   font-size: 13px; color: var(--text); background: var(--panel);
@@ -306,7 +319,7 @@ input[type=range]::-webkit-slider-thumb {
 
 /* Guided story bar */
 #storyBar { position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
-  z-index: 13; width: min(680px, 94vw);
+  z-index: 13; width: min(680px, calc(94vw - 2 * var(--sax)));
   display: flex; align-items: center; gap: 12px;
   background: rgba(14,24,38,0.95); border: 1px solid rgba(93,169,255,0.35);
   border-radius: 14px; padding: 10px 14px; backdrop-filter: blur(10px);
@@ -337,8 +350,8 @@ body.quiz-active #storyBar,
 body.quiz-active #search { display: none; }
 
 #quizPanel {
-  position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
-  z-index: 15; width: 460px; max-width: calc(100vw - 36px);
+  position: absolute; left: 50%; bottom: calc(40px + var(--sab)); transform: translateX(-50%);
+  z-index: 15; width: 460px; max-width: calc(100vw - 36px - 2 * var(--sax));
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 16px 18px; backdrop-filter: blur(10px);
   box-shadow: 0 10px 40px rgba(0,0,0,.5);
@@ -368,7 +381,7 @@ body.quiz-active #search { display: none; }
 .qz-final { text-align: center; padding: 8px 0 16px; }
 .qz-final-score { font-size: 40px; font-weight: 800; }
 .qz-grade { color: var(--muted); font-size: 14px; margin-top: 4px; }
-@media (max-width: 520px) { #quizPanel { bottom: 20px; } }
+@media (max-width: 520px) { #quizPanel { bottom: calc(20px + var(--sab)); } }
 
 /* Map Quiz — game menu, flags, population choices */
 .qz-menu { display: flex; flex-direction: column; gap: 8px; }
@@ -392,8 +405,8 @@ body.quiz-active #search { display: none; }
 
 /* Empire Story — thread picker */
 #storyPicker {
-  position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%);
-  z-index: 15; width: 480px; max-width: calc(100vw - 36px);
+  position: absolute; left: 50%; bottom: calc(40px + var(--sab)); transform: translateX(-50%);
+  z-index: 15; width: 480px; max-width: calc(100vw - 36px - 2 * var(--sax));
   max-height: 60vh; overflow-y: auto;
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 14px; padding: 16px 18px; backdrop-filter: blur(10px);
@@ -456,3 +469,144 @@ body.quiz-active #search { display: none; }
   box-shadow: 0 0 40px 6px rgba(93,169,255,0.35), 0 0 120px 20px rgba(93,169,255,0.15);
 }
 #globePlaceholder.ready { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }
+
+/* ---------- Phone layout (portrait phones up to the 440 pt Pro Max, and
+   touch screens in landscape, where Safari leaves ~300 pt of height) ----------
+   Everything below is scoped to these queries, so desktop is untouched.
+   Rows from the top: ☰ · 🌍 · context · year/era  |  search  |  modes pill.
+   The country card drops in under the search row; the timeline is pinned
+   to the bottom safe area. */
+@media (max-width: 480px), (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --top: calc(env(safe-area-inset-top, 0px) + 8px);
+    --l: max(8px, env(safe-area-inset-left, 0px));
+    --r: max(8px, env(safe-area-inset-right, 0px));
+    --b: max(8px, env(safe-area-inset-bottom, 0px));
+  }
+  html, body { height: 100%; height: -webkit-fill-available; height: 100dvh; }
+  body { position: relative; -webkit-text-size-adjust: 100%; }
+  button, input, label, .cc-close { touch-action: manipulation; }
+
+  /* Row 1 */
+  #menuBtn { top: var(--top); left: var(--l); width: 44px; height: 44px;
+    padding: 0; font-size: 18px; }
+  #menuBtn .btn-label { display: none; }
+  #topbar { top: var(--top); left: calc(var(--l) + 50px); right: var(--r);
+    height: 44px; gap: 6px; justify-content: flex-start; }
+  #brand, #context { height: 44px; border-radius: 10px; }
+  #brand { flex: none; padding: 0 10px; font-size: 18px; line-height: 42px; }
+  #brand .brand-name { display: none; }
+  #context { flex: 1 1 auto; min-width: 0; max-width: none;
+    font-size: 13px; line-height: 42px; padding: 0 10px; }
+  /* Two clamped lines. The vertical padding is a transparent border so the
+     clamp's overflow clip (at the padding box) hides any third line; the
+     outline is a box-shadow outside it. */
+  #era { flex: none; max-width: 44%; padding: 0 9px; border-radius: 10px;
+    border: solid transparent; border-width: 7px 0; box-shadow: 0 0 0 1px var(--border);
+    font-size: 11px; line-height: 14.5px;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; }
+
+  /* Row 2: search, full width; 16px text so iOS doesn't zoom on focus */
+  #search { top: calc(var(--top) + 52px); left: var(--l); right: var(--r);
+    width: auto; transform: none; }
+  #searchInput { height: 44px; font-size: 16px; }
+  #searchResults { max-height: 50dvh; overflow-y: auto; }
+  #searchResults .sr { padding: 12px 14px; font-size: 15px; }
+  #searchResults .sr-member { padding-left: 30px; font-size: 14px; }
+
+  /* Row 3: modes & layers, a pill when collapsed, full width when open */
+  #modesPanel { top: calc(var(--top) + 104px); left: var(--l); width: auto;
+    padding: 0 12px; max-height: calc(100dvh - var(--top) - 330px); }
+  #modesPanel .modes-title { min-height: 40px; margin: 0; gap: 10px; }
+  #modesPanel.collapsed { padding-bottom: 0; }
+  #modesPanel:not(.collapsed) { right: var(--r); padding-bottom: 10px; }
+  #layersPanel .lp-row { min-height: 44px; font-size: 15px; }
+
+  /* Country / event card: full width under the search row, globe stays
+     visible below it; big close target in the corner */
+  #infoCard { top: calc(var(--top) + 104px); left: var(--l); right: var(--r);
+    width: auto; padding: 14px;
+    max-height: min(38dvh, calc(100dvh - var(--top) - 380px)); }
+  #infoCard .cc-close { top: 0; right: 0; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  #infoCard h2 { font-size: 18px; padding-right: 34px; }
+  #infoCard img.cc-thumb { max-height: 120px; object-fit: cover; }
+
+  /* Drawer */
+  #drawer { padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); }
+  #drawerClose { width: 44px; height: 44px; font-size: 20px; }
+  .acc-h { min-height: 44px; font-size: 14px; }
+
+  /* Story bar, quiz, story picker: full width, finger-sized controls */
+  #storyBar { left: var(--l); right: var(--r); width: auto; transform: none;
+    gap: 8px; padding: 6px 8px; }
+  #storyBar button, #storyBar .sb-exit { width: 44px; height: 44px; }
+  #quizPanel, #storyPicker { left: var(--l); right: var(--r); width: auto;
+    max-width: none; transform: none; bottom: var(--b); padding: 14px; }
+  #quizPanel { max-height: calc(100dvh - var(--top) - 60px); overflow-y: auto; }
+  #storyPicker { max-height: 60dvh; }
+  .qz-exit, .sp-exit { width: 44px; height: 44px; font-size: 16px; }
+  .qz-input { font-size: 16px; min-width: 0; }
+  .qz-submit, .qz-next, .qz-again, .qz-done, .qz-region { min-height: 44px; }
+  .sp-thread { padding: 12px; }
+}
+
+/* Phone timeline: year and step buttons on one row, steps and status on the
+   next, a finger-sized slider, and only the ticks that fit. */
+@media (max-width: 480px), (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
+  #timeline { left: var(--l); right: var(--r); bottom: var(--b); width: auto;
+    transform: none; padding: 8px 10px 8px; }
+  #timeRow { gap: 6px; margin-bottom: 2px; }
+  #timeline button { width: 44px; height: 44px; font-size: 15px; }
+  #yearLabel { flex: 1 0 110px; min-width: 0; font-size: 22px; text-align: center;
+    white-space: nowrap; }
+  #surprise { width: 44px !important; padding: 0; font-size: 18px; }
+  #surprise .btn-label { display: none; }
+  #stepGroup { order: 1; margin-left: 0; }
+  #stepGroup button { width: 44px; height: 40px; font-size: 13px; }
+  #status { order: 1; flex: 1 1 0; min-width: 0; text-align: right;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #trackMarks { height: 16px; }
+  #slider { display: block; height: 32px; margin: 0; background: transparent; }
+  #slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  #slider::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
+  #ticks { margin-top: 0; font-size: 10px; }
+  #ticks .tick-minor { display: none; }
+}
+
+/* Phone landscape: the phone rules above, but the search joins row 1 on the
+   right, and the modes panel and card open over the timeline instead of
+   squeezing into the strip above it. One timeline control row. */
+@media (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
+  #topbar { right: calc(var(--r) + 238px); }
+  #era { max-width: 40%; }
+  #search { top: var(--top); left: auto; width: 230px; }
+  #searchResults { max-height: calc(100dvh - var(--top) - 60px - var(--b)); }
+
+  #modesPanel { top: calc(var(--top) + 52px);
+    max-height: calc(100dvh - var(--top) - 52px - var(--b)); }
+  #modesPanel:not(.collapsed) { right: auto; width: 300px; z-index: 11; }
+  #infoCard { top: calc(var(--top) + 52px); left: auto; width: 340px; z-index: 11;
+    max-height: calc(100dvh - var(--top) - 52px - var(--b)); }
+  #infoCard img.cc-thumb { max-height: 90px; }
+  /* Story bar: tucked closer to the timeline so it clears the modes pill,
+     and beside an open card rather than across its title. */
+  #storyBar { --story-gap: 4px; padding: 4px 8px; }
+  body:has(#infoCard:not([hidden])) #storyBar { right: calc(var(--r) + 348px); }
+
+  #quizPanel, #storyPicker { left: auto; width: 440px;
+    max-height: calc(100dvh - var(--top) - 52px - var(--b)); }
+
+  #timeline { padding: 4px 10px; }
+  #timeRow { flex-wrap: nowrap; }
+  #stepGroup, #status { order: 0; }
+  #yearLabel { flex: 0 0 auto; min-width: 96px; font-size: 20px; }
+  #stepGroup button { height: 44px; }
+  #trackMarks { height: 14px; }
+  #slider { height: 26px; }
+  #ticks { height: 12px; }
+}
