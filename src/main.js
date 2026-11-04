@@ -466,6 +466,7 @@ async function boot() {
   pickCity = d => {
     if (state.mode === "map-quiz") return;
     const host = globe.allFeatures().find(f => featureContains(f, d.lng, d.lat));
+    setContext("📍 " + d.name);       // else the header keeps naming the previous country
     card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
   };
 
