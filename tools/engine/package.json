@@ -1,0 +1,11 @@
+{
+  "name": "atlas-engine-build",
+  "private": true,
+  "description": "Pinned inputs for tools/build-engine.mjs (custom globe.gl build). Not used at runtime; the deploy stays zero-build.",
+  "type": "module",
+  "dependencies": {
+    "esbuild": "0.24.0",
+    "globe.gl": "2.34.4",
+    "three": "0.171.0"
+  }
+}
