@@ -3,15 +3,16 @@
 // (`hoverObj`). A finger has no hover before it lands, so on iOS a tap acted
 // on a stale target (the previous tap's country, or Chile over open ocean).
 // Here a tap (short, barely moving, one finger) is hit-tested where it
-// lifted: event dots within a finger-sized radius first, then territory
-// outlines, then border polygons.
+// lifted: city dots and names first, then event dots within a finger-sized
+// radius, then territory outlines, then border polygons.
 // Mouse and pen input keep globe.gl's own click path.
 
 const TAP_SLOP = 10;        // px the finger may wander and still count as a tap
 const TAP_MS = 700;         // longer presses are not taps
 const POINT_RADIUS = 12;    // px around an event dot that counts as hitting it
+const CITY_RADIUS = 16;     // px around a city dot; its name to the right counts too
 
-export function installTouchPick(world, el, { onPoint, onPolygon, onPath }) {
+export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity, cities }) {
   let lastType = "mouse";
   let down = null;
 
@@ -34,6 +35,8 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath }) {
   }, { capture: true });
 
   function pick(x, y) {
+    const city = cityAt(x, y);
+    if (city) return onCity(city.__d);
     const pt = nearestPoint(x, y);
     if (pt) return onPoint(pt);
     const ll = world.toGlobeCoords(x, y);
@@ -65,6 +68,22 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath }) {
     return best;
   }
 
+  // City labels ignore touches (styles/main.css) so a drag that starts on one
+  // turns the globe; a tap on a dot or its name is matched here instead.
+  function cityAt(x, y) {
+    const box = el.getBoundingClientRect();
+    let best = null, bestD = CITY_RADIUS;
+    for (const c of cities()) {
+      if (!c.getClientRects().length) continue;          // hidden: behind the globe or off screen
+      const r = c.getBoundingClientRect();
+      const cx = r.left + r.width / 2 - box.left, cy = r.top + r.height / 2 - box.top;
+      let d = Math.hypot(x - cx, y - cy);
+      if (d >= bestD && x > cx && x < cx + r.width / 2 + 3 + nameWidth(c)) d = Math.abs(y - cy) * 1.5;
+      if (d < bestD) { best = c; bestD = d; }
+    }
+    return best;
+  }
+
   return { isTouch: () => lastType === "touch" };
 }
 
@@ -92,4 +111,13 @@ function inRing(lat, lng, ring, xy) {
     if (((yi > lat) !== (yj > lat)) && (lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi)) inside = !inside;
   }
   return inside;
+}
+
+// Rendered width of a city label's name (its ::after), 0 when names are hidden.
+const measure = document.createElement("canvas").getContext("2d");
+function nameWidth(c) {
+  const cs = getComputedStyle(c, "::after");
+  if (cs.display === "none") return 0;
+  measure.font = `${cs.fontSize} ${cs.fontFamily}`;
+  return measure.measureText(c.dataset.name).width;
 }

@@ -30,6 +30,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 /* globe.gl's hover tooltip follows the pointer; under a finger it sticks at the
    last touch point. Touch devices use the country/event card instead. */
 @media (hover: none) { #globe .scene-tooltip { display: none; } }
+/* On touch screens a press on a label must turn the globe like any other drag,
+   so labels let touches through to the canvas; src/touchPick.js maps taps to cities. */
+@media (hover: none) { .city-label { pointer-events: none; } }
 
 #topbar {
   position: absolute; top: 16px; left: 18px; right: 18px; z-index: 10;

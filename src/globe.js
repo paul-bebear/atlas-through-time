@@ -131,7 +131,9 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   const touch = installTouchPick(world, el, {
     onPoint: onEventClick,
     onPath: d => { if (d.name) onTerritoryClick?.(d.name); },
-    onPolygon: clickPolygon
+    onPolygon: clickPolygon,
+    onCity: d => { lastPointClick = Date.now(); onCityClick?.(d); },
+    cities: () => cityEls.values()
   });
 
   const refresh = () => world.polygonsData(world.polygonsData());
