@@ -7,7 +7,7 @@ import { featureName } from "./data.js";
 const WIKI = "https://en.wikipedia.org/api/rest_v1/page/summary/";
 const FLAG = "https://flagcdn.com/w80/";
 
-export function createInfoCard({ countries }) {
+export function createInfoCard({ countries, onDismiss }) {
   const card = document.getElementById("infoCard");
   // Bumped by every open and by close, so a Wikipedia fetch that lands late can't
   // overwrite a newer card or reopen a closed one (a tap on × "not working").
@@ -46,8 +46,10 @@ export function createInfoCard({ countries }) {
   const x = document.createElement("span");
   x.className = "cc-close";
   x.textContent = "×";
-  x.onclick = close;
-  x.addEventListener("touchend", e => { e.preventDefault(); close(); });
+  // The user's own close, as opposed to the card giving way to another panel.
+  const dismiss = () => { close(); onDismiss?.(); };
+  x.onclick = dismiss;
+  x.addEventListener("touchend", e => { e.preventDefault(); dismiss(); });
 
   function shell(titleHtml, sub, body) {
     card.hidden = false;

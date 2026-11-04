@@ -278,7 +278,7 @@ async function boot() {
           }
           timeline.setStatus(`${state.modeState.label} · ${fc.features.length} polities`);
         } catch (e) { timeline.setStatus(e.message); }
-        if (selection) selection.render(year);
+        if (selection && !selection.dismissed) selection.render(year);
         return;
       }
 
@@ -325,8 +325,9 @@ async function boot() {
       // Wars layer changes with the year — recompute only when it's on
       // (selection tint is static across years, so no per-tick cost when off).
       if (state.layers.wars.enabled) applyHighlights();
-      // Selected country: re-render its card for the year being viewed.
-      if (selection) selection.render(year);
+      // Selected country: re-render its card for the year being viewed,
+      // unless the user closed it (see onDismiss).
+      if (selection && !selection.dismissed) selection.render(year);
     },
     onSurprise: () => {
       clearSelection();
@@ -342,7 +343,9 @@ async function boot() {
   [wars, formations, countries, cities, seedEvents, genEvents, tradeRoutes] = await dataP;
   warsData = wars;
   events = createEvents([...seedEvents, ...genEvents]);
-  card = createInfoCard({ countries });
+  // A closed card stays closed while the year steps; the selection's tint and
+  // slider span stay, and any new pick (a fresh selection) opens the card again.
+  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; } });
   buildLegend();
   initPanel();
 
