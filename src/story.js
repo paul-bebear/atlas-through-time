@@ -34,11 +34,13 @@ export function createStory({ wars, formations, onBeat, onExit }) {
 
   // Sit just above the timeline's real top edge, whatever its (wrapping)
   // height or bottom offset; re-run when the timeline or viewport resizes.
+  // The gap is 12px unless the stylesheet sets --story-gap (phone landscape).
   function place() {
     if (bar.hidden || !timelineEl) return;
     const top = timelineEl.getBoundingClientRect().top;
     const h = document.documentElement.clientHeight;
-    bar.style.bottom = Math.max(0, h - top + 12) + "px";
+    const gap = parseFloat(getComputedStyle(bar).getPropertyValue("--story-gap")) || 12;
+    bar.style.bottom = Math.max(0, h - top + gap) + "px";
   }
   if (timelineEl && "ResizeObserver" in window) new ResizeObserver(place).observe(timelineEl);
   window.addEventListener("resize", place);

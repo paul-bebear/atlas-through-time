@@ -470,12 +470,13 @@ body.quiz-active #search { display: none; }
 }
 #globePlaceholder.ready { opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }
 
-/* ---------- Phone layout (portrait phones up to the 440 pt Pro Max) ----------
-   Everything below is scoped to this query, so desktop is untouched.
+/* ---------- Phone layout (portrait phones up to the 440 pt Pro Max, and
+   touch screens in landscape, where Safari leaves ~300 pt of height) ----------
+   Everything below is scoped to these queries, so desktop is untouched.
    Rows from the top: ☰ · 🌍 · context · year/era  |  search  |  modes pill.
    The country card drops in under the search row; the timeline is pinned
    to the bottom safe area. */
-@media (max-width: 480px) {
+@media (max-width: 480px), (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
   :root {
     --top: calc(env(safe-area-inset-top, 0px) + 8px);
     --l: max(8px, env(safe-area-inset-left, 0px));
@@ -555,7 +556,7 @@ body.quiz-active #search { display: none; }
 
 /* Phone timeline: year and step buttons on one row, steps and status on the
    next, a finger-sized slider, and only the ticks that fit. */
-@media (max-width: 480px) {
+@media (max-width: 480px), (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
   #timeline { left: var(--l); right: var(--r); bottom: var(--b); width: auto;
     transform: none; padding: 8px 10px 8px; }
   #timeRow { gap: 6px; margin-bottom: 2px; }
@@ -575,4 +576,37 @@ body.quiz-active #search { display: none; }
   #slider::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
   #ticks { margin-top: 0; font-size: 10px; }
   #ticks .tick-minor { display: none; }
+}
+
+/* Phone landscape: the phone rules above, but the search joins row 1 on the
+   right, and the modes panel and card open over the timeline instead of
+   squeezing into the strip above it. One timeline control row. */
+@media (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
+  #topbar { right: calc(var(--r) + 238px); }
+  #era { max-width: 40%; }
+  #search { top: var(--top); left: auto; width: 230px; }
+  #searchResults { max-height: calc(100dvh - var(--top) - 60px - var(--b)); }
+
+  #modesPanel { top: calc(var(--top) + 52px);
+    max-height: calc(100dvh - var(--top) - 52px - var(--b)); }
+  #modesPanel:not(.collapsed) { right: auto; width: 300px; z-index: 11; }
+  #infoCard { top: calc(var(--top) + 52px); left: auto; width: 340px; z-index: 11;
+    max-height: calc(100dvh - var(--top) - 52px - var(--b)); }
+  #infoCard img.cc-thumb { max-height: 90px; }
+  /* Story bar: tucked closer to the timeline so it clears the modes pill,
+     and beside an open card rather than across its title. */
+  #storyBar { --story-gap: 4px; padding: 4px 8px; }
+  body:has(#infoCard:not([hidden])) #storyBar { right: calc(var(--r) + 348px); }
+
+  #quizPanel, #storyPicker { left: auto; width: 440px;
+    max-height: calc(100dvh - var(--top) - 52px - var(--b)); }
+
+  #timeline { padding: 4px 10px; }
+  #timeRow { flex-wrap: nowrap; }
+  #stepGroup, #status { order: 0; }
+  #yearLabel { flex: 0 0 auto; min-width: 96px; font-size: 20px; }
+  #stepGroup button { height: 44px; }
+  #trackMarks { height: 14px; }
+  #slider { height: 26px; }
+  #ticks { height: 12px; }
 }

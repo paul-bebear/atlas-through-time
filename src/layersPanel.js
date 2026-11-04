@@ -26,12 +26,15 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
   // Collapse: title click folds the whole panel; phones start folded so the
   // panel doesn't eat half the viewport.
   const aside = root.closest("#modesPanel");
+  // Narrow screens and phones in landscape (short + touch) fold the panel.
+  const compact = () => window.innerWidth < 720 ||
+    matchMedia("(pointer: coarse) and (max-height: 500px)").matches;
   const title = aside?.querySelector(".modes-title");
   if (title && !title.dataset.wired) {
     title.dataset.wired = "1";
     title.innerHTML += `<span class="modes-chev">▾</span>`;
     title.onclick = () => aside.classList.toggle("collapsed");
-    if (window.innerWidth < 720) aside.classList.add("collapsed");
+    if (compact()) aside.classList.add("collapsed");
   }
 
   const countOf = id => {
@@ -69,7 +72,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
     root.querySelectorAll('input[name="lp-mode"]').forEach(el => {
       el.onchange = () => {
         // On phones the open panel would cover the mode's own UI.
-        if (window.innerWidth < 720) aside?.classList.add("collapsed");
+        if (compact()) aside?.classList.add("collapsed");
         onModeChange?.(el.value);
       };
     });
