@@ -177,6 +177,20 @@ export async function loadBorders(year) {
   return gj;
 }
 
+// Warm the snapshots either side of `year` in idle time (memory + the
+// worker's on-device cache), so the next timeline step skips the download
+// and the simplify step. Skipped when the visitor asked to save data.
+export function prefetchNeighbours(year) {
+  if (navigator.connection?.saveData) return;
+  const i = PERIODS.indexOf(nearestPeriod(year));
+  // The auto-rotating globe can leave no idle frame on a slow GPU, hence the timeout.
+  const idle = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 3000 }) : f => setTimeout(f, 2000);
+  for (const p of [PERIODS[i - 1], PERIODS[i + 1]]) {
+    if (p === undefined || p < nearestPeriod(SLIDER_MIN)) continue;
+    idle(() => { if (!geoCache.has(p) && !geoInflight.has(p)) loadBorders(p).catch(() => {}); });
+  }
+}
+
 export async function loadJSON(path) {
   const res = await fetch(path);
   if (!res.ok) throw new Error(`Failed to load ${path} (HTTP ${res.status})`);

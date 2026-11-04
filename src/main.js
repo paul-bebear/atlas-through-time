@@ -3,7 +3,7 @@
 // events fade in/out by year proximity.
 
 import {
-  loadJSON, loadOptionalJSON, loadBorders, nearestPeriod, eraFor, yearLabel, featureName, CATEGORIES,
+  loadJSON, loadOptionalJSON, loadBorders, prefetchNeighbours, nearestPeriod, eraFor, yearLabel, featureName, CATEGORIES,
   SLIDER_MIN, SLIDER_MAX
 } from "./data.js";
 import { bordersForYear } from "./borders.js";
@@ -245,6 +245,7 @@ async function boot() {
   const setSelection = groups => { selHighlights = groups || []; applyHighlights(); };
 
   let usaPrefetched = false;       // idle-warm the USA territory once, after the first borders render
+  let scrubbed = false;            // neighbour snapshots are warmed only once the timeline has moved, never at boot
   const timeline = createTimeline({
     initialYear: bootYear,
     onChange: async (year) => {
@@ -309,6 +310,8 @@ async function boot() {
           state.layers.borders.count = features.length;
           layersPanel?.updateCounts();
           timeline.setStatus(`borders ${source} · ${vis.length} events`);
+          if (year !== bootYear) scrubbed = true;
+          if (scrubbed) prefetchNeighbours(year);
         } else {
           if (state.lastSig !== "off") {
             state.lastSig = "off";
