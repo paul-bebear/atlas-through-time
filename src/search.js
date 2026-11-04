@@ -23,7 +23,8 @@ export function createSearch({ catalog, onPick }) {
   let rows = [], sel = -1, seq = 0, timer = null;
   const expanded = new Set();
 
-  const clear = () => { res.innerHTML = ""; rows = []; sel = -1; expanded.clear(); };
+  // Also drops a database search still in flight, so its hits can't reopen the list.
+  const clear = () => { res.innerHTML = ""; rows = []; sel = -1; expanded.clear(); clearTimeout(timer); seq++; };
 
   function rankCurated(q) {
     q = q.toLowerCase();
@@ -62,6 +63,9 @@ export function createSearch({ catalog, onPick }) {
   }
 
   function render() {
+    // Database hits land after the curated rows; swapping rows under a finger
+    // that is already down makes iOS drop the tap, so wait for the lift.
+    if (touch0) { renderLater = true; return; }
     res.innerHTML = rows.map((h, i) => {
       const on = i === sel ? " on" : "";
       if (h.kind === "thread") {
@@ -78,23 +82,43 @@ export function createSearch({ catalog, onPick }) {
         return `<div class="sr${on}" data-i="${i}">${h.label}<small>${span(h.polity)}</small></div>`;
       return `<div class="sr${on}" data-i="${i}">${h.label}</div>`;
     }).join("");
+  }
 
-    res.querySelectorAll(".sr-exp").forEach(el => {
-      el.onmousedown = e => {
-        e.preventDefault(); e.stopPropagation();
-        const h = rows[+el.dataset.i];
-        expanded.has(h.thread.id) ? expanded.delete(h.thread.id) : expanded.add(h.thread.id);
-        rows = buildRows(base.curated, base.threads, base.db);
-        render();
-      };
-    });
-    res.querySelectorAll(".sr").forEach(el => {
-      el.onmousedown = e => {
-        if (e.target.classList.contains("sr-exp")) return;
-        e.preventDefault();
-        pick(+el.dataset.i);
-      };
-    });
+  // One set of handlers on the list itself (rows are re-rendered often).
+  // A pick acts on click, not mousedown: picking removes the list, and the
+  // release that followed a mousedown pick landed on the globe underneath,
+  // which then opened whatever country it last hovered.
+  res.addEventListener("mousedown", e => e.preventDefault());   // keep focus in the input
+  res.addEventListener("click", e => activate(e.target));
+  // Touch acts on the lift, and cancels the mouse events and click that would
+  // follow, so nothing reaches what lies under the finger once the list is gone.
+  let touch0 = null, renderLater = false;
+  res.addEventListener("touchstart", e => {
+    const t = e.touches[0];
+    touch0 = e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null;
+  }, { passive: true });
+  res.addEventListener("touchcancel", () => { touch0 = null; flush(); });
+  res.addEventListener("touchend", e => {
+    const t = e.changedTouches[0], t0 = touch0;
+    touch0 = null;
+    if (t0 && Math.hypot(t.clientX - t0.x, t.clientY - t0.y) <= 10) {   // further is a scroll of the list
+      e.preventDefault();
+      activate(document.elementFromPoint(t.clientX, t.clientY));
+    }
+    flush();
+  });
+  const flush = () => { if (renderLater) { renderLater = false; if (rows.length) render(); } };
+
+  function activate(el) {
+    const exp = el?.closest(".sr-exp");
+    if (exp) {
+      const h = rows[+exp.dataset.i];
+      expanded.has(h.thread.id) ? expanded.delete(h.thread.id) : expanded.add(h.thread.id);
+      rows = buildRows(base.curated, base.threads, base.db);
+      return render();
+    }
+    const row = el?.closest(".sr");
+    if (row) pick(+row.dataset.i);
   }
 
   let base = { curated: [], threads: [], db: [] };
@@ -102,9 +126,9 @@ export function createSearch({ catalog, onPick }) {
   function pick(i) {
     const h = rows[i];
     if (!h) return;
-    if (h.kind === "thread") { input.value = h.label; clear(); input.blur(); onPick({ kind: "thread", thread: h.thread }); return; }
-    if (h.kind === "thread-member") { input.value = h.label; clear(); input.blur(); onPick({ kind: "thread", thread: h.thread, atPolityId: h.polity.id }); return; }
-    input.value = h.label; clear(); input.blur();
+    input.value = ""; clear(); input.blur();   // the card and the context pill name the pick
+    if (h.kind === "thread") return onPick({ kind: "thread", thread: h.thread });
+    if (h.kind === "thread-member") return onPick({ kind: "thread", thread: h.thread, atPolityId: h.polity.id });
     onPick(h.kind === "curated" ? { kind: "curated", entry: h.entry } : { kind: "db", polity: h.polity });
   }
 
@@ -146,5 +170,7 @@ export function createSearch({ catalog, onPick }) {
     else if (e.key === "Enter") { pick(sel < 0 ? 0 : sel); }
     else if (e.key === "Escape") { clear(); input.blur(); }
   });
-  document.addEventListener("click", e => { if (!e.target.closest("#search")) clear(); });
+  // The path, not target.closest: a click on ▸ re-renders the list, detaching its target.
+  const box = document.getElementById("search");
+  document.addEventListener("click", e => { if (!e.composedPath().includes(box)) clear(); });
 }
