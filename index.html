@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Atlas Through Time</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="preconnect" href="https://cbvkgcvngigjvodnxgxg.supabase.co" crossorigin />
@@ -34,7 +34,7 @@
   <div id="globePlaceholder" aria-hidden="true"><img src="assets/globe-placeholder-600-v1.webp" alt="" width="600" height="600" fetchpriority="high"></div>
 
   <header id="topbar">
-    <div id="brand">🌍 Atlas Through Time</div>
+    <div id="brand">🌍<span class="brand-name"> Atlas Through Time</span></div>
     <div id="context">Explore history — click a country, war or formation</div>
     <div id="era"></div>
   </header>
@@ -169,7 +169,7 @@ GET /fact?subject_type=eq.polity&amp;key=eq.head_of_state&amp;subject_id=eq.21</
         <button data-step="25">25y</button>
         <button data-step="100">100y</button>
       </div>
-      <button id="surprise" title="Jump somewhere &amp; somewhen random">🎲 Surprise me</button>
+      <button id="surprise" title="Jump somewhere &amp; somewhen random">🎲<span class="surprise-label"> Surprise me</span></button>
       <div id="status">loading globe engine…</div>
     </div>
     <div id="trackMarks"></div>

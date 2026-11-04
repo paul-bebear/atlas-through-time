@@ -109,11 +109,15 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
     }, 400);
   };
 
-  stepGroup.querySelectorAll("button").forEach(b => {
+  // Phones show only the active step (styles/main.css); tapping it cycles to the next.
+  const phone = matchMedia("(max-width: 430px)");
+  const stepBtns = [...stepGroup.querySelectorAll("button")];
+  stepBtns.forEach((b, i) => {
     b.onclick = () => {
-      step = +b.dataset.step;
-      stepGroup.querySelectorAll("button").forEach(x => x.classList.remove("on"));
-      b.classList.add("on");
+      const pick = phone.matches && b.classList.contains("on") ? stepBtns[(i + 1) % stepBtns.length] : b;
+      step = +pick.dataset.step;
+      stepBtns.forEach(x => x.classList.remove("on"));
+      pick.classList.add("on");
     };
   });
 
