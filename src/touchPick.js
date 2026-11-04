@@ -10,7 +10,8 @@
 const TAP_SLOP = 10;        // px the finger may wander and still count as a tap
 const TAP_MS = 700;         // longer presses are not taps
 const POINT_RADIUS = 12;    // px around an event dot that counts as hitting it
-const CITY_RADIUS = 16;     // px around a city dot; its name to the right counts too
+const CITY_RADIUS = 16;     // px around a city dot while names show; the name counts too
+const DOT_RADIUS = 6;       // zoomed out (names hidden): only a tap on the dot itself
 
 export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity, cities }) {
   let lastType = "mouse";
@@ -70,15 +71,18 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity
 
   // City labels ignore touches (src/globe.js) so a drag that starts on one
   // turns the globe; a tap on a dot or its name is matched here instead.
+  // Zoomed out the dots are tiny and unnamed, so a country tap near one must
+  // still reach the country.
   function cityAt(x, y) {
     const box = el.getBoundingClientRect();
-    let best = null, bestD = CITY_RADIUS;
+    const far = el.classList.contains("cities-far");
+    let best = null, bestD = far ? DOT_RADIUS : CITY_RADIUS;
     for (const c of cities()) {
       if (!c.getClientRects().length) continue;          // hidden: behind the globe or off screen
       const r = c.getBoundingClientRect();
       const cx = r.left + r.width / 2 - box.left, cy = r.top + r.height / 2 - box.top;
       let d = Math.hypot(x - cx, y - cy);
-      if (d >= bestD && x > cx && x < cx + r.width / 2 + 3 + nameWidth(c)) d = Math.abs(y - cy) * 1.5;
+      if (!far && d >= bestD && x > cx && x < cx + r.width / 2 + 3 + nameWidth(c)) d = Math.abs(y - cy) * 1.5;
       if (d < bestD) { best = c; bestD = d; }
     }
     return best;
