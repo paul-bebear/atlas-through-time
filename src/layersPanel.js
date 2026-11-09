@@ -58,7 +58,19 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
         <span>${l.label}</span>
         <span class="lp-count" data-count="${l.id}">${countOf(l.id)}</span>
       </label>`).join("");
-    root.innerHTML = `
+    // Pins from a link the visitor opened: shown only while there are some, with Clear.
+    const pins = state.layers.pins?.count ? `
+      <div class="lp-row lp-pins">
+        <label><input type="checkbox" name="lp-layer" value="pins" ${state.layers.pins.enabled ? "checked" : ""}>
+          <span>Pins</span></label>
+        <span class="lp-count" data-count="pins">${countOf("pins")}</span>
+        <button type="button" class="lp-clear">Clear</button>
+      </div>` : "";
+    root.innerHTML = `${pins ? `
+      <div class="lp-section">
+        <div class="lp-heading">From the link you opened</div>
+        ${pins}
+      </div>` : ""}
       <div class="lp-section">
         <div class="lp-heading">Mode</div>
         ${modes}
@@ -79,6 +91,8 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
     root.querySelectorAll('input[name="lp-layer"]').forEach(el => {
       el.onchange = () => onLayerToggle?.(el.value, el.checked);
     });
+    const clear = root.querySelector(".lp-clear");
+    if (clear) clear.onclick = () => api.onClearPins?.();
   }
 
   // Update only the count badges — called per scrub tick, so no full
@@ -89,6 +103,8 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
     });
   }
 
+  // onClearPins is assigned by main.js once the link view is wired.
+  const api = { refresh: render, updateCounts, onClearPins: null };
   render();
-  return { refresh: render, updateCounts };
+  return api;
 }

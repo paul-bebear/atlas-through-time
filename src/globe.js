@@ -86,9 +86,9 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     let e = pinEls.get(d.key);
     if (!e) {
       pinEls.set(d.key, e = document.createElement("div"));
-      e.className = "map-pin pin-" + d.style;
       e.innerHTML = `<span class="pin-label"></span><span class="pin-stem"></span><span class="pin-dot"></span>`;
     }
+    e.className = "map-pin pin-" + d.style + (d.side && d.side !== "up" ? " pin-" + d.side : "");
     e.querySelector(".pin-label").textContent = d.label;
     return e;
   }
@@ -223,10 +223,18 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       return currentFeatures.filter(f => set.has(norm(featureName(f))));
     },
     setCities: c => { htmlCities = c || []; pushHtml(); },
-    // The red pin at the selected polity: { label, lat, lng } or null.
+    // The red pin at the selected polity (a link may select two): { label, lat, lng }, a list, or null.
     setSelectionPin(p) {
-      if (p) htmlPins.set("sel", [{ kind: "pin", style: "sel", key: "sel", label: p.label, lat: p.lat, lng: p.lng }]);
-      else htmlPins.delete("sel");
+      const list = (Array.isArray(p) ? p : p ? [p] : []).filter(q => q.lat != null);
+      htmlPins.set("sel", list.map((q, i) => ({ kind: "pin", style: "sel", key: "sel" + i, label: q.label, lat: q.lat, lng: q.lng })));
+      pushHtml();
+    },
+    // Pins from the link the visitor opened: [{ label, lat, lng }]. Kept in memory only.
+    // Pins close together (Elath and Ezion-Geber) get their labels on different sides.
+    setLinkPins(list) {
+      const pins = list || [];
+      htmlPins.set("link", pins.map((q, i) => ({ kind: "pin", style: "link", key: "link" + i, label: q.label || "", lat: q.lat, lng: q.lng,
+        side: ["up", "down", "right", "left"][pins.slice(0, i).filter(o => Math.hypot(o.lat - q.lat, (o.lng - q.lng) * Math.cos(q.lat * Math.PI / 180)) < 1.5).length % 4] })));
       pushHtml();
     },
     allFeatures: () => currentFeatures,

@@ -42,6 +42,18 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .map-pin .pin-label { left: 0; bottom: 17px; translate: -50% 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; padding: 4px 8px; border-radius: 6px; background: #e5322d; color: #fff;
   font-size: 13px; font-weight: 700; line-height: 1.1; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.55); }
+.map-pin .pin-label:empty { display: none; }
+/* Pins from a link the visitor opened: violet, dashed, plainly not Atlas's own marks. */
+.pin-link .pin-dot { left: -5px; top: -5px; width: 10px; height: 10px; background: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.35), 0 1px 4px rgba(0, 0, 0, 0.6); }
+.pin-link .pin-stem { height: 10px; }
+.pin-link .pin-label { bottom: 13px; background: rgba(14, 24, 38, 0.9); color: #ddd6fe; font-size: 12px; font-weight: 600;
+  border: 1px dashed #a78bfa; padding: 3px 7px; }
+.pin-down .pin-stem { bottom: auto; top: 4px; }
+.pin-down .pin-label { bottom: auto; top: 13px; }
+.pin-right .pin-stem, .pin-left .pin-stem { display: none; }
+.pin-right .pin-label { bottom: auto; top: 0; translate: 10px -50%; }
+.pin-left .pin-label { bottom: auto; top: 0; left: auto; right: 0; translate: -10px -50%; }
 
 #topbar {
   position: absolute; top: calc(16px + var(--sat)); z-index: 10;
@@ -151,6 +163,11 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 #layersPanel .lp-row.is-disabled:hover { background: transparent; }
 #layersPanel input[type="radio"],
 #layersPanel input[type="checkbox"] { accent-color: var(--accent); margin: 0; }
+#layersPanel .lp-pins { cursor: default; }
+#layersPanel .lp-pins label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ddd6fe; }
+#layersPanel .lp-pins .lp-count { margin-left: auto; }
+#layersPanel .lp-clear { font: inherit; font-size: 12px; color: var(--text); cursor: pointer;
+  background: rgba(167, 139, 250, 0.16); border: 1px dashed #a78bfa; border-radius: 6px; padding: 2px 10px; }
 #layersPanel .lp-note {
   font-size: 11px; color: var(--muted); margin: 4px 2px 0;
   font-style: italic; line-height: 1.4;
@@ -535,6 +552,8 @@ body.quiz-active #search { display: none; }
   #modesPanel.collapsed { padding-bottom: 0; }
   #modesPanel:not(.collapsed) { right: var(--r); padding-bottom: 10px; }
   #layersPanel .lp-row { min-height: 44px; font-size: 15px; }
+  #layersPanel .lp-pins label { min-height: 44px; }
+  #layersPanel .lp-clear { min-height: 40px; min-width: 64px; font-size: 14px; }
 
   /* Country / event card: full width under the search row, globe stays
      visible below it; big close target in the corner */

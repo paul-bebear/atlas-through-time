@@ -20,6 +20,7 @@ import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
 import { createQuiz } from "./quiz.js";
 import { sliceByName, rowForYear } from "./politySlice.js";
+import { parseLink, frameFor, spanLabel } from "./linkView.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
@@ -37,6 +38,7 @@ const state = {
     events:  { enabled: true, count: 0 },
     wars:    { enabled: false },
     trade:   { enabled: false },
+    pins:    { enabled: true, count: null },   // pins from a link the visitor opened
   },
   selection: null,
   modeState: null,
@@ -112,9 +114,11 @@ function buildLegend() {
 }
 
 async function boot() {
-  // Snapshot the URL params before anything can replaceState over them.
-  const bootParams = new URLSearchParams(location.search);
-  const qYear = parseInt(bootParams.get("year"), 10);
+  // Snapshot the URL before anything can replaceState over it. A link view
+  // (#v=2&…, docs/link-format.md) lives in the fragment and wins over the query.
+  const link = parseLink(location.hash);
+  const bootParams = new URLSearchParams(link ? "" : location.search);
+  const qYear = link ? link.year : parseInt(bootParams.get("year"), 10);
   const bootYear = Number.isFinite(qYear) ? Math.max(SLIDER_MIN, Math.min(SLIDER_MAX, qYear)) : 1900;
   // The globe needs none of the JSON below, so it starts before it lands.
   // The boot year's borders (the slowest fetch) go out first; the timeline's
@@ -161,6 +165,7 @@ async function boot() {
   let selLabel = null;
   let storyThread = null, storyBeat = 0;   // active Empire Story, for permalinks
   let urlTimer = null;
+  let linkPins = [];               // pins from the opened link: memory only, never stored or sent
   const syncURL = () => {
     if (!events) return;             // permalink restore hasn't run yet — keep ?sel=/?mode=
     clearTimeout(urlTimer);
@@ -174,7 +179,8 @@ async function boot() {
         q.set("thread", storyThread);
         if (storyBeat) q.set("beat", String(storyBeat));
       } else if (selLabel) q.set("sel", selLabel);
-      history.replaceState(null, "", "?" + q.toString());
+      // The link's fragment stays while its pins show; Clear drops it.
+      history.replaceState(null, "", "?" + q.toString() + (linkPins.length ? location.hash : ""));
     }, 300);
   };
 
@@ -188,12 +194,14 @@ async function boot() {
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
 
+  let globeIsReady;
+  const globeReady = new Promise(r => { globeIsReady = r; });   // camera moves before this are lost
   const globe = createGlobe(document.getElementById("globe"), {
     onCountryClick: f => pickFeature(f),
     onEventClick: ev => { clearSelection(); card?.openEvent(ev); },
     onTerritoryClick: name => pickTerritory(name),
     onCityClick: d => pickCity(d),
-    onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
+    onReady: () => { document.getElementById("globePlaceholder")?.classList.add("ready"); globeIsReady(); }
   });
   document.getElementById("status").textContent = "loading textures & borders…";
 
@@ -800,6 +808,7 @@ async function boot() {
         }
       }
       else if (id === "wars") applyHighlights();      // belligerents, no border reload
+      else if (id === "pins") globe.setLinkPins(enabled ? linkPins : []);
       else if (id === "trade") {
         tradeSig = null;
         if (enabled) refreshTrade(state.year);
@@ -814,9 +823,46 @@ async function boot() {
   });
   layersPanel.updateCounts();
 
+  // --- Link view v2 -----------------------------------------------------
+  // Pins a link carries are a pointer someone sent, not Atlas facts: drawn in
+  // their own style, counted with a Clear control, never stored or sent anywhere.
+  const slug = s => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  // Atlas's own name for a pin whose id it knows (atlas:<city>, period-correct), else the link's label.
+  const pinLabel = p => {
+    if (p.id?.startsWith("atlas:")) {
+      const c = cities.find(c => [c.name, ...(c.names || []).map(n => n.name)].some(n => "atlas:" + slug(n) === p.id));
+      if (c) return cityNameAt(c, state.year);
+    }
+    return p.label;
+  };
+  const showLinkPins = pins => {
+    linkPins = pins;
+    state.layers.pins.count = pins.length || null;
+    globe.setLinkPins(state.layers.pins.enabled ? pins : []);
+    layersPanel.refresh();
+  };
+  layersPanel.onClearPins = () => {
+    showLinkPins([]);
+    history.replaceState(null, "", location.pathname + location.search);
+    syncURL();
+  };
+  async function applyLink(v) {
+    showLinkPins(v.pins.map(p => ({ lat: p.lat, lng: p.lng, label: pinLabel(p) })));
+    if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));
+    // Camera: at= wins, else the pins' bounding box, else leave it.
+    const el = document.getElementById("globe");
+    const cam = v.at || frameFor(v.pins, el.clientWidth / el.clientHeight);
+    await globeReady;
+    if (cam) globe.flyTo(cam.lat, cam.lng, cam.altitude);
+  }
+
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
   // The shared year is already on the slider (initialYear); a selection may
   // still move it (the USA clamps to 1776+).
+  if (link) applyLink(link);
+  // A new link pasted into this tab only changes the fragment: start it fresh.
+  addEventListener("hashchange", () => { if (parseLink(location.hash)) location.reload(); });
   const qMode = bootParams.get("mode");
   const qSel = bootParams.get("sel");
   const qThread = bootParams.get("thread");
