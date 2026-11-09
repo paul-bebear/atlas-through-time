@@ -100,5 +100,106 @@
       [-55.0, 19.5], [-66.0, 18.5], [-70.0, 19.0], [-77.0, 20.0], [-86.0, 20.5],
       [-96.13, 19.19]
     ]
+  },
+  {
+    "id": "tyre-jerusalem",
+    "name": "Tyre–Jerusalem road",
+    "from": -1000,
+    "to": -586,
+    "color": "#ff5d73",
+    "summary": "The overland link between Tyre, the leading Phoenician port, and Jerusalem in the Judean hills, drawn here down the coast to Akko, through the Jezreel Valley and along the hill-country ridge. In the biblical account Hiram of Tyre sent David and Solomon cedar, juniper and skilled builders, and Solomon paid in wheat and olive oil; the timber itself went mostly by sea, floated down the coast. These dealings are known from the Bible and from Tyrian records that Josephus quoted a thousand years later; the road is real geography, but its exact line is not known, so it is drawn schematically.",
+    "points": [
+      [35.2018, 33.2693], [35.15, 33.1], [35.115, 33.0], [35.0798, 32.9213], [35.12, 32.72],
+      [35.1837, 32.5838], [35.2399, 32.4135], [35.2821, 32.2135], [35.2383, 31.9283], [35.235, 31.7772]
+    ],
+    "kind": "trade",
+    "mode": "land",
+    "goods": ["cedar timber", "juniper timber", "wheat", "olive oil"],
+    "certainty": "schematic",
+    "waypoints": [
+      { "name": "Tyre", "lat": 33.2693, "lng": 35.2018, "place": "pleiades:678437" },
+      { "name": "Akko", "lat": 32.9213, "lng": 35.0798, "place": "pleiades:678010" },
+      { "name": "Megiddo", "lat": 32.5838, "lng": 35.1837, "place": "pleiades:26356565" },
+      { "name": "Dothan", "lat": 32.4135, "lng": 35.2399, "place": "pleiades:857932175" },
+      { "name": "Shechem", "lat": 32.2135, "lng": 35.2821, "place": "pleiades:678403" },
+      { "name": "Bethel", "lat": 31.9283, "lng": 35.2383, "place": "pleiades:260940008" },
+      { "name": "Jerusalem", "lat": 31.7772, "lng": 35.235, "place": "pleiades:687928" }
+    ],
+    "sources": [
+      { "title": "1 Kings 5:1–12; 7:13–14 (Hiram's timber and craftsmen, Solomon's wheat and oil)", "url": "https://en.wikisource.org/wiki/Bible_(King_James)/1_Kings", "licence": "public domain (King James Version)", "use": "the account; goods" },
+      { "title": "2 Samuel 5:11 (Hiram sends David cedar, carpenters and masons)", "url": "https://en.wikisource.org/wiki/Bible_(King_James)/2_Samuel", "licence": "public domain (King James Version)", "use": "start year" },
+      { "title": "2 Chronicles 2:16 (timber floated by sea to Joppa)", "url": "https://en.wikisource.org/wiki/Bible_(King_James)/2_Chronicles", "licence": "public domain (King James Version)", "use": "the account: why the timber is said to have gone by sea" },
+      { "title": "Ezekiel 27:17 (Judah and Israel trading wheat, honey, oil and balm with Tyre)", "url": "https://en.wikisource.org/wiki/Bible_(King_James)/Ezekiel", "licence": "public domain (King James Version)", "use": "end year: trade with Tyre still described in the early 6th century BCE" },
+      { "title": "Josephus, Against Apion 1.17–18, quoting Dius and Menander of Ephesus on Hiram and Solomon (Whiston translation)", "url": "https://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.01.0216", "licence": "public domain (Whiston translation)", "use": "the only non-biblical text on the Hiram–Solomon dealings, written c. 100 CE" },
+      { "title": "Pleiades place records: Tyrus 678437, Ake/Ptolemais 678010, Magidû 26356565, Dothan 857932175, Sychem 678403, Beitin 260940008, Ierusalem 687928", "url": "https://pleiades.stoa.org/places/678437", "licence": "CC BY 3.0", "use": "place ids and coordinates of the waypoints (checked 2026-11-09)" },
+      { "title": "Years", "use": "from −1000: the account begins Tyre's dealings with Jerusalem under David (2 Samuel 5:11), conventionally c. 1000 BCE. To −586: Babylon's destruction of Jerusalem (587/586 BCE). The span covers the dealings the sources describe, not proof of continuous traffic." },
+      { "title": "Certainty", "use": "schematic: the stops are real Iron Age towns on the natural coast-to-hills corridor, but no source gives the road's exact line; the Hiram–Solomon dealings themselves rest on the biblical account and on Tyrian records known only through Josephus." },
+      { "title": "Geometry", "use": "drawn by hand by Atlas from the Pleiades coordinates above and general geography; not traced from ORBIS, DARE, a copyrighted atlas or a map in a book. Atlas-authored, CC BY 4.0." }
+    ]
+  },
+  {
+    "id": "levant-red-sea",
+    "name": "Red Sea voyages towards Ophir",
+    "from": -970,
+    "to": -931,
+    "color": "#3fd0c9",
+    "summary": "A sea lane from the head of the Gulf of Aqaba down the Red Sea, as told in the biblical account of Solomon's fleet: ships built at Ezion-Geber beside Elath, crewed partly by Hiram's Tyrian sailors, brought back gold, almug wood and precious stones from Ophir. Where Ophir lay is unknown (southern Arabia, the Horn of Africa and India have all been proposed), so the line stops in the southern Red Sea instead of at a claimed Ophir. Where Ezion-Geber stood is disputed too, and neither proposed site has yielded a tenth-century port, so the voyages are known only from the biblical text.",
+    "points": [
+      [34.965, 29.525], [34.92, 29.45], [34.84, 29.2], [34.76, 28.95], [34.64, 28.5],
+      [34.52, 28.15], [34.4653, 28.0039], [34.4, 27.8], [34.55, 27.4], [35.65, 25.8],
+      [37.1, 23.5], [38.25, 21.0], [40.0, 18.5], [40.8, 16.6], [41.4, 15.0]
+    ],
+    "kind": "trade",
+    "mode": "sea",
+    "goods": ["gold", "almug wood", "precious stones"],
+    "certainty": "legendary",
+    "waypoints": [
+      {
+        "name": "Ezion-Geber (site disputed)",
+        "lat": 29.525,
+        "lng": 34.965,
+        "note": "The line starts in the water at the head of the Gulf of Aqaba, where the account places Ezion-Geber. This point is not a claimed site; the candidates are listed.",
+        "candidates": [
+          { "name": "Tell el-Kheleifeh", "lat": 29.5441, "lng": 34.9866, "place": "pleiades:746754", "note": "Proposed by Nelson Glueck, who dug it in 1938–40. Pratico's 1985 reappraisal dates its occupation to the 8th–early 6th centuries BCE and found nothing from the 10th; he left the identification open. Wikidata's Ezion-Geber item (Q1386052) uses this site's coordinates." },
+          { "name": "Jezirat Faraun (Pharaoh's Island)", "lat": 29.4628, "lng": 34.8601, "place": "wikidata:Q933219", "note": "Proposed by Alexander Flinder (1977, 1989) as the harbour, with Beno Rothenberg and Avner Raban arguing for the island too. Its earliest finds are Iron Age I pottery; the fortress standing today is medieval." }
+        ]
+      },
+      {
+        "name": "Elath",
+        "lat": 29.5306,
+        "lng": 35.0,
+        "place": "pleiades:746700",
+        "note": "The account sets Ezion-Geber beside Elath (Eloth). Pleiades records Elath, and Ezion-Geber, as names of Aila at Aqaba; some scholars place Elath at Tell el-Kheleifeh instead.",
+        "candidates": [
+          { "name": "Aila (Aqaba)", "lat": 29.5306, "lng": 35.0, "place": "pleiades:746700" },
+          { "name": "Tell el-Kheleifeh", "lat": 29.5441, "lng": 34.9866, "place": "pleiades:746754" }
+        ]
+      },
+      { "name": "Strait of Tiran", "lat": 28.0039, "lng": 34.4653, "place": "wikidata:Q208157" },
+      {
+        "name": "towards Ophir (location unknown)",
+        "lat": 15.0,
+        "lng": 41.4,
+        "open": true,
+        "note": "An open end in the southern Red Sea, not a place. Ophir's location is unknown; the account says only that the round trip brought gold. Proposed regions are listed without a pick.",
+        "candidates": [
+          { "name": "Southern Arabia", "note": "Proposed: across the Red Sea from the Horn of Africa; the Bible lists Ophir among the peoples of Arabia (Genesis 10:29)." },
+          { "name": "Horn of Africa / East Africa", "note": "Proposed: a gold-bearing coast reached down the Red Sea, sometimes linked with Egypt's land of Punt." },
+          { "name": "India", "note": "Proposed: from the goods named (almug wood, and in 1 Kings 10:22 ivory, apes and peacocks) and from Josephus, who placed Ophir in India (Antiquities 8.6.4)." }
+        ]
+      }
+    ],
+    "sources": [
+      { "title": "1 Kings 9:26–28; 10:11 (the fleet at Ezion-Geber beside Eloth, Hiram's sailors, 420 talents of gold, almug wood and precious stones)", "url": "https://en.wikisource.org/wiki/Bible_(King_James)/1_Kings", "licence": "public domain (King James Version)", "use": "the account; goods. 1 Kings 10:22's silver, ivory, apes and peacocks came with the 'ships of Tarshish', whose route is debated, so they are not listed as goods here." },
+      { "title": "2 Chronicles 8:17–18 (parallel account, 450 talents); 1 Kings 22:48 (Jehoshaphat's later fleet wrecked at Ezion-Geber)", "url": "https://en.wikisource.org/wiki/Bible_(King_James)/2_Chronicles", "licence": "public domain (King James Version)", "use": "the account; why the route is not extended into the 9th century" },
+      { "title": "Gary D. Pratico, 'Nelson Glueck's 1938–1940 Excavations at Tell el-Kheleifeh: A Reappraisal', BASOR 259 (1985) 1–32", "url": "https://bible.ca/archeology/bible-archeology-exodus-kadesh-barnea-ezion-geber-nelson-gluecks-1938-1940-excavations-tell-el-kheleifeh-reappraisal-gary-pratico-1985ad.htm", "use": "Tell el-Kheleifeh's dates and the open identification (read through the hosted copy)" },
+      { "title": "Alexander Flinder, 'Is This Solomon's Seaport?', Biblical Archaeology Review 15:4 (1989)", "url": "https://cojs.org/is_this_solomon-s_seaport-_alexander_flinder-_bar_15-04-_july-aug_1989/", "use": "the Jezirat Faraun candidate (consulted through summaries, not read in full)" },
+      { "title": "'A Shipment of Gold': the Tell Qasile ostracon, 8th century BCE, 'gold of Ophir to (or for) Beth-Horon, 30 shekels'", "url": "https://www.posenlibrary.com/entry/shipment-gold", "use": "Ophir as a known name for gold outside the Bible; the sherd does not locate Ophir" },
+      { "title": "Pleiades place records: Aelana/Aila 746700, Kheleifeh 746754", "url": "https://pleiades.stoa.org/places/746700", "licence": "CC BY 3.0", "use": "place ids, coordinates, and Pleiades' own name records for Elath and Ezion-Geber (checked 2026-11-09)" },
+      { "title": "Wikidata: Pharaoh's Island Q933219, Straits of Tiran Q208157, Ezion-Geber Q1386052, Ophir Q914073; coastal towns Haql Q97291597, Nuweiba Q1011488, Dahab Q370495, Sharm el-Sheikh Q644", "url": "https://www.wikidata.org/wiki/Q933219", "licence": "CC0", "use": "ids and coordinates; the coastal towns were used to keep the line mid-gulf in the Gulf of Aqaba" },
+      { "title": "Years", "use": "−970 to −931: the conventional dates of Solomon's reign, to which the account ties the voyages. They are not extended: Jehoshaphat's attempt in the 9th century failed (1 Kings 22:48), and the later Elath of 2 Kings 14:22 and 16:6 belongs to other stories." },
+      { "title": "Certainty", "use": "legendary, in Atlas's sense: known only from texts written down centuries later, with no contemporary evidence for the voyages, their port or their destination. This says nothing about whether the voyages happened." },
+      { "title": "Geometry", "use": "drawn by hand by Atlas: mid-channel down the Gulf of Aqaba between the coastal towns above, through the Strait of Tiran, then down the middle of the Red Sea. Not traced from ORBIS, DARE, a copyrighted atlas or a map in a book. Atlas-authored, CC BY 4.0." }
+    ]
   }
 ]
