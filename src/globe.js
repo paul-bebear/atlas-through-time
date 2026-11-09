@@ -12,6 +12,8 @@ const HILITE_B = "rgba(255, 138, 93, 0.85)";
 const STROKE = "#8fe9ff";          // crisp cyan border, high contrast on satellite
 const STROKE_SEL = "#ffffff";      // selected country border
 const SEL_FILL = "rgba(143, 233, 255, 0.30)"; // selected country tint
+// Idle auto-spin until the first touch: slow enough to read the map while it turns.
+const IDLE_SPIN_SPEED = 0.12;
 
 // globe.gl's hover tooltip follows the pointer; under a finger it sticks at the last
 // touch point. Touch-only screens get no tooltip text (the cards are the touch affordance).
@@ -77,7 +79,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
 
   const controls = world.controls();
   controls.autoRotate = true;
-  controls.autoRotateSpeed = 0.3;
+  controls.autoRotateSpeed = IDLE_SPIN_SPEED;
   el.addEventListener("pointerdown", () => { controls.autoRotate = false; }, { once: true });
   el.addEventListener("pointerdown", () => { lastPress = Date.now(); });
   controls.addEventListener("change", sizeCities);
