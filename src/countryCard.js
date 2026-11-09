@@ -174,7 +174,9 @@ export function createInfoCard({ countries, onDismiss }) {
     shell(p.canonical_name, `${span} · from the Atlas registry${asOf}`,
       rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + (wiki ? `<a class="cc-link" href="${wiki.url}" target="_blank" rel="noopener">Read on Wikipedia →</a>` : "")
-      + `<div class="cc-note">Live from the Atlas database (Wikidata-sourced). Rulers/population shown for the viewed year.</div>`);
+      + (p._slice
+        ? `<div class="cc-note">From Atlas's committed registry (Wikidata-sourced); the live database is unreachable, so rulers and population are not shown.</div>`
+        : `<div class="cc-note">Live from the Atlas database (Wikidata-sourced). Rulers/population shown for the viewed year.</div>`));
   }
 
   const yspan = f => {

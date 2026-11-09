@@ -19,6 +19,7 @@ import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
 import { createQuiz } from "./quiz.js";
+import { sliceByName, rowForYear } from "./politySlice.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
@@ -70,16 +71,33 @@ function featureContains(feature, lng, lat) {
   return false;
 }
 
-function featureCentroid(feature) {
-  let best = null, bestA = -1;
-  for (const poly of polysOf(feature.geometry)) {
+// Centre of a set of border shapes: the area centroid of the largest outer ring,
+// moved onto the ring along its parallel when the ring is C-shaped and the
+// centroid falls outside it. Where a pin stands and the camera flies.
+function shapesCentre(features) {
+  let best = null, bestA = 0;
+  for (const f of features || []) for (const poly of polysOf(f.geometry)) {
     const r = poly[0];
-    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
-    for (const [x, y] of r) { if (x < a) a = x; if (x > c) c = x; if (y < b) b = y; if (y > d) d = y; }
-    const area = (c - a) * (d - b);
-    if (area > bestA) { bestA = area; best = [(a + c) / 2, (b + d) / 2]; }
+    let a = 0, cx = 0, cy = 0;
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const k = r[j][0] * r[i][1] - r[i][0] * r[j][1];
+      a += k; cx += (r[j][0] + r[i][0]) * k; cy += (r[j][1] + r[i][1]) * k;
+    }
+    if (Math.abs(a) > bestA) { bestA = Math.abs(a); best = { ring: r, lng: cx / (3 * a), lat: cy / (3 * a) }; }
   }
-  return best ? { lng: best[0], lat: best[1] } : null;
+  if (!best) return null;
+  const { ring, lat } = best;
+  if (ringHit(best.lng, lat, ring)) return { lat, lng: best.lng };
+  // Widest stretch of the parallel through the centroid that lies inside the ring.
+  const xs = [];
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > lat) !== (yj > lat)) xs.push(xi + ((lat - yi) * (xj - xi)) / (yj - yi));
+  }
+  xs.sort((p, q) => p - q);
+  let lng = best.lng, w = -1;
+  for (let i = 0; i + 1 < xs.length; i += 2) if (xs[i + 1] - xs[i] > w) { w = xs[i + 1] - xs[i]; lng = (xs[i] + xs[i + 1]) / 2; }
+  return { lat, lng };
 }
 
 const activeWarsFor = y => warsData.filter(w => y >= w.start && y <= w.end);
@@ -164,6 +182,7 @@ async function boot() {
     selLabel = null;
     storyThread = null; storyBeat = 0;
     syncURL();
+    globe.setSelectionPin(null);
     setSelection([]);                 // clears selection tint; layer tints re-apply
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
@@ -176,6 +195,14 @@ async function boot() {
     onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
   });
   document.getElementById("status").textContent = "loading textures & borders…";
+
+  // A selected polity gets a red pin with its name at its point (else the centre
+  // of its highlighted shapes, so it shows even with no shape in this snapshot),
+  // and the camera flies there.
+  const pinSelection = (label, ll, altitude = 1.0) => {
+    globe.setSelectionPin(ll ? { label, lat: ll.lat, lng: ll.lng } : null);
+    if (ll) globe.flyTo(ll.lat, ll.lng, altitude);
+  };
 
   // Cities through time: a city dot is permanent once founded (gone if the
   // city dies — Babylon, Carthage), and its LABEL is period-correct
@@ -345,7 +372,8 @@ async function boot() {
   events = createEvents([...seedEvents, ...genEvents]);
   // A closed card stays closed while the year steps; the selection's tint and
   // slider span stay, and any new pick (a fresh selection) opens the card again.
-  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; } });
+  // Closing the card also takes the selection's pin away (and nothing brings the card back).
+  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; globe.setSelectionPin(null); } });
   buildLegend();
   initPanel();
 
@@ -379,9 +407,8 @@ async function boot() {
       return x.includes("united states") || x === "usa" || x === "us";
     });
 
-    const feats = globe.featuresForNames(names);
     const ll = entry.lat != null ? { lat: entry.lat, lng: entry.lng }
-      : feats[0] ? featureCentroid(feats[0]) : null;
+      : shapesCentre(globe.featuresForNames(names));
     if (!isUSA) setSelection([{ names, side: "A" }]);
     selection = {
       names,
@@ -398,6 +425,7 @@ async function boot() {
       // setTerritoryOutlines (driven by the first onChange below) clears
       // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
+      globe.setSelectionPin(null);
       globe.flyTo(39, -98, 1.6);
       timeline.clearOverlays();
       timeline.setSpan(1776, 2025, "USA territorial growth");
@@ -407,7 +435,7 @@ async function boot() {
       timeline.setYear(Math.max(1776, Math.min(2025, timeline.currentYear())));
     } else {
       setContext(entry.name);
-      if (ll) globe.flyTo(ll.lat, ll.lng, 1.0);
+      pinSelection(entry.name, ll);
       const eras = entry.eras || [];
       const from = eras.length ? Math.min(...eras.map(e => e.from)) : null;
       const to = eras.length ? Math.max(...eras.map(e => (e.to >= 9999 ? 2025 : e.to))) : 2025;
@@ -421,8 +449,9 @@ async function boot() {
   async function selectDbPolity(p) {
     const mine = ++dbSelectionSeq;
     const wasT = exitTerritory();
-    let resolved = [];
-    try { resolved = await resolvedNames(p.id); } catch { /* optional */ }
+    // Rows from the committed slice (database unreachable) carry their border names.
+    let resolved = p._names || [];
+    if (!p._slice) try { resolved = await resolvedNames(p.id); } catch { /* optional */ }
     if (mine !== dbSelectionSeq) return;       // a newer pick already started
     const names = [...new Set([
       p.canonical_name,
@@ -430,14 +459,12 @@ async function boot() {
       ...resolved
     ].filter(Boolean))];
     setContext("🗄 " + p.canonical_name);
-    const feats = globe.featuresForNames(names);
-    const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng }
-      : feats[0] ? featureCentroid(feats[0]) : null;
-    if (ll) globe.flyTo(ll.lat, ll.lng, 1.0);
+    const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
+    pinSelection(p.canonical_name, ll);
     setSelection([{ names, side: "A" }]);
     scopeSlider(names, p.start_year, p.end_year ?? p.start_year ?? 2025, p.canonical_name);
     let detail = null;
-    try { detail = await polityDetail(p.id); } catch { /* basic */ }
+    if (!p._slice) try { detail = await polityDetail(p.id); } catch { /* basic */ }
     if (mine !== dbSelectionSeq) return;       // newer pick won the race
     selection = { names, render: y => card.openDbPolity(p, detail, y) };
     selLabel = p.canonical_name;
@@ -484,8 +511,7 @@ async function boot() {
     if (entry) { selectCurated(entry); return; }
     if (wasT) timeline.setYear(timeline.currentYear());
     setContext(name);
-    const c = featureCentroid(f);
-    if (c) globe.flyTo(c.lat, c.lng, 0.9);
+    pinSelection(name, shapesCentre([f]), 0.9);
     setSelection([{ names: [name], side: "A" }]);
     scopeSlider([name], null, null, name);
     selection = {
@@ -496,6 +522,20 @@ async function boot() {
     syncURL();
     selection.render(timeline.currentYear());
   };
+  // A polity by name (`sel=`): the first exact database hit, preferring the row
+  // whose years cover the viewed year; the committed slice when the database
+  // is unreachable or not configured.
+  async function selectByName(name) {
+    const year = timeline.currentYear();
+    let p = null;
+    try {
+      const hits = await searchPolities(name, 8);
+      const exact = hits.filter(h => h.canonical_name.toLowerCase() === name.toLowerCase());
+      p = rowForYear(exact, year) || hits[0] || null;
+    } catch { /* database down — try the slice */ }
+    if (!p) try { p = await sliceByName(name, year); } catch { /* no slice either */ }
+    if (p) selectDbPolity(p);
+  }
   // --------------------------------------------------------------------
 
   createWarsPanel({
@@ -533,6 +573,8 @@ async function boot() {
       timeline.setYear(bt.year);
       setSelection([{ names, side: "A" }]);
       setContext("📖 " + country.name);
+      const ll = country.lat != null ? { lat: country.lat, lng: country.lng } : shapesCentre(globe.featuresForNames(names));
+      globe.setSelectionPin(ll ? { label: country.name, ...ll } : null);
       timeline.setSpan(beats[0].year, beats[beats.length - 1].year, country.name);
       timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
       card.openEntry(country, bt.year,
@@ -600,10 +642,8 @@ async function boot() {
       }
       const names = nameCache.get(mp.id);
       setContext("🧵 " + th.display_name + " — " + mp.canonical_name);
-      const feats = globe.featuresForNames(names);
-      const ll = mp.lat != null ? { lat: mp.lat, lng: mp.lng }
-        : feats[0] ? featureCentroid(feats[0]) : null;
-      if (ll) globe.flyTo(ll.lat, ll.lng, 1.2);
+      const ll = mp.lat != null ? { lat: mp.lat, lng: mp.lng } : shapesCentre(globe.featuresForNames(names));
+      pinSelection(mp.canonical_name, ll, 1.2);
       setSelection([{ names, side: "A" }]);
       timeline.clearOverlays();
       timeline.setSpan(beats[0].year, beats[beats.length - 1].year, th.display_name);
@@ -791,10 +831,7 @@ async function boot() {
   } else if (qSel) {
     const e = card.resolve(qSel);
     if (e) selectCurated(e);
-    else searchPolities(qSel, 5).then(hits => {
-      const p = hits.find(h => h.canonical_name.toLowerCase() === qSel.toLowerCase()) || hits[0];
-      if (p) selectDbPolity(p);
-    }).catch(() => { /* bad sel param — ignore */ });
+    else selectByName(qSel);
   }
   // Render the data layers for the current year (borders reuse the cached or
   // in-flight snapshot and the sig is unchanged, so no second tessellate). A

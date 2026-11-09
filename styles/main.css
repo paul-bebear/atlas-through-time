@@ -32,6 +32,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   font-size: clamp(9px, var(--city-size), 13px); line-height: 1; white-space: nowrap;
   color: rgba(255, 220, 150, 0.8); text-shadow: 0 0 2px rgba(0, 0, 0, 0.8); }
 .cities-far .city-label::after { display: none; }
+/* Map pins: a zero-size anchor at the point, the label stands above it. They are
+   never hit targets (taps, clicks and drags reach the globe). */
+.map-pin { width: 0; height: 0; pointer-events: none; }
+.map-pin > span { position: absolute; pointer-events: none; }
+.map-pin .pin-dot { left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%;
+  background: #e5322d; border: 2px solid #fff; box-shadow: 0 0 0 3px rgba(229, 50, 45, 0.35), 0 1px 4px rgba(0, 0, 0, 0.6); }
+.map-pin .pin-stem { left: -1px; bottom: 4px; width: 2px; height: 14px; background: #fff; box-shadow: 0 0 2px rgba(0, 0, 0, 0.7); }
+.map-pin .pin-label { left: 0; bottom: 17px; translate: -50% 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; padding: 4px 8px; border-radius: 6px; background: #e5322d; color: #fff;
+  font-size: 13px; font-weight: 700; line-height: 1.1; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.55); }
 
 #topbar {
   position: absolute; top: calc(16px + var(--sat)); z-index: 10;

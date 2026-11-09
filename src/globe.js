@@ -35,7 +35,9 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .onGlobeReady(() => onReady?.())
     .polygonsTransitionDuration(0)
     .polygonSideColor(() => "rgba(0,0,0,0)")
-    .htmlElement(cityEl)
+    // One HTML layer: city labels plus map pins, one array tagged by kind.
+    .htmlElement(d => d.kind === "pin" ? pinEl(d) : cityEl(d))
+    .htmlAltitude(d => d.kind === "pin" ? 0.035 : 0)
     .pointLat(d => d.lat).pointLng(d => d.lng)
     .pointColor(d => d._color)
     .pointAltitude(0.006)
@@ -76,6 +78,23 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     e.__d = d;
     return e;
   }
+
+  // Map pins (the selected polity). Never hit targets: taps, clicks and drags
+  // go through to the globe, so touchPick and globe.gl see them as before.
+  const pinEls = new Map();
+  function pinEl(d) {
+    let e = pinEls.get(d.key);
+    if (!e) {
+      pinEls.set(d.key, e = document.createElement("div"));
+      e.className = "map-pin pin-" + d.style;
+      e.innerHTML = `<span class="pin-label"></span><span class="pin-stem"></span><span class="pin-dot"></span>`;
+    }
+    e.querySelector(".pin-label").textContent = d.label;
+    return e;
+  }
+  let htmlCities = [];
+  const htmlPins = new Map();       // style → pins
+  const pushHtml = () => world.htmlElementsData([...htmlCities, ...[...htmlPins.values()].flat()]);
 
   const controls = world.controls();
   controls.autoRotate = true;
@@ -203,7 +222,13 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       const set = new Set((names || []).map(norm));
       return currentFeatures.filter(f => set.has(norm(featureName(f))));
     },
-    setCities: c => world.htmlElementsData(c || []),
+    setCities: c => { htmlCities = c || []; pushHtml(); },
+    // The red pin at the selected polity: { label, lat, lng } or null.
+    setSelectionPin(p) {
+      if (p) htmlPins.set("sel", [{ kind: "pin", style: "sel", key: "sel", label: p.label, lat: p.lat, lng: p.lng }]);
+      else htmlPins.delete("sel");
+      pushHtml();
+    },
     allFeatures: () => currentFeatures,
     setEvents: e => world.pointsData(e || []),
     setHighlights(highlights) {
@@ -212,7 +237,8 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       selectedKey = null;             // selection event will re-set this AFTER if a polygon was clicked
       world.polygonsData(world.polygonsData());
     },
-    flyTo(lat, lng, altitude = 0.75, ms = 1400) { world.pointOfView({ lat, lng, altitude }, ms); }
+    // A fly-to means "look here", so the idle spin stops instead of carrying the view away.
+    flyTo(lat, lng, altitude = 0.75, ms = 1400) { controls.autoRotate = false; world.pointOfView({ lat, lng, altitude }, ms); }
   };
 }
 
