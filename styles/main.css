@@ -42,6 +42,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .map-pin .pin-label { left: 0; bottom: 17px; translate: -50% 0; max-width: 60vw; overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; padding: 4px 8px; border-radius: 6px; background: #e5322d; color: #fff;
   font-size: 13px; font-weight: 700; line-height: 1.1; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.55); }
+/* A selected polity in a year it did not exist: grey, its label giving its dates. */
+.pin-off .pin-dot { background: #8b95a1; box-shadow: 0 0 0 3px rgba(139, 149, 161, 0.3), 0 1px 4px rgba(0, 0, 0, 0.6); }
+.pin-off .pin-label { background: #4b5563; color: #e5e7eb; font-weight: 600; font-style: italic; }
 
 #topbar {
   position: absolute; top: calc(16px + var(--sat)); z-index: 10;
@@ -226,6 +229,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; }
 #infoCard h2 { margin: 0 6px 2px 0; font-size: 20px; padding-right: 18px; }
 #infoCard .cc-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+#infoCard .cc-gone { margin: 0 0 10px; padding: 8px 10px; border-radius: 8px; background: rgba(139, 149, 161, 0.16);
+  color: var(--text); font-size: 13px; }
 #infoCard img.cc-thumb { width: 100%; border-radius: 9px; margin: 4px 0 10px;
   border: 1px solid var(--border); }
 #infoCard .cc-extract { font-size: 13px; line-height: 1.55; }

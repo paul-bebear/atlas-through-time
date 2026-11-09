@@ -182,7 +182,7 @@ async function boot() {
     selLabel = null;
     storyThread = null; storyBeat = 0;
     syncURL();
-    globe.setSelectionPin(null);
+    setSelPins([]);
     aim = null;
     setSelection([]);                 // clears selection tint; layer tints re-apply
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
@@ -200,8 +200,17 @@ async function boot() {
   // A selected polity gets a red pin with its name at its point (else the centre
   // of its highlighted shapes, so it shows even with no shape in this snapshot),
   // and the camera flies there.
-  const pinSelection = (label, ll, altitude = 1.0) => {
-    globe.setSelectionPin(ll ? { label, lat: ll.lat, lng: ll.lng } : null);
+  // `span` = [from, to]: in a year outside it the pin turns grey and its label
+  // gives the dates, so a polity that no longer exists does not read as current.
+  let selPins = [];
+  const showSelPins = (y = state.year) => globe.setSelectionPin(selPins.map(p => {
+    const off = y != null && ((p.from != null && y < p.from) || (p.to != null && y > p.to));
+    return { lat: p.lat, lng: p.lng, off,
+      label: off ? `${p.label} · ${p.from != null ? yearLabel(p.from) : "?"} – ${p.to != null ? yearLabel(p.to) : "present"}` : p.label };
+  }));
+  const setSelPins = list => { selPins = list; showSelPins(); };
+  const pinSelection = (label, ll, altitude = 1.0, span = null) => {
+    setSelPins(ll ? [{ label, lat: ll.lat, lng: ll.lng, from: span?.[0] ?? null, to: span?.[1] ?? null }] : []);
     if (ll) flyFramed(ll.lat, ll.lng, altitude);
   };
 
@@ -408,6 +417,7 @@ async function boot() {
       // Selected country: re-render its card for the year being viewed,
       // unless the user closed it (see onDismiss).
       if (selection && !selection.dismissed) selection.render(year);
+      if (selPins.length) showSelPins(year);    // grey when the year leaves the polity's lifetime
     },
     onSurprise: () => {
       clearSelection();
@@ -426,7 +436,7 @@ async function boot() {
   // A closed card stays closed while the year steps; the selection's tint and
   // slider span stay, and any new pick (a fresh selection) opens the card again.
   // Closing the card also takes the selection's pin away (and nothing brings the card back).
-  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; globe.setSelectionPin(null); aim = null; } });
+  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; setSelPins([]); aim = null; } });
   buildLegend();
   initPanel();
 
@@ -478,7 +488,7 @@ async function boot() {
       // setTerritoryOutlines (driven by the first onChange below) clears
       // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
-      globe.setSelectionPin(null);
+      setSelPins([]);
       globe.flyTo(39, -98, 1.6);
       timeline.clearOverlays();
       timeline.setSpan(1776, 2025, "USA territorial growth");
@@ -488,10 +498,10 @@ async function boot() {
       timeline.setYear(Math.max(1776, Math.min(2025, timeline.currentYear())));
     } else {
       setContext(entry.name);
-      pinSelection(entry.name, ll);
       const eras = entry.eras || [];
       const from = eras.length ? Math.min(...eras.map(e => e.from)) : null;
       const to = eras.length ? Math.max(...eras.map(e => (e.to >= 9999 ? 2025 : e.to))) : 2025;
+      pinSelection(entry.name, ll, 1.0, eras.length ? [from, to >= 2025 ? null : to] : null);
       scopeSlider(names, from, to, entry.name);
       // Drive one onChange so borders refresh (incl. leaving territory mode)
       // and the card renders for the current year.
@@ -513,7 +523,7 @@ async function boot() {
     ].filter(Boolean))];
     setContext("🗄 " + p.canonical_name);
     const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
-    pinSelection(p.canonical_name, ll);
+    pinSelection(p.canonical_name, ll, 1.0, [p.start_year, p.end_year]);
     setSelection([{ names, side: "A" }]);
     scopeSlider(names, p.start_year, p.end_year ?? p.start_year ?? 2025, p.canonical_name);
     let detail = null;
@@ -627,7 +637,7 @@ async function boot() {
       setSelection([{ names, side: "A" }]);
       setContext("📖 " + country.name);
       const ll = country.lat != null ? { lat: country.lat, lng: country.lng } : shapesCentre(globe.featuresForNames(names));
-      globe.setSelectionPin(ll ? { label: country.name, ...ll } : null);
+      setSelPins(ll ? [{ label: country.name, ...ll, from: null, to: null }] : []);
       timeline.setSpan(beats[0].year, beats[beats.length - 1].year, country.name);
       timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
       card.openEntry(country, bt.year,

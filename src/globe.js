@@ -88,9 +88,9 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     let e = pinEls.get(d.key);
     if (!e) {
       pinEls.set(d.key, e = document.createElement("div"));
-      e.className = "map-pin pin-" + d.style;
       e.innerHTML = `<span class="pin-label"></span><span class="pin-stem"></span><span class="pin-dot"></span>`;
     }
+    e.className = "map-pin pin-" + d.style;           // the style can change (a pin greys out)
     e.querySelector(".pin-label").textContent = d.label;
     return e;
   }
@@ -241,9 +241,10 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     },
     setCities: c => { htmlCities = c || []; pushHtml(); },
     // The red pin at the selected polity: { label, lat, lng } or null.
+    // One pin or several ({ label, lat, lng, off }); `off` greys it (not in this year).
     setSelectionPin(p) {
-      if (p) htmlPins.set("sel", [{ kind: "pin", style: "sel", key: "sel", label: p.label, lat: p.lat, lng: p.lng }]);
-      else htmlPins.delete("sel");
+      const list = (Array.isArray(p) ? p : p ? [p] : []).filter(q => q.lat != null);
+      htmlPins.set("sel", list.map((q, i) => ({ kind: "pin", style: q.off ? "sel pin-off" : "sel", key: "sel" + i, label: q.label, lat: q.lat, lng: q.lng })));
       pushHtml();
     },
     allFeatures: () => currentFeatures,
