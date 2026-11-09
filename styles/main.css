@@ -292,6 +292,8 @@ input[type=range]::-webkit-slider-thumb {
   white-space: nowrap; }
 #ticks span:first-child { transform: none; }
 #ticks span:last-child { transform: translateX(-100%); }
+/* Minor ticks (timeline.js) only fit on a wide track; phones also hide them below. */
+@media (max-width: 720px) { #ticks .tick-minor { display: none; } }
 
 /* Country search */
 #search { position: absolute; top: calc(60px + var(--sat)); left: 50%; transform: translateX(-50%);
