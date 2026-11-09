@@ -41,16 +41,21 @@ export function eraFor(y) {
 export const SLIDER_MIN = -3000;
 export const SLIDER_MAX = 2025;
 
-// Non-linear (log) time scale: the slider position is uniform, but years are
+// Semi-logarithmic time scale: the slider position is uniform, but years are
 // mapped so deep antiquity is compressed and recent centuries get more room.
-// Anchored so that year 1 sits ~30% along the track.
+// INTENTIONAL, user requirement: year 0 (the 1 BCE / 1 CE boundary) sits about
+// ONE THIRD along the track. It was 30% at first, drifted to 18% in 0f2bb6e and
+// read as wrong; do not move it, flatten it to linear (0 would land at ~60%),
+// or position anything on the timeline without yearToPos/posToYear.
+// Guarded by `node tools/check-timescale.mjs`.
 //
 //   pos(year) = (A - ln(F - year)) / (A - B)     pos in [0,1]
 //   year(pos) = F - exp(A - pos*(A - B))
+//   (same as pos = 1 - ln(1 + (MAX - year)/k) / ln(1 + (MAX - MIN)/k), k = F - MAX)
 //
 // F is an offset (> SLIDER_MAX) solved so pos(ANCHOR_YEAR) = ANCHOR_POS.
-const ANCHOR_YEAR = 1;
-const ANCHOR_POS = 0.18;   // year 1 at 18% → CE owns ~82% of the track
+const ANCHOR_YEAR = 0;
+const ANCHOR_POS = 1 / 3;  // year 0 at a third → CE owns two thirds of the track
 
 const timeScale = (() => {
   const posFor = (F, year) => {
@@ -70,7 +75,7 @@ const timeScale = (() => {
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   return {
     yearToPos: year => clamp((A - Math.log(F - clamp(year, SLIDER_MIN, SLIDER_MAX))) / (A - B), 0, 1),
-    posToYear: pos => clamp(Math.round(F - Math.exp(A - clamp(pos, 0, 1) * (A - B))), SLIDER_MIN, SLIDER_MAX)
+    posToYear: pos => clamp(Math.round(F - Math.exp(A - clamp(pos, 0, 1) * (A - B))), SLIDER_MIN, SLIDER_MAX) || 0  // no -0
   };
 })();
 

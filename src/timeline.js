@@ -19,9 +19,10 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   slider.max = STEPS;
   slider.step = 1;
 
-  // Minor ticks crowd the left end of the log scale; phones hide them (CSS).
-  const MINOR_TICKS = new Set([-1000, 1]);
-  [-3000, -1000, 1, 800, 1500, 1850, 2000].forEach(y => {
+  // Ticks sit where the semi-log scale puts them (1 CE a third along). Phones
+  // hide the minor ones (CSS) so the 10px labels never overprint at 375px.
+  const MINOR_TICKS = new Set([-1000, 500, 1800]);
+  [-3000, -1000, 1, 500, 1000, 1500, 1800, 2000].forEach(y => {
     const s = document.createElement("span");
     s.textContent = yearLabel(y);
     if (MINOR_TICKS.has(y)) s.className = "tick-minor";
@@ -37,6 +38,7 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
     year = Math.max(SLIDER_MIN, Math.min(SLIDER_MAX, year));
     yearLabelEl.textContent = yearLabel(year);
     slider.value = Math.round(yearToPos(year) * STEPS);
+    slider.setAttribute("aria-valuetext", yearLabel(year));
     onChange(year);
   }
 
@@ -90,6 +92,7 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   slider.addEventListener("input", () => {
     year = posToYear(+slider.value / STEPS);
     yearLabelEl.textContent = yearLabel(year);
+    slider.setAttribute("aria-valuetext", yearLabel(year));
     clearTimeout(scrubTimer);
     scrubTimer = setTimeout(() => onChange(year), 55);
   });
