@@ -563,6 +563,11 @@ async function boot() {
     if (state.mode === "map-quiz") return;
     const host = globe.allFeatures().find(f => featureContains(f, d.lng, d.lat));
     setContext("📍 " + d.name);       // else the header keeps naming the previous country
+    // The city card replaces the polity's: the pin moves to the city, and a year
+    // step must not bring the polity's card back over it.
+    if (selection) selection.dismissed = true;
+    const c = d.city || d;
+    pinSelection(d.name, { lat: d.lat, lng: d.lng }, globe.altitude(), [c.founded ?? null, c.until ?? null]);
     card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
   };
 

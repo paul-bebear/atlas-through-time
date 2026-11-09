@@ -259,7 +259,8 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     flyTo(lat, lng, altitude = 0.75, ms = 1400) {
       controls.autoRotate = false;
       ready.then(() => fly({ lat, lng, altitude, ms }));
-    }
+    },
+    altitude: () => world.pointOfView().altitude
   };
 }
 
