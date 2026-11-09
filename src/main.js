@@ -47,6 +47,7 @@ let warsData = [];               // wars dataset (was state.wars before Phase 1)
 const bordersSig = (source, features) => source + "|" + features.length;
 const eraEl = document.getElementById("era");
 const contextEl = document.getElementById("context");
+const statusEl = document.getElementById("status");
 
 function setContext(text, selected = true) {
   contextEl.textContent = text;
@@ -336,7 +337,10 @@ async function boot() {
           }
           state.layers.borders.count = features.length;
           layersPanel?.updateCounts();
-          timeline.setStatus(`borders ${source} · ${vis.length} events`);
+          // Borders come from fixed snapshots: say plainly when the map is not this year's.
+          const snap = nearestPeriod(year);
+          timeline.setStatus(`${snap === year ? "Borders" : "Borders shown: c."} ${yearLabel(snap)} · ${vis.length} events`);
+          statusEl.classList.toggle("snapped", snap !== year);
           if (year !== bootYear) scrubbed = true;
           if (scrubbed) prefetchNeighbours(year);
         } else {
@@ -344,7 +348,8 @@ async function boot() {
             state.lastSig = "off";
             globe.setBorders({ features: [] });
           }
-          timeline.setStatus(`borders off · ${vis.length} events`);
+          timeline.setStatus(`Borders off · ${vis.length} events`);
+          statusEl.classList.remove("snapped");
         }
       } catch (e) {
         timeline.setStatus(e.message);
