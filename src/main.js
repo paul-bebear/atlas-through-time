@@ -166,6 +166,7 @@ async function boot() {
   let storyThread = null, storyBeat = 0;   // active Empire Story, for permalinks
   let urlTimer = null;
   let linkPins = [];               // pins from the opened link: memory only, never stored or sent
+  let linkRoutes = new Set();      // route ids the opened link highlights
   const syncURL = () => {
     if (!events) return;             // permalink restore hasn't run yet — keep ?sel=/?mode=
     clearTimeout(urlTimer);
@@ -179,8 +180,8 @@ async function boot() {
         q.set("thread", storyThread);
         if (storyBeat) q.set("beat", String(storyBeat));
       } else if (selLabel) q.set("sel", selLabel);
-      // The link's fragment stays while its pins show; Clear drops it.
-      history.replaceState(null, "", "?" + q.toString() + (linkPins.length ? location.hash : ""));
+      // The link's fragment stays while its pins or routes show; Clear drops it.
+      history.replaceState(null, "", "?" + q.toString() + (linkPins.length || linkRoutes.size ? location.hash : ""));
     }, 300);
   };
 
@@ -242,12 +243,13 @@ async function boot() {
   const refreshTrade = y => {
     if (state.mode !== "discovery") return;      // territory owns the paths layer
     if (!tradeRoutes || !state.layers.trade.enabled) return;
-    const active = tradeRoutes.filter(r =>
-      (r.from == null || y >= r.from) && (r.to == null || y <= r.to));
-    const sig = active.map(r => r.id).join("|");
+    const inUse = r => (r.from == null || y >= r.from) && (r.to == null || y <= r.to);
+    // Routes a link highlights stay drawn outside their years (greyed, with dates).
+    const active = tradeRoutes.filter(r => inUse(r) || linkRoutes.has(r.id));
+    const sig = active.map(r => r.id + (inUse(r) ? "" : "~")).join("|") + "#" + [...linkRoutes].join("|");
     if (sig === tradeSig) return;
     tradeSig = sig;
-    globe.setTradeRoutes(active);
+    globe.setTradeRoutes(active, { highlight: linkRoutes, year: y });
     state.layers.trade.count = active.length;
     layersPanel?.updateCounts();
   };
@@ -848,8 +850,17 @@ async function boot() {
     globe.setLinkPins(state.layers.pins.enabled ? pins : []);
     layersPanel.refresh();
   };
+  const showLinkRoutes = ids => {
+    linkRoutes = new Set(ids);
+    state.layers.pins.routes = ids.length || null;
+    if (ids.length && !state.layers.trade.enabled) state.layers.trade.enabled = true;
+    tradeSig = null;
+    refreshTrade(state.year);
+    layersPanel.refresh();
+  };
   layersPanel.onClearPins = () => {
     showLinkPins([]);
+    if (linkRoutes.size) showLinkRoutes([]);
     history.replaceState(null, "", location.pathname + location.search);
     syncURL();
   };
@@ -879,17 +890,23 @@ async function boot() {
     // Camera: at= wins, else the pins' bounding box, else the polities, else leave it.
     const el = document.getElementById("globe");
     const aspect = el.clientWidth / el.clientHeight;
-    const cam = v.at || frameFor(v.pins, aspect);
+    // Routes: only ids Atlas knows; the trade layer turns on to show them.
+    const routes = v.routes.map(id => tradeRoutes?.find(r => r.id === id)).filter(Boolean);
+    if (routes.length) showLinkRoutes(routes.map(r => r.id));
+    const routePoints = routes.flatMap(r => r.points.map(([lng, lat]) => ({ lat, lng })));
+    const cam = v.at || frameFor(v.pins, aspect) || (!v.qids.length && frameFor(routePoints, aspect));
     globeReady.then(() => { if (cam) globe.flyTo(cam.lat, cam.lng, cam.altitude); });
     if (!v.qids.length) return;
     // The registry slice loads only now, and only because the link names polities.
     const rows = (await Promise.all(v.qids.map(q => sliceByQid(q, state.year).catch(() => null)))).filter(Boolean);
-    if (!rows.length) return;
+    const routeCam = () => { const rc = !cam && frameFor(routePoints, aspect); if (rc) globeReady.then(() => globe.flyTo(rc.lat, rc.lng, rc.altitude)); };
+    if (!rows.length) return routeCam();
     await whenBorders();
     const points = selectLinkPolities(rows);
     if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));   // the link's era, not the polity's
     const pc = !cam && frameFor(points, aspect);
     if (pc) { await globeReady; globe.flyTo(pc.lat, pc.lng, Math.max(1, pc.altitude)); }
+    else routeCam();
   }
 
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.

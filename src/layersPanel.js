@@ -58,14 +58,22 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
         <span>${l.label}</span>
         <span class="lp-count" data-count="${l.id}">${countOf(l.id)}</span>
       </label>`).join("");
-    // Pins from a link the visitor opened: shown only while there are some, with Clear.
-    const pins = state.layers.pins?.count ? `
+    // Pins and route highlights from a link the visitor opened: shown only while
+    // there are some, with one Clear for both.
+    const lk = state.layers.pins || {};
+    const clearBtn = `<button type="button" class="lp-clear">Clear</button>`;
+    const pins = (lk.count ? `
       <div class="lp-row lp-pins">
-        <label><input type="checkbox" name="lp-layer" value="pins" ${state.layers.pins.enabled ? "checked" : ""}>
+        <label><input type="checkbox" name="lp-layer" value="pins" ${lk.enabled ? "checked" : ""}>
           <span>Pins</span></label>
         <span class="lp-count" data-count="pins">${countOf("pins")}</span>
-        <button type="button" class="lp-clear">Clear</button>
-      </div>` : "";
+        ${clearBtn}
+      </div>` : "") + (lk.routes ? `
+      <div class="lp-row lp-pins lp-routes">
+        <span class="lp-routes-label">Routes highlighted</span>
+        <span class="lp-count lp-rcount">${lk.routes}</span>
+        ${lk.count ? "" : clearBtn}
+      </div>` : "");
     root.innerHTML = `${pins ? `
       <div class="lp-section">
         <div class="lp-heading">From the link you opened</div>
@@ -98,7 +106,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
   // Update only the count badges — called per scrub tick, so no full
   // re-render (that would rebuild inputs mid-interaction).
   function updateCounts() {
-    root.querySelectorAll(".lp-count").forEach(el => {
+    root.querySelectorAll(".lp-count[data-count]").forEach(el => {
       el.textContent = countOf(el.dataset.count);
     });
   }

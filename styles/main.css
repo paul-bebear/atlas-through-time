@@ -49,6 +49,13 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .pin-link .pin-stem { height: 10px; }
 .pin-link .pin-label { bottom: 13px; background: rgba(14, 24, 38, 0.9); color: #ddd6fe; font-size: 12px; font-weight: 600;
   border: 1px dashed #a78bfa; padding: 3px 7px; }
+/* A route a link highlights: its name beside the line, in the route's colour;
+   grey with its dates when the route was not in use in the timeline year. */
+.pin-route .pin-dot { left: -4px; top: -4px; width: 8px; height: 8px; background: var(--pin-c, #9aa3ad);
+  border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.pin-route .pin-label { background: rgba(14, 24, 38, 0.88); color: var(--pin-c, #c3cad3); font-size: 12px; font-weight: 600;
+  border: 1px solid var(--pin-c, #9aa3ad); padding: 3px 7px; }
+.pin-route-off .pin-label { font-weight: 500; font-style: italic; }
 .pin-down .pin-stem { bottom: auto; top: 4px; }
 .pin-down .pin-label { bottom: auto; top: 13px; }
 .pin-right .pin-stem, .pin-left .pin-stem { display: none; }
@@ -166,6 +173,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 #layersPanel .lp-pins { cursor: default; }
 #layersPanel .lp-pins label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ddd6fe; }
 #layersPanel .lp-pins .lp-count { margin-left: auto; }
+#layersPanel .lp-routes-label { color: #ddd6fe; }
 #layersPanel .lp-clear { font: inherit; font-size: 12px; color: var(--text); cursor: pointer;
   background: rgba(167, 139, 250, 0.16); border: 1px dashed #a78bfa; border-radius: 6px; padding: 2px 10px; }
 #layersPanel .lp-note {
@@ -552,7 +560,7 @@ body.quiz-active #search { display: none; }
   #modesPanel.collapsed { padding-bottom: 0; }
   #modesPanel:not(.collapsed) { right: var(--r); padding-bottom: 10px; }
   #layersPanel .lp-row { min-height: 44px; font-size: 15px; }
-  #layersPanel .lp-pins label { min-height: 44px; }
+  #layersPanel .lp-pins label, #layersPanel .lp-routes { min-height: 44px; }
   #layersPanel .lp-clear { min-height: 40px; min-width: 64px; font-size: 14px; }
 
   /* Country / event card: full width under the search row, globe stays

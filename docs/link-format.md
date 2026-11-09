@@ -31,7 +31,7 @@ https://atlas-through-time.vercel.app/#v=2&year=-950&span=-970,-931&qid=Q3185305
 | `span` | `a,b` | An era band on the timeline. Atlas writes its label itself ("c. 970–931 BCE"). | Integers, `a ≤ b`, each clamped to −3000…2025. Otherwise ignored. |
 | `qid` | `Q…,Q…` | Up to 2 polities by Wikidata QID. Atlas uses the registry row whose years cover `year`, highlights it on the borders shown, and puts a red pin with its name at its point (else at the centre of its shapes). | `^Q[1-9][0-9]{0,9}$`. More than 2: the rest ignored. An unknown QID is ignored. Resolved from Atlas's committed registry slice, so it works when the database is down. |
 | `pins` | items separated by `;` | Up to 8 pins. Each is `[src:id]@lat,lng[~label]`. | See below. More than 8: the rest ignored. |
-| `route` | `id,id,…` | Up to 3 Atlas route ids. The trade routes layer turns on and these routes are highlighted. A route outside `year` is drawn greyed, with its dates, rather than hidden. | `^[a-z0-9][a-z0-9-]{0,47}$`. Unknown ids are ignored. |
+| `route` | `id,id,…` | Up to 3 Atlas route ids (`docs/routes.md`). The trade routes layer turns on and these routes are drawn thicker, with their names; the other routes dim. A route outside `year` is drawn grey, its label giving its dates, rather than hidden. | `^[a-z0-9][a-z0-9-]{0,47}$`. Unknown ids are ignored. |
 | `scene` | id | A curated Atlas scene (planned, A5). | Parsed and ignored for now; the rest of the link applies. |
 | `at` | `lat,lng,alt` | The camera: latitude, longitude, altitude in globe radii. | lat −90…90, lng −180…180, alt 0.05…10. Otherwise ignored. |
 
@@ -57,7 +57,7 @@ pleiades:678378@33.27,35.20~Tyrus
   GeoNames and Wikidata place ids are accepted and kept for later (planned A2/A4); for
   now those pins use their `~label`.
 - Pins are a pointer someone sent, not Atlas facts. They are drawn in their own dashed
-  violet style, counted under *Pins from your link* in the layers panel with a **Clear**
+  violet style, counted under *From the link you opened* in the layers panel with a **Clear**
   control, and are **never stored** (no database, localStorage or IndexedDB), never sent
   anywhere, and never in the API or exports.
 
@@ -68,14 +68,16 @@ pleiades:678378@33.27,35.20~Tyrus
 2. Set the year, draw the pins and the span.
 3. Resolve `qid` (loading the registry slice only when a link carries one), highlight and
    pin the polities.
-4. Turn on and highlight the routes.
+4. Turn on the trade routes layer and highlight the routes. Sea routes (`mode: "sea"`) are
+   dashed, and while in use their dashes move in the direction of travel. A route whose last
+   waypoint is an open end (`open: true`) fades out there instead of ending on a place.
 5. Camera: `at` if given; else the pins' bounding box with padding; else the polities;
-   else the camera stays where it is.
+   else the routes; else the camera stays where it is.
 6. Whenever the border snapshot is not the timeline year, the timeline says so:
    "Borders shown: c. 1000 BCE" (for every visitor, not only links).
-7. While link pins show, the address bar keeps the fragment (the timeline's own `?year=`
-   is written in front of it). **Clear** removes the pins, the route highlights and the
-   fragment.
+7. While link pins or route highlights show, the address bar keeps the fragment (the
+   timeline's own `?year=` is written in front of it). **Clear** removes the pins, the route
+   highlights and the fragment; the trade routes layer stays on.
 
 ## Rules for anyone building links
 
