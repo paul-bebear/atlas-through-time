@@ -183,6 +183,7 @@ async function boot() {
     storyThread = null; storyBeat = 0;
     syncURL();
     globe.setSelectionPin(null);
+    aim = null;
     setSelection([]);                 // clears selection tint; layer tints re-apply
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
@@ -201,8 +202,60 @@ async function boot() {
   // and the camera flies there.
   const pinSelection = (label, ll, altitude = 1.0) => {
     globe.setSelectionPin(ll ? { label, lat: ll.lat, lng: ll.lng } : null);
-    if (ll) globe.flyTo(ll.lat, ll.lng, altitude);
+    if (ll) flyFramed(ll.lat, ll.lng, altitude);
   };
+
+  // Phone layouts: the card covers part of the globe, so the camera aims to put
+  // the target (and its pin label) in the middle of what stays visible — below
+  // the card in portrait, beside it in landscape. It aims again whenever the card
+  // appears or changes size (a photo landing, a later database answer), until
+  // the visitor moves the globe. Desktop keeps the centre.
+  const phoneLayout = () => innerWidth <= 480 || matchMedia("(pointer: coarse) and (max-height: 500px)").matches;
+  const infoCardEl = document.getElementById("infoCard");
+  function aimFor(lat, lng, altitude) {
+    if (!phoneLayout()) return { lat, lng };
+    const g = document.getElementById("globe").getBoundingClientRect();
+    const tl = document.getElementById("timeline")?.getBoundingClientRect();
+    const top = Math.max(g.top, document.getElementById("search")?.getBoundingClientRect().bottom ?? g.top);
+    const bottom = Math.min(g.bottom, tl && tl.height ? tl.top : g.bottom);
+    let box = { l: g.left, r: g.right, t: top, b: bottom };
+    const c = infoCardEl.hidden ? null : infoCardEl.getBoundingClientRect();
+    if (c && c.height) {
+      const below = { l: g.left, r: g.right, t: Math.max(top, c.bottom), b: bottom };
+      const beside = { l: g.left, r: Math.min(g.right, c.left), t: top, b: bottom };
+      const area = q => Math.max(0, q.r - q.l - 60) * Math.max(0, q.b - q.t - 60);
+      box = area(below) >= area(beside) ? below : beside;
+      if (!area(box)) box = { l: g.left, r: g.right, t: top, b: bottom };
+    }
+    // The pin's label stands ~35 px above its dot: aim the dot a little low.
+    const px = (box.l + box.r) / 2, py = Math.min(box.b - 12, (box.t + box.b) / 2 + 18);
+    const s = Math.tan(25 * Math.PI / 180) / (g.height / 2);   // 50° vertical field of view
+    const k = 1 + altitude;                                    // camera distance in globe radii
+    // Angle on the globe between the view centre and a point drawn `d` px off centre.
+    const arc = d => {
+      const t = Math.abs(d) * s;
+      const v = Math.min(1, t * k / Math.hypot(1, t));
+      return Math.sign(d) * (Math.asin(v) - Math.atan(t)) * 180 / Math.PI;
+    };
+    const cos = Math.max(0.2, Math.cos(lat * Math.PI / 180));
+    return {
+      lat: Math.max(-85, Math.min(85, lat + arc(py - (g.top + g.height / 2)))),   // target low on screen: look north of it
+      lng: lng - arc(px - (g.left + g.width / 2)) / cos                           // target left: look east of it
+    };
+  }
+  let aim = null;                                  // the last framed target, while the card may still change
+  function flyFramed(lat, lng, altitude, ms = 1400) {
+    aim = { lat, lng, altitude };
+    const a = aimFor(lat, lng, altitude);
+    globe.flyTo(a.lat, a.lng, altitude, ms);
+  }
+  new ResizeObserver(() => {
+    if (!aim || !phoneLayout() || infoCardEl.hidden) return;
+    const a = aimFor(aim.lat, aim.lng, aim.altitude);
+    globe.flyTo(a.lat, a.lng, aim.altitude, 600);
+  }).observe(infoCardEl);
+  // Once the visitor moves the globe, the camera is theirs.
+  document.getElementById("globe").addEventListener("pointerdown", () => { aim = null; });
 
   // Cities through time: a city dot is permanent once founded (gone if the
   // city dies — Babylon, Carthage), and its LABEL is period-correct
@@ -373,7 +426,7 @@ async function boot() {
   // A closed card stays closed while the year steps; the selection's tint and
   // slider span stay, and any new pick (a fresh selection) opens the card again.
   // Closing the card also takes the selection's pin away (and nothing brings the card back).
-  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; globe.setSelectionPin(null); } });
+  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; globe.setSelectionPin(null); aim = null; } });
   buildLegend();
   initPanel();
 

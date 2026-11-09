@@ -25,6 +25,8 @@ const tip = fn => NO_HOVER ? null : fn;
 export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onReady }) {
   let lastPointClick = -1, lastPress = 0;
 
+  let readyNow;
+  const ready = new Promise(r => { readyNow = r; });   // a fly-to before this would be lost
   const world = Globe()(el)
     .backgroundColor("#06101c")
     .globeImageUrl("assets/earth-blue-marble-2048-v1.webp")
@@ -32,7 +34,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .showAtmosphere(true)
     .atmosphereColor("#5da9ff")
     .atmosphereAltitude(0.16)
-    .onGlobeReady(() => onReady?.())
+    .onGlobeReady(() => { readyNow(); onReady?.(); })
     .polygonsTransitionDuration(0)
     .polygonSideColor(() => "rgba(0,0,0,0)")
     // One HTML layer: city labels plus map pins, one array tagged by kind.
@@ -106,6 +108,21 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   // Stop burning GPU when the tab is in the background.
   document.addEventListener("visibilitychange", () =>
     document.hidden ? world.pauseAnimation() : world.resumeAnimation());
+
+  // globe.gl does not stop a camera tween when another starts, so two at once
+  // fight and the longer one lands last. A fly-to asked for mid-flight waits for
+  // the current one to end; only the latest such request runs.
+  let flying = false, nextFlight = null;
+  function fly(p) {
+    if (flying) { nextFlight = p; return; }
+    flying = true;
+    world.pointOfView({ lat: p.lat, lng: p.lng, altitude: p.altitude }, p.ms);
+    setTimeout(() => {
+      flying = false;
+      const q = nextFlight; nextFlight = null;
+      if (q) fly(q);
+    }, p.ms + 30);
+  }
 
   let highlightMap = new Map();
   let selectedKey = null;
@@ -238,7 +255,10 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       world.polygonsData(world.polygonsData());
     },
     // A fly-to means "look here", so the idle spin stops instead of carrying the view away.
-    flyTo(lat, lng, altitude = 0.75, ms = 1400) { controls.autoRotate = false; world.pointOfView({ lat, lng, altitude }, ms); }
+    flyTo(lat, lng, altitude = 0.75, ms = 1400) {
+      controls.autoRotate = false;
+      ready.then(() => fly({ lat, lng, altitude, ms }));
+    }
   };
 }
 
