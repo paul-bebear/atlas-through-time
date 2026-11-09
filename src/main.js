@@ -209,9 +209,9 @@ async function boot() {
       label: off ? `${p.label} · ${p.from != null ? yearLabel(p.from) : "?"} – ${p.to != null ? yearLabel(p.to) : "present"}` : p.label };
   }));
   const setSelPins = list => { selPins = list; showSelPins(); };
-  const pinSelection = (label, ll, altitude = 1.0, span = null) => {
+  const pinSelection = (label, ll, altitude = 1.0, span = null, fly = true) => {
     setSelPins(ll ? [{ label, lat: ll.lat, lng: ll.lng, from: span?.[0] ?? null, to: span?.[1] ?? null }] : []);
-    if (ll) flyFramed(ll.lat, ll.lng, altitude);
+    if (ll && fly) flyFramed(ll.lat, ll.lng, altitude);
   };
 
   // Phone layouts: the card covers part of the globe, so the camera aims to put
@@ -509,7 +509,9 @@ async function boot() {
     }
   }
 
-  async function selectDbPolity(p) {
+  // `fly: false` when the same polity is already pinned and framed (the slice
+  // answered first and the database row arrives later).
+  async function selectDbPolity(p, { fly = true } = {}) {
     const mine = ++dbSelectionSeq;
     const wasT = exitTerritory();
     // Rows from the committed slice (database unreachable) carry their border names.
@@ -523,7 +525,7 @@ async function boot() {
     ].filter(Boolean))];
     setContext("🗄 " + p.canonical_name);
     const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
-    pinSelection(p.canonical_name, ll, 1.0, [p.start_year, p.end_year]);
+    pinSelection(p.canonical_name, ll, 1.0, [p.start_year, p.end_year], fly);
     setSelection([{ names, side: "A" }]);
     scopeSlider(names, p.start_year, p.end_year ?? p.start_year ?? 2025, p.canonical_name);
     let detail = null;
@@ -593,16 +595,26 @@ async function boot() {
   // A polity by name (`sel=`): the first exact database hit, preferring the row
   // whose years cover the viewed year; the committed slice when the database
   // is unreachable or not configured.
+  // If the database has not answered within a second (a cold start took 10 s),
+  // the slice's row is shown meanwhile, so the pin and the fly-to do not wait;
+  // the database row then fills in the card without moving the camera again.
   async function selectByName(name) {
     const year = timeline.currentYear();
+    let early = null, done = false;
+    const slow = setTimeout(async () => {
+      try { early = await sliceByName(name, year); } catch { /* no slice */ }
+      if (early && !done) selectDbPolity(early);
+    }, 1000);
     let p = null;
     try {
       const hits = await searchPolities(name, 8);
       const exact = hits.filter(h => h.canonical_name.toLowerCase() === name.toLowerCase());
       p = rowForYear(exact, year) || hits[0] || null;
     } catch { /* database down — try the slice */ }
-    if (!p) try { p = await sliceByName(name, year); } catch { /* no slice either */ }
-    if (p) selectDbPolity(p);
+    done = true;
+    clearTimeout(slow);
+    if (p) selectDbPolity(p, { fly: !(early && early.wikidata_qid === p.wikidata_qid) });
+    else if (!early) try { p = await sliceByName(name, year); if (p) selectDbPolity(p); } catch { /* no slice either */ }
   }
   // --------------------------------------------------------------------
 
