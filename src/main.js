@@ -19,7 +19,7 @@ import { createStory } from "./story.js";
 import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
 import { createQuiz } from "./quiz.js";
-import { sliceByName, rowForYear } from "./politySlice.js";
+import { sliceByName, sliceByQid, rowForYear } from "./politySlice.js";
 import { parseLink, frameFor, spanLabel } from "./linkView.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
@@ -280,6 +280,10 @@ async function boot() {
   };
   const setSelection = groups => { selHighlights = groups || []; applyHighlights(); };
 
+  // Resolves once the borders for the current year are on the globe (link polities need their shapes).
+  let bordersYear = null, bordersWaiters = [];
+  const whenBorders = () => bordersYear === state.year ? Promise.resolve()
+    : new Promise(r => { bordersWaiters.push(r); setTimeout(r, 10000); });
   let usaPrefetched = false;       // idle-warm the USA territory once, after the first borders render
   let scrubbed = false;            // neighbour snapshots are warmed only once the timeline has moved, never at boot
   const timeline = createTimeline({
@@ -345,6 +349,8 @@ async function boot() {
           }
           state.layers.borders.count = features.length;
           layersPanel?.updateCounts();
+          bordersYear = year;
+          bordersWaiters.splice(0).forEach(r => r());
           // Borders come from fixed snapshots: say plainly when the map is not this year's.
           const snap = nearestPeriod(year);
           timeline.setStatus(`${snap === year ? "Borders" : "Borders shown: c."} ${yearLabel(snap)} · ${vis.length} events`);
@@ -847,14 +853,43 @@ async function boot() {
     history.replaceState(null, "", location.pathname + location.search);
     syncURL();
   };
+  // Up to two polities from a link's qid: highlighted through their resolved
+  // border names, each with the red selection pin; the card shows the first.
+  function selectLinkPolities(rows) {
+    exitTerritory();
+    const groups = rows.map(p => ({ p, names: [...new Set([p.canonical_name, ...p._names])] }));
+    const points = groups.map(({ p, names }) => {
+      const ll = p.lat != null ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
+      return ll && { label: p.canonical_name, ...ll };
+    }).filter(Boolean);
+    setSelection(groups.map(g => ({ names: g.names, side: "A" })));
+    globe.setSelectionPin(points);
+    setContext("🗄 " + rows.map(p => p.canonical_name).join(" · "));
+    const first = rows[0];
+    scopeSlider(groups[0].names, first.start_year, first.end_year ?? 2025, first.canonical_name);
+    selection = { names: groups.flatMap(g => g.names), render: y => card.openDbPolity(first, null, y) };
+    selLabel = first.canonical_name;
+    selection.render(timeline.currentYear());
+    return points;
+  }
+
   async function applyLink(v) {
     showLinkPins(v.pins.map(p => ({ lat: p.lat, lng: p.lng, label: pinLabel(p) })));
     if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));
-    // Camera: at= wins, else the pins' bounding box, else leave it.
+    // Camera: at= wins, else the pins' bounding box, else the polities, else leave it.
     const el = document.getElementById("globe");
-    const cam = v.at || frameFor(v.pins, el.clientWidth / el.clientHeight);
-    await globeReady;
-    if (cam) globe.flyTo(cam.lat, cam.lng, cam.altitude);
+    const aspect = el.clientWidth / el.clientHeight;
+    const cam = v.at || frameFor(v.pins, aspect);
+    globeReady.then(() => { if (cam) globe.flyTo(cam.lat, cam.lng, cam.altitude); });
+    if (!v.qids.length) return;
+    // The registry slice loads only now, and only because the link names polities.
+    const rows = (await Promise.all(v.qids.map(q => sliceByQid(q, state.year).catch(() => null)))).filter(Boolean);
+    if (!rows.length) return;
+    await whenBorders();
+    const points = selectLinkPolities(rows);
+    if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));   // the link's era, not the polity's
+    const pc = !cam && frameFor(points, aspect);
+    if (pc) { await globeReady; globe.flyTo(pc.lat, pc.lng, Math.max(1, pc.altitude)); }
   }
 
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
