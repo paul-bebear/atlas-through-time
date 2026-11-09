@@ -196,14 +196,12 @@ async function boot() {
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
 
-  let globeIsReady;
-  const globeReady = new Promise(r => { globeIsReady = r; });   // camera moves before this are lost
   const globe = createGlobe(document.getElementById("globe"), {
     onCountryClick: f => pickFeature(f),
     onEventClick: ev => { clearSelection(); card?.openEvent(ev); },
     onTerritoryClick: name => pickTerritory(name),
     onCityClick: d => pickCity(d),
-    onReady: () => { document.getElementById("globePlaceholder")?.classList.add("ready"); globeIsReady(); }
+    onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
   });
   document.getElementById("status").textContent = "loading textures & borders…";
 
@@ -231,9 +229,11 @@ async function boot() {
   // the visitor moves the globe. Desktop keeps the centre.
   const phoneLayout = () => innerWidth <= 480 || matchMedia("(pointer: coarse) and (max-height: 500px)").matches;
   const infoCardEl = document.getElementById("infoCard");
-  function aimFor(lat, lng, altitude) {
-    if (!phoneLayout()) return { lat, lng };
+  // The part of the globe left visible: on phones, between the search row and the
+  // timeline, minus the card (below it or beside it, whichever is larger).
+  function visibleBox() {
     const g = document.getElementById("globe").getBoundingClientRect();
+    if (!phoneLayout()) return { g, box: { l: g.left, r: g.right, t: g.top, b: g.bottom } };
     const tl = document.getElementById("timeline")?.getBoundingClientRect();
     const top = Math.max(g.top, document.getElementById("search")?.getBoundingClientRect().bottom ?? g.top);
     const bottom = Math.min(g.bottom, tl && tl.height ? tl.top : g.bottom);
@@ -246,6 +246,11 @@ async function boot() {
       box = area(below) >= area(beside) ? below : beside;
       if (!area(box)) box = { l: g.left, r: g.right, t: top, b: bottom };
     }
+    return { g, box };
+  }
+  function aimFor(lat, lng, altitude) {
+    if (!phoneLayout()) return { lat, lng };
+    const { g, box } = visibleBox();
     // The pin's label stands ~35 px above its dot: aim the dot a little low.
     const px = (box.l + box.r) / 2, py = Math.min(box.b - 12, (box.t + box.b) / 2 + 18);
     const s = Math.tan(25 * Math.PI / 180) / (g.height / 2);   // 50° vertical field of view
@@ -268,8 +273,22 @@ async function boot() {
     const a = aimFor(lat, lng, altitude);
     globe.flyTo(a.lat, a.lng, altitude, ms);
   }
+  // A set of points (a link's pins, polities or routes) framed into the visible part.
+  function fitFor(points, minAlt) {
+    const { g, box } = visibleBox();
+    const h = box.b - box.t, f = frameFor(points, (box.r - box.l) / h);
+    return f && { lat: f.lat, lng: f.lng, altitude: Math.max(minAlt, Math.min(3, f.altitude * g.height / h)) };
+  }
+  function flyToFit(points, minAlt = 0) {
+    const f = fitFor(points, minAlt);
+    if (!f) return false;
+    flyFramed(f.lat, f.lng, f.altitude);
+    aim.fit = { points, minAlt };
+    return true;
+  }
   new ResizeObserver(() => {
     if (!aim || !phoneLayout() || infoCardEl.hidden) return;
+    if (aim.fit) aim = { ...fitFor(aim.fit.points, aim.fit.minAlt), fit: aim.fit };
     const a = aimFor(aim.lat, aim.lng, aim.altitude);
     globe.flyTo(a.lat, a.lng, aim.altitude, 600);
   }).observe(infoCardEl);
@@ -951,10 +970,10 @@ async function boot() {
     const groups = rows.map(p => ({ p, names: [...new Set([p.canonical_name, ...p._names])] }));
     const points = groups.map(({ p, names }) => {
       const ll = p.lat != null ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
-      return ll && { label: p.canonical_name, ...ll };
+      return ll && { label: p.canonical_name, ...ll, from: p.start_year, to: p.end_year };
     }).filter(Boolean);
     setSelection(groups.map(g => ({ names: g.names, side: "A" })));
-    globe.setSelectionPin(points);
+    setSelPins(points);
     setContext("🗄 " + rows.map(p => p.canonical_name).join(" · "));
     const first = rows[0];
     scopeSlider(groups[0].names, first.start_year, first.end_year ?? 2025, first.canonical_name);
@@ -967,26 +986,23 @@ async function boot() {
   async function applyLink(v) {
     showLinkPins(v.pins.map(p => ({ lat: p.lat, lng: p.lng, label: pinLabel(p) })));
     if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));
-    // Camera: at= wins, else the pins' bounding box, else the polities, else leave it.
-    const el = document.getElementById("globe");
-    const aspect = el.clientWidth / el.clientHeight;
+    // Camera: at= wins (exactly), else the pins' bounding box, else the polities,
+    // else the routes, else leave it; on phones fitted to what the card leaves visible.
     // Routes: only ids Atlas knows; the trade layer turns on to show them.
     const routes = v.routes.map(id => tradeRoutes?.find(r => r.id === id)).filter(Boolean);
     if (routes.length) showLinkRoutes(routes.map(r => r.id));
     const routePoints = routes.flatMap(r => r.points.map(([lng, lat]) => ({ lat, lng })));
-    const cam = v.at || frameFor(v.pins, aspect) || (!v.qids.length && frameFor(routePoints, aspect));
-    globeReady.then(() => { if (cam) globe.flyTo(cam.lat, cam.lng, cam.altitude); });
+    const cam = v.at ? (globe.flyTo(v.at.lat, v.at.lng, v.at.altitude), true)
+      : flyToFit(v.pins) || (!v.qids.length && flyToFit(routePoints));
     if (!v.qids.length) return;
     // The registry slice loads only now, and only because the link names polities.
     const rows = (await Promise.all(v.qids.map(q => sliceByQid(q, state.year).catch(() => null)))).filter(Boolean);
-    const routeCam = () => { const rc = !cam && frameFor(routePoints, aspect); if (rc) globeReady.then(() => globe.flyTo(rc.lat, rc.lng, rc.altitude)); };
+    const routeCam = () => { if (!cam) flyToFit(routePoints); };
     if (!rows.length) return routeCam();
     await whenBorders();
     const points = selectLinkPolities(rows);
     if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));   // the link's era, not the polity's
-    const pc = !cam && frameFor(points, aspect);
-    if (pc) { await globeReady; globe.flyTo(pc.lat, pc.lng, Math.max(1, pc.altitude)); }
-    else routeCam();
+    if (!cam && !flyToFit(points, 1)) routeCam();
   }
 
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
