@@ -107,7 +107,15 @@ routes.forEach((rt, i) => {
       if (!str(s.title)) fail(r, `${at}: title missing`);
       if (!str(s.use)) fail(r, `${at}: use missing (say what the source was used for)`);
       if (s.url !== undefined && !/^https:\/\/\S+$/.test(s.url)) fail(r, `${at}: url must be https`);
-      if (s.book && !["bite", "atlas"].includes(s.text)) fail(r, `${at}: a book source must say text: "bite" or "atlas"`);
+      if (s.book) {
+        if (!["bite", "atlas"].includes(s.text)) fail(r, `${at}: a book source must say text: "bite" or "atlas"`);
+        if (s.text === "bite" && typeof s.unchanged !== "boolean") fail(r, `${at}: text "bite" must say unchanged: true or false`);
+        if (s.copyright !== undefined && !["public-domain", "in-copyright"].includes(s.copyright)) fail(r, `${at}: copyright must be "public-domain" or "in-copyright"`);
+        if (s.author !== undefined && !str(s.author)) fail(r, `${at}: author must be a string`);
+        if (s.field !== undefined && !str(rt[s.field])) fail(r, `${at}: field "${s.field}" is not a text field of this route`);
+      } else if (["text", "unchanged", "copyright", "field"].some(k => s[k] !== undefined)) {
+        fail(r, `${at}: text/unchanged/copyright/field belong only on a book source (book: true)`);
+      }
     });
   }
 });

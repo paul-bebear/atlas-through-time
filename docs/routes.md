@@ -16,11 +16,14 @@ to check that routes are in use in a given year). It exits 1 on any failure.
   (NC-SA), DARE (SA), a copyrighted atlas or a map in a book.
 - Explanations (`summary`) are written fresh, in Atlas's own words. Wikipedia (CC BY-SA) may be
   read for facts but never copied or closely paraphrased.
-- **Books (Paul's rule, 2026-11-09).** Nothing comes from Shelf automatically. A bite that Paul
-  brings across by hand may be used as text, or may inform Atlas's own wording; either way the
-  facts are checked against open sources, and the book may be named in `sources` with `book: true`
-  and `text` set to `"bite"` or `"atlas"`. Rewording a bite from an in-copyright book is
-  recommended; text marked `"bite"` lets API and export builds leave it out.
+- **Books (Paul's rule, 2026-11-09).** Nothing comes from Shelf automatically. **Any bite** that
+  Paul brings across by hand may be used as route text, whatever its book's copyright status, or
+  may inform Atlas's own wording. Either way the explanation stays about the route, the facts are
+  checked against open sources, and the book is named in `sources` (`book: true`) with whose
+  wording it is (`text`) and whether the bite went in unchanged (`unchanged`).
+  - Recommendation, not a rule: when the book is still in copyright, offer Paul an Atlas rewording
+    first. If the bite goes in unchanged, `unchanged: true` (with `copyright: "in-copyright"`)
+    lets API and export builds leave that text out.
 - **Aggregate, never interpret.** Where a place is disputed, the waypoint lists every sourced
   candidate and the line does not pick one. Where a destination is unknown, the line ends open,
   short of any claimed site. Tradition is kept apart from archaeology in `summary` and `sources`.
@@ -73,8 +76,19 @@ only the original fields keeps working.
 | `url` | string | Optional, https. |
 | `licence` | string | Optional. The source's licence, where it matters for reuse. |
 | `use` | string | What it was used for, or the reasoning itself. |
-| `book` | boolean | Only for a book Paul brought across by hand (rule above). |
-| `text` | string | With `book`: `"bite"` if the route text is the bite's own words, `"atlas"` if Atlas wrote its own wording from it. |
+| `book` | boolean | Only for a book Paul brought across by hand (rule above). `title` is then the book's title. |
+| `author` | string | With `book`: the book's author(s). |
+| `copyright` | string | With `book`: `"public-domain"` or `"in-copyright"`. |
+| `text` | string | With `book`, required: `"bite"` if the route text is the bite's wording, `"atlas"` if Atlas wrote its own wording from it. |
+| `unchanged` | boolean | With `text: "bite"`, required: `true` if the bite's text went in word for word, `false` if it was trimmed or adapted. Export builds drop `unchanged` in-copyright text. |
+| `field` | string | With `book`, optional: which field holds the text (default `"summary"`). |
+
+Example of a book source (no route uses one yet):
+
+```json
+{ "title": "<book title>", "author": "<author>", "book": true, "copyright": "in-copyright",
+  "text": "bite", "unchanged": true, "use": "summary is the bite's text, brought across by Paul on <date>; facts checked against <open sources>" }
+```
 
 ## Routes
 
