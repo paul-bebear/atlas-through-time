@@ -190,7 +190,8 @@ async function boot() {
     selLabel = null;
     storyThread = null; storyBeat = 0;
     syncURL();
-    globe.setSelectionPin(null);
+    setSelPins([]);
+    aim = null;
     setSelection([]);                 // clears selection tint; layer tints re-apply
     if (exitTerritory()) timeline.setYear(timeline.currentYear());
   };
@@ -209,10 +210,71 @@ async function boot() {
   // A selected polity gets a red pin with its name at its point (else the centre
   // of its highlighted shapes, so it shows even with no shape in this snapshot),
   // and the camera flies there.
-  const pinSelection = (label, ll, altitude = 1.0) => {
-    globe.setSelectionPin(ll ? { label, lat: ll.lat, lng: ll.lng } : null);
-    if (ll) globe.flyTo(ll.lat, ll.lng, altitude);
+  // `span` = [from, to]: in a year outside it the pin turns grey and its label
+  // gives the dates, so a polity that no longer exists does not read as current.
+  let selPins = [];
+  const showSelPins = (y = state.year) => globe.setSelectionPin(selPins.map(p => {
+    const off = y != null && ((p.from != null && y < p.from) || (p.to != null && y > p.to));
+    return { lat: p.lat, lng: p.lng, off,
+      label: off ? `${p.label} · ${p.from != null ? yearLabel(p.from) : "?"} – ${p.to != null ? yearLabel(p.to) : "present"}` : p.label };
+  }));
+  const setSelPins = list => { selPins = list; showSelPins(); };
+  const pinSelection = (label, ll, altitude = 1.0, span = null, fly = true) => {
+    setSelPins(ll ? [{ label, lat: ll.lat, lng: ll.lng, from: span?.[0] ?? null, to: span?.[1] ?? null }] : []);
+    if (ll && fly) flyFramed(ll.lat, ll.lng, altitude);
   };
+
+  // Phone layouts: the card covers part of the globe, so the camera aims to put
+  // the target (and its pin label) in the middle of what stays visible — below
+  // the card in portrait, beside it in landscape. It aims again whenever the card
+  // appears or changes size (a photo landing, a later database answer), until
+  // the visitor moves the globe. Desktop keeps the centre.
+  const phoneLayout = () => innerWidth <= 480 || matchMedia("(pointer: coarse) and (max-height: 500px)").matches;
+  const infoCardEl = document.getElementById("infoCard");
+  function aimFor(lat, lng, altitude) {
+    if (!phoneLayout()) return { lat, lng };
+    const g = document.getElementById("globe").getBoundingClientRect();
+    const tl = document.getElementById("timeline")?.getBoundingClientRect();
+    const top = Math.max(g.top, document.getElementById("search")?.getBoundingClientRect().bottom ?? g.top);
+    const bottom = Math.min(g.bottom, tl && tl.height ? tl.top : g.bottom);
+    let box = { l: g.left, r: g.right, t: top, b: bottom };
+    const c = infoCardEl.hidden ? null : infoCardEl.getBoundingClientRect();
+    if (c && c.height) {
+      const below = { l: g.left, r: g.right, t: Math.max(top, c.bottom), b: bottom };
+      const beside = { l: g.left, r: Math.min(g.right, c.left), t: top, b: bottom };
+      const area = q => Math.max(0, q.r - q.l - 60) * Math.max(0, q.b - q.t - 60);
+      box = area(below) >= area(beside) ? below : beside;
+      if (!area(box)) box = { l: g.left, r: g.right, t: top, b: bottom };
+    }
+    // The pin's label stands ~35 px above its dot: aim the dot a little low.
+    const px = (box.l + box.r) / 2, py = Math.min(box.b - 12, (box.t + box.b) / 2 + 18);
+    const s = Math.tan(25 * Math.PI / 180) / (g.height / 2);   // 50° vertical field of view
+    const k = 1 + altitude;                                    // camera distance in globe radii
+    // Angle on the globe between the view centre and a point drawn `d` px off centre.
+    const arc = d => {
+      const t = Math.abs(d) * s;
+      const v = Math.min(1, t * k / Math.hypot(1, t));
+      return Math.sign(d) * (Math.asin(v) - Math.atan(t)) * 180 / Math.PI;
+    };
+    const cos = Math.max(0.2, Math.cos(lat * Math.PI / 180));
+    return {
+      lat: Math.max(-85, Math.min(85, lat + arc(py - (g.top + g.height / 2)))),   // target low on screen: look north of it
+      lng: lng - arc(px - (g.left + g.width / 2)) / cos                           // target left: look east of it
+    };
+  }
+  let aim = null;                                  // the last framed target, while the card may still change
+  function flyFramed(lat, lng, altitude, ms = 1400) {
+    aim = { lat, lng, altitude };
+    const a = aimFor(lat, lng, altitude);
+    globe.flyTo(a.lat, a.lng, altitude, ms);
+  }
+  new ResizeObserver(() => {
+    if (!aim || !phoneLayout() || infoCardEl.hidden) return;
+    const a = aimFor(aim.lat, aim.lng, aim.altitude);
+    globe.flyTo(a.lat, a.lng, aim.altitude, 600);
+  }).observe(infoCardEl);
+  // Once the visitor moves the globe, the camera is theirs.
+  document.getElementById("globe").addEventListener("pointerdown", () => { aim = null; });
 
   // Cities through time: a city dot is permanent once founded (gone if the
   // city dies — Babylon, Carthage), and its LABEL is period-correct
@@ -376,6 +438,7 @@ async function boot() {
       // Selected country: re-render its card for the year being viewed,
       // unless the user closed it (see onDismiss).
       if (selection && !selection.dismissed) selection.render(year);
+      if (selPins.length) showSelPins(year);    // grey when the year leaves the polity's lifetime
     },
     onSurprise: () => {
       clearSelection();
@@ -394,7 +457,7 @@ async function boot() {
   // A closed card stays closed while the year steps; the selection's tint and
   // slider span stay, and any new pick (a fresh selection) opens the card again.
   // Closing the card also takes the selection's pin away (and nothing brings the card back).
-  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; globe.setSelectionPin(null); } });
+  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; setSelPins([]); aim = null; } });
   buildLegend();
   initPanel();
 
@@ -446,7 +509,7 @@ async function boot() {
       // setTerritoryOutlines (driven by the first onChange below) clears
       // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
-      globe.setSelectionPin(null);
+      setSelPins([]);
       globe.flyTo(39, -98, 1.6);
       timeline.clearOverlays();
       timeline.setSpan(1776, 2025, "USA territorial growth");
@@ -456,10 +519,10 @@ async function boot() {
       timeline.setYear(Math.max(1776, Math.min(2025, timeline.currentYear())));
     } else {
       setContext(entry.name);
-      pinSelection(entry.name, ll);
       const eras = entry.eras || [];
       const from = eras.length ? Math.min(...eras.map(e => e.from)) : null;
       const to = eras.length ? Math.max(...eras.map(e => (e.to >= 9999 ? 2025 : e.to))) : 2025;
+      pinSelection(entry.name, ll, 1.0, eras.length ? [from, to >= 2025 ? null : to] : null);
       scopeSlider(names, from, to, entry.name);
       // Drive one onChange so borders refresh (incl. leaving territory mode)
       // and the card renders for the current year.
@@ -467,7 +530,9 @@ async function boot() {
     }
   }
 
-  async function selectDbPolity(p) {
+  // `fly: false` when the same polity is already pinned and framed (the slice
+  // answered first and the database row arrives later).
+  async function selectDbPolity(p, { fly = true } = {}) {
     const mine = ++dbSelectionSeq;
     const wasT = exitTerritory();
     // Rows from the committed slice (database unreachable) carry their border names.
@@ -481,7 +546,7 @@ async function boot() {
     ].filter(Boolean))];
     setContext("🗄 " + p.canonical_name);
     const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
-    pinSelection(p.canonical_name, ll);
+    pinSelection(p.canonical_name, ll, 1.0, [p.start_year, p.end_year], fly);
     setSelection([{ names, side: "A" }]);
     scopeSlider(names, p.start_year, p.end_year ?? p.start_year ?? 2025, p.canonical_name);
     let detail = null;
@@ -521,6 +586,11 @@ async function boot() {
     if (state.mode === "map-quiz") return;
     const host = globe.allFeatures().find(f => featureContains(f, d.lng, d.lat));
     setContext("📍 " + d.name);       // else the header keeps naming the previous country
+    // The city card replaces the polity's: the pin moves to the city, and a year
+    // step must not bring the polity's card back over it.
+    if (selection) selection.dismissed = true;
+    const c = d.city || d;
+    pinSelection(d.name, { lat: d.lat, lng: d.lng }, globe.altitude(), [c.founded ?? null, c.until ?? null]);
     card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
   };
 
@@ -546,16 +616,26 @@ async function boot() {
   // A polity by name (`sel=`): the first exact database hit, preferring the row
   // whose years cover the viewed year; the committed slice when the database
   // is unreachable or not configured.
+  // If the database has not answered within a second (a cold start took 10 s),
+  // the slice's row is shown meanwhile, so the pin and the fly-to do not wait;
+  // the database row then fills in the card without moving the camera again.
   async function selectByName(name) {
     const year = timeline.currentYear();
+    let early = null, done = false;
+    const slow = setTimeout(async () => {
+      try { early = await sliceByName(name, year); } catch { /* no slice */ }
+      if (early && !done) selectDbPolity(early);
+    }, 1000);
     let p = null;
     try {
       const hits = await searchPolities(name, 8);
       const exact = hits.filter(h => h.canonical_name.toLowerCase() === name.toLowerCase());
       p = rowForYear(exact, year) || hits[0] || null;
     } catch { /* database down — try the slice */ }
-    if (!p) try { p = await sliceByName(name, year); } catch { /* no slice either */ }
-    if (p) selectDbPolity(p);
+    done = true;
+    clearTimeout(slow);
+    if (p) selectDbPolity(p, { fly: !(early && early.wikidata_qid === p.wikidata_qid) });
+    else if (!early) try { p = await sliceByName(name, year); if (p) selectDbPolity(p); } catch { /* no slice either */ }
   }
   // --------------------------------------------------------------------
 
@@ -595,7 +675,7 @@ async function boot() {
       setSelection([{ names, side: "A" }]);
       setContext("📖 " + country.name);
       const ll = country.lat != null ? { lat: country.lat, lng: country.lng } : shapesCentre(globe.featuresForNames(names));
-      globe.setSelectionPin(ll ? { label: country.name, ...ll } : null);
+      setSelPins(ll ? [{ label: country.name, ...ll, from: null, to: null }] : []);
       timeline.setSpan(beats[0].year, beats[beats.length - 1].year, country.name);
       timeline.setMarkers(beats.map(b => ({ year: b.year, label: b.label })));
       card.openEntry(country, bt.year,

@@ -25,6 +25,14 @@ export function createInfoCard({ countries, onDismiss }) {
   const eraFor = (c, year) =>
     (c.eras || []).find(e => year >= e.from && year <= (e.to ?? 9999)) || null;
 
+  // [first, last] year of a curated entry's eras when `year` falls outside all of them.
+  const outside = (c, year) => {
+    const eras = c.eras || [];
+    if (!eras.length) return null;
+    const a = Math.min(...eras.map(e => e.from)), b = Math.max(...eras.map(e => e.to ?? 9999));
+    return year < a || year > b ? [a, b] : null;
+  };
+
   const thumbCache = new Map();
 
   async function fetchThumb(title) {
@@ -88,12 +96,14 @@ export function createInfoCard({ countries, onDismiss }) {
       : "";
 
     const myseq = ++openSeq;
+    const out = c && !era && outside(c, year);
     shell(`${name}${flag}`, eraTxt,
-      `<div class="cc-imgwrap"></div>`
+      (out ? `<div class="cc-gone">${c.name} did not exist in ${yr(year)}. Atlas has it from ${yr(out[0])} to ${out[1] >= 9999 ? "the present" : yr(out[1])}.</div>` : "")
+      + `<div class="cc-imgwrap"></div>`
       + rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + wars
       + (era?.note ? `<div class="cc-note">${era.note}</div>` : "")
-      + (c && !era ? `<div class="cc-note">No profile for ${yr(year)} yet — ${c.name} is curated for other periods.</div>` : "")
+      + (c && !era && !outside(c, year) ? `<div class="cc-note">No profile for ${yr(year)} yet — ${c.name} is curated for other periods.</div>` : "")
       + (!c ? `<div class="cc-note">No curated profile yet — showing raw map data. We'll deepen this.</div>` : "")
       + factsHtml);
 
@@ -171,8 +181,11 @@ export function createInfoCard({ countries, onDismiss }) {
 
     const wiki = (detail?.refs || []).find(r => r.kind === "wikipedia");
     const asOf = y != null ? ` · as of ${yr(y)}` : "";
+    // Outside its lifetime the card says so first, rather than reading as current.
+    const gone = y != null && ((p.start_year != null && y < p.start_year) || (p.end_year != null && y > p.end_year));
     shell(p.canonical_name, `${span} · from the Atlas registry${asOf}`,
-      rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
+      (gone ? `<div class="cc-gone">${p.canonical_name} did not exist in ${yr(y)}. It lasted ${span}.</div>` : "")
+      + rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + (wiki ? `<a class="cc-link" href="${wiki.url}" target="_blank" rel="noopener">Read on Wikipedia →</a>` : "")
       + (p._slice
         ? `<div class="cc-note">From Atlas's committed registry (Wikidata-sourced). Rulers and population come from the live database, so they are not shown here.</div>`
