@@ -103,7 +103,14 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     // A route's stop already shown as a link pin or a city keeps that one label.
     const near = (a, b) => Math.abs(a.lat - b.lat) < 0.12 && Math.abs(a.lng - b.lng) < 0.12;
     const marks = [...(htmlPins.get("link") || []), ...htmlCities];
-    const shown = [...htmlPins.values()].flat().filter(d => d.style !== "wpt" || !marks.some(m => near(m, d)));
+    // A stop two highlighted routes share (Tyre) is labelled once, by the first route.
+    const stops = [];
+    const shown = [...htmlPins.values()].flat().filter(d => {
+      if (d.style !== "wpt") return true;
+      if (marks.some(m => near(m, d)) || stops.some(s => s.label === d.label && near(s, d))) return false;
+      stops.push(d);
+      return true;
+    });
     world.htmlElementsData([...htmlCities, ...shown]);
     declutterSoon();
   };
