@@ -98,16 +98,24 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   }
   let htmlCities = [];
   const htmlPins = new Map();       // style → pins
+  const stopCities = new Map();     // city name → "end" | "mid": it names a highlighted route's stop
   const pushHtml = () => {
     placeRouteNames();
-    // A route's stop already shown as a link pin or a city keeps that one label.
+    // A route's stop already shown as a link pin keeps that one label, and so does
+    // one that two highlighted routes share (Tyre): the first route's.
+    // A stop on a city is named once too. In the middle of a route the city's
+    // name stands in for it (see declutter). A route's first or last stop keeps
+    // its own label, which may move out but never hides, over the city's dot.
     const near = (a, b) => Math.abs(a.lat - b.lat) < 0.12 && Math.abs(a.lng - b.lng) < 0.12;
-    const marks = [...(htmlPins.get("link") || []), ...htmlCities];
-    // A stop two highlighted routes share (Tyre) is labelled once, by the first route.
-    const stops = [];
+    const links = htmlPins.get("link") || [], stops = [];
+    stopCities.clear();
     const shown = [...htmlPins.values()].flat().filter(d => {
       if (d.style !== "wpt") return true;
-      if (marks.some(m => near(m, d)) || stops.some(s => s.label === d.label && near(s, d))) return false;
+      if (links.some(m => near(m, d)) || stops.some(s => s.label === d.label && near(s, d))) return false;
+      const city = htmlCities.find(m => near(m, d));
+      d.onCity = !!city && d.end;
+      if (city) stopCities.set(city.name, d.end || stopCities.get(city.name) === "end" ? "end" : "mid");
+      if (city && !d.end) return false;
       stops.push(d);
       return true;
     });
@@ -158,19 +166,30 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       const a = e.getBoundingClientRect(), lab = e.querySelector(".pin-label");
       if (a.right < box.left || a.left > box.right || a.bottom < box.top || a.top > box.bottom) continue;
       const style = d.style.split(" ")[0];
+      e.classList.toggle("pin-on-city", !!d.onCity);
       const r = style === "wpt" ? 3 : style === "route" ? 0 : 6;
       if (r) dots.push({ l: a.left - r, r: a.left + r, t: a.top - r, b: a.top + r, e });
-      if (lab && d.label) items.push({ e, x: a.left, y: a.top, w: lab.offsetWidth, h: lab.offsetHeight, rank: RANK[style] ?? 5,
-        side: d.side || "up", style });
+      // A route's first and last stop are named like its open end: moved out, never hidden.
+      if (lab && d.label) items.push({ e, x: a.left, y: a.top, w: lab.offsetWidth, h: lab.offsetHeight,
+        rank: style === "wpt" && d.end ? RANK["route-end"] : RANK[style] ?? 5, side: d.side || "up", style });
     }
-    if (!el.classList.contains("cities-far")) {
+    {
+      // A city standing in for a stop in the middle of a highlighted route is named
+      // as that stop would be: with its rank, and also when the other city names are
+      // off (far out). A city at a route's end leaves its name to the stop's label.
+      const far = el.classList.contains("cities-far");
       const fs = Math.max(9, Math.min(13, parseFloat(getComputedStyle(el).getPropertyValue("--city-size")) || 11));
       measure.font = `${fs}px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
       for (const e of cityEls.values()) {
-        if (!e.isConnected || !e.getClientRects().length) continue;
+        const stop = stopCities.get(e.dataset.name);
+        e.classList.toggle("city-stop", stop === "mid");
+        e.classList.toggle("city-end", stop === "end");
+        if ((far && stop !== "mid") || stop === "end" || !e.isConnected || !e.getClientRects().length) continue;
         const a = e.getBoundingClientRect(), k = e.dataset.name + "|" + fs;
         if (!textW.has(k)) textW.set(k, measure.measureText(e.dataset.name).width);
-        items.push({ e, city: true, rank: 6, rect: { l: a.right + 3, r: a.right + 3 + textW.get(k), t: a.top + a.height / 2 - fs / 2, b: a.top + a.height / 2 + fs / 2 } });
+        const w = textW.get(k), t = a.top + a.height / 2 - fs / 2, b = t + fs;
+        items.push({ e, city: true, rank: stop ? RANK.wpt : 6,
+          rect: { l: a.right + 3, r: a.right + 3 + w, t, b }, left: stop ? { l: a.left - 3 - w, r: a.left - 3, t, b } : null });
       }
     }
     const rects = side => it => {
@@ -212,7 +231,13 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     for (const it of items) {
       const free = q => q.l >= vw.l && q.r <= vw.r && q.t >= vw.t && q.b <= vw.b
         && !placed.some(p => hit(p, q)) && !dots.some(d => d.e !== it.e && hit(d, q));
-      if (it.city) { const ok = free(it.rect); if (ok) placed.push(it.rect); out.push([it, ok ? "" : "hide"]); continue; }
+      if (it.city) {
+        // A city naming a route's stop may take its left side when the right is taken.
+        const q = [it.rect, it.left].find(q => q && free(q));
+        if (q) placed.push(q);
+        out.push([it, !q ? "hide" : q === it.rect ? "" : "left"]);
+        continue;
+      }
       const sides = [it.side, ...["up", "right", "down", "left"].filter(s => s !== it.side)];
       const side = sides.find(s => free(rects(s)(it)));
       if (side) { placed.push(rects(side)(it)); out.push([it, side === it.side ? "" : side]); continue; }
@@ -223,7 +248,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       out.push([it, "free", r]);
     }
     for (const [it, v, r] of out) {
-      if (it.city) { it.e.classList.toggle("dc-hide", v === "hide"); continue; }
+      if (it.city) { it.e.classList.toggle("dc-hide", v === "hide"); it.e.classList.toggle("dc-left", v === "left"); continue; }
       if ((it.e.dataset.dc || "") !== v) it.e.dataset.dc = v;
       if (v !== "free") continue;
       // The label's corner relative to the anchor, and a leader from the anchor
@@ -431,7 +456,8 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
           color, label: on ? r.name : `${r.name} · in use ${yr(r.from)} – ${yr(r.to)}` });
         (r.waypoints || []).forEach((w, j) => {
           if (w.open) labels.push({ kind: "pin", style: "route-end", key: `rend${i}`, side: "down", lat: w.lat, lng: w.lng, route: r, color, label: w.name });
-          else labels.push({ kind: "pin", style: "wpt", key: `wpt${i}-${j}`, side: "right", lat: w.lat, lng: w.lng, route: r, color, label: w.name });
+          else labels.push({ kind: "pin", style: "wpt", key: `wpt${i}-${j}`, side: "right", lat: w.lat, lng: w.lng, route: r, color, label: w.name,
+            end: j === 0 || j === r.waypoints.length - 1 });
         });
       });
       htmlPins.set("route", labels);

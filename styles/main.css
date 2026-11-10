@@ -33,6 +33,11 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   font-size: clamp(9px, var(--city-size), 13px); line-height: 1; white-space: nowrap;
   color: rgba(255, 220, 150, 0.8); text-shadow: 0 0 2px rgba(0, 0, 0, 0.8); }
 .cities-far .city-label::after { display: none; }
+/* A city on a highlighted route's stop (globe.js pushHtml): in the middle of the
+   route its name stands in for the stop's, at a route's end the stop's label names it. */
+.cities-far .city-label.city-stop::after { display: block; }
+.city-label.city-end::after { display: none; }
+.city-label.dc-left::after { left: auto; right: calc(100% + 3px); }
 /* Map pins: a zero-size anchor at the point, the label stands above it. They are
    never hit targets (taps, clicks and drags reach the globe). */
 .map-pin { width: 0; height: 0; pointer-events: none; }
@@ -67,6 +72,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 /* The named stops of a highlighted route: a small dot on the line, a quiet name. */
 .pin-wpt .pin-dot { left: -3px; top: -3px; width: 6px; height: 6px; background: var(--pin-c, #9aa3ad);
   border: 1px solid #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.pin-wpt.pin-on-city .pin-dot { display: none; }   /* the city's own dot marks it */
 .pin-wpt .pin-label { background: none; box-shadow: none; padding: 0; translate: 7px -50%;
   color: #f1f5f9; font-size: 11px; font-weight: 600; text-shadow: 0 0 3px #000, 0 0 2px #000; }
 .pin-down .pin-stem { bottom: auto; top: 4px; }
