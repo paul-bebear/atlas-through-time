@@ -265,15 +265,16 @@ async function boot() {
   // the target (and its pin label) in the middle of what stays visible — below
   // the card in portrait, beside it in landscape. It aims again whenever the card
   // appears or changes size (a photo landing, a later database answer), until
-  // the visitor moves the globe. Desktop keeps the centre for a single pick; a
-  // set of points (a link) is framed clear of the top row, the chip and the timeline.
+  // the visitor moves the globe. Desktop keeps the centre and the whole globe for
+  // a selection; what a link brings (its pins, routes and polities) is framed
+  // clear of the top row, the chip and the timeline.
   const phoneLayout = () => innerWidth <= 480 || matchMedia("(pointer: coarse) and (max-height: 500px)").matches;
   const infoCardEl = document.getElementById("infoCard");
   // The part of the globe left visible: on phones, the largest rectangle that
   // nothing covers (the top row, search, the layers pill, the card, the link
   // chip, the story bar, the timeline), in portrait and in landscape alike.
-  // On desktop only fits use it, clear of the top row and the bottom panels
-  // (timeline, chip, story bar); the side panels leave the middle open.
+  // On desktop only a link's fit (`fit` "link") uses it, clear of the top row and
+  // the bottom panels (timeline, chip, story bar); the side panels leave the middle open.
   const COVERS = ["menuBtn", "topbar", "searchInput", "modesPanel", "infoCard", "linkChip", "storyBar", "timeline"];
   const DESKTOP_COVERS = ["menuBtn", "topbar", "searchInput", "linkChip", "storyBar", "timeline"];
   // `fit`: for framing a set of points (fitted as a circle, see frameFor) the
@@ -283,7 +284,7 @@ async function boot() {
     const g = document.getElementById("globe").getBoundingClientRect();
     const whole = { l: g.left, r: g.right, t: g.top, b: g.bottom };
     const phone = phoneLayout();
-    if (!phone && !fit) return { g, box: whole };
+    if (!phone && fit !== "link") return { g, box: whole };
     const m = 6;
     const obs = (phone ? COVERS : DESKTOP_COVERS).map(id => document.getElementById(id)).filter(e => e && !e.hidden && e.getClientRects().length)
       .map(e => e.getBoundingClientRect()).filter(r => r.width && r.height)
@@ -309,7 +310,7 @@ async function boot() {
     return { g, box: box || whole };
   }
   function aimFor(lat, lng, altitude, fit = false) {
-    if (!phoneLayout() && !fit) return { lat, lng };
+    if (!phoneLayout() && fit !== "link") return { lat, lng };
     const { g, box } = visibleBox(fit);
     // The pin's label stands ~35 px above its dot: aim the dot a little low,
     // never so high that the label goes under whatever is above the box.
@@ -336,24 +337,25 @@ async function boot() {
     globe.flyTo(a.lat, a.lng, altitude, ms);
   }
   // A set of points (a link's pins, polities or routes) framed into the visible part.
-  function fitFor(points, minAlt) {
-    const { g, box } = visibleBox(true);
+  // `link`: what a link brings, framed into the band on desktop too.
+  function fitFor(points, minAlt, link = false) {
+    const { g, box } = visibleBox(link ? "link" : true);
     const h = box.b - box.t, f = frameFor(points, (box.r - box.l) / h);
     const raw = f && f.altitude * g.height / h;     // before the cap: how high it would need to be
     return f && { lat: f.lat, lng: f.lng, altitude: Math.max(minAlt, Math.min(3, raw)), raw };
   }
-  function flyToFit(points, minAlt = 0) {
-    const f = fitFor(points, minAlt);
+  function flyToFit(points, minAlt = 0, link = false) {
+    const f = fitFor(points, minAlt, link);
     if (!f) return false;
-    flyFramed(f.lat, f.lng, f.altitude, 1400, true);
-    aim.fit = { points, minAlt };
+    flyFramed(f.lat, f.lng, f.altitude, 1400, link ? "link" : true);
+    aim.fit = { points, minAlt, link };
     return true;
   }
   // Aim again for what is visible now (a card that grew, a rotation, a resize).
   function reaim() {
     if (!aim) return;
-    if (aim.fit) aim = { ...fitFor(aim.fit.points, aim.fit.minAlt), fit: aim.fit };
-    const a = aimFor(aim.lat, aim.lng, aim.altitude, !!aim.fit);
+    if (aim.fit) aim = { ...fitFor(aim.fit.points, aim.fit.minAlt, aim.fit.link), fit: aim.fit };
+    const a = aimFor(aim.lat, aim.lng, aim.altitude, aim.fit ? (aim.fit.link ? "link" : true) : false);
     globe.flyTo(a.lat, a.lng, aim.altitude, 600);
   }
   new ResizeObserver(() => { if (phoneLayout() && !infoCardEl.hidden) reaim(); }).observe(infoCardEl);
@@ -1217,7 +1219,7 @@ async function boot() {
     const before = selection;
     let touched = false;
     document.getElementById("globe").addEventListener("pointerdown", () => { touched = true; }, { once: true });
-    if (!v.at && base.length) flyToFit(base);
+    if (!v.at && base.length) flyToFit(base, 0, true);
     else if (v.at) globe.flyTo(v.at.lat, v.at.lng, v.at.altitude);
     if (!v.qids.length) return;
     // The registry slice loads only now, and only because the link names polities.
@@ -1230,7 +1232,7 @@ async function boot() {
     if (phoneLayout() && !quiet) card.peek();
     const points = selectLinkPolities(rows, quiet);
     updateLinkChip();
-    if (!v.at && !touched) flyToFit([...base, ...points], base.length ? 0 : 1);
+    if (!v.at && !touched) flyToFit([...base, ...points], base.length ? 0 : 1, true);
   }
 
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
