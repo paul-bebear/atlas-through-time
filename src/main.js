@@ -265,24 +265,32 @@ async function boot() {
   // the target (and its pin label) in the middle of what stays visible — below
   // the card in portrait, beside it in landscape. It aims again whenever the card
   // appears or changes size (a photo landing, a later database answer), until
-  // the visitor moves the globe. Desktop keeps the centre.
+  // the visitor moves the globe. Desktop keeps the centre for a single pick; a
+  // set of points (a link) is framed clear of the top row, the chip and the timeline.
   const phoneLayout = () => innerWidth <= 480 || matchMedia("(pointer: coarse) and (max-height: 500px)").matches;
   const infoCardEl = document.getElementById("infoCard");
   // The part of the globe left visible: on phones, the largest rectangle that
   // nothing covers (the top row, search, the layers pill, the card, the link
   // chip, the story bar, the timeline), in portrait and in landscape alike.
+  // On desktop only fits use it, clear of the top row and the bottom panels
+  // (timeline, chip, story bar); the side panels leave the middle open.
   const COVERS = ["menuBtn", "topbar", "searchInput", "modesPanel", "infoCard", "linkChip", "storyBar", "timeline"];
+  const DESKTOP_COVERS = ["menuBtn", "topbar", "searchInput", "linkChip", "storyBar", "timeline"];
   // `fit`: for framing a set of points (fitted as a circle, see frameFor) the
   // box whose shorter side is longest wins, not the largest one: a wide strip
   // under a peek card would shrink the view to its height.
   function visibleBox(fit = false) {
     const g = document.getElementById("globe").getBoundingClientRect();
     const whole = { l: g.left, r: g.right, t: g.top, b: g.bottom };
-    if (!phoneLayout()) return { g, box: whole };
+    const phone = phoneLayout();
+    if (!phone && !fit) return { g, box: whole };
     const m = 6;
-    const obs = COVERS.map(id => document.getElementById(id)).filter(e => e && !e.hidden && e.getClientRects().length)
+    const obs = (phone ? COVERS : DESKTOP_COVERS).map(id => document.getElementById(id)).filter(e => e && !e.hidden && e.getClientRects().length)
       .map(e => e.getBoundingClientRect()).filter(r => r.width && r.height)
-      .map(r => ({ l: r.left - m, r: r.right + m, t: r.top - m, b: r.bottom + m }));
+      .map(r => ({ l: r.left - m, r: r.right + m, t: r.top - m, b: r.bottom + m }))
+      // Desktop: each cover counts across the full width, so a fit takes the open
+      // band between the top row and the chip, centred, not a taller box beside the chip.
+      .map(o => phone ? o : { ...o, l: g.left, r: g.right });
     const xs = [...new Set([g.left, g.right, ...obs.flatMap(o => [o.l, o.r])])].filter(x => x >= g.left && x <= g.right).sort((a, b) => a - b);
     const ys = [...new Set([g.top, g.bottom, ...obs.flatMap(o => [o.t, o.b])])].filter(y => y >= g.top && y <= g.bottom).sort((a, b) => a - b);
     let box = null, best = 0;
@@ -301,7 +309,7 @@ async function boot() {
     return { g, box: box || whole };
   }
   function aimFor(lat, lng, altitude, fit = false) {
-    if (!phoneLayout()) return { lat, lng };
+    if (!phoneLayout() && !fit) return { lat, lng };
     const { g, box } = visibleBox(fit);
     // The pin's label stands ~35 px above its dot: aim the dot a little low,
     // never so high that the label goes under whatever is above the box.
