@@ -167,6 +167,7 @@ async function boot() {
   let urlTimer = null;
   let linkPins = [];               // pins from the opened link: memory only, never stored or sent
   let linkRoutes = new Set();      // route ids the opened link highlights
+  let linkOn = false;              // a link's view is on (pins, routes, era band, polities) until Clear
   const syncURL = () => {
     if (!events) return;             // permalink restore hasn't run yet — keep ?sel=/?mode=
     clearTimeout(urlTimer);
@@ -180,8 +181,8 @@ async function boot() {
         q.set("thread", storyThread);
         if (storyBeat) q.set("beat", String(storyBeat));
       } else if (selLabel) q.set("sel", selLabel);
-      // The link's fragment stays while its pins or routes show; Clear drops it.
-      history.replaceState(null, "", "?" + q.toString() + (linkPins.length || linkRoutes.size ? location.hash : ""));
+      // The link's fragment stays while its view is on, so it can be shared again; Clear drops it.
+      history.replaceState(null, "", "?" + q.toString() + (linkOn ? location.hash : ""));
     }, 300);
   };
 
@@ -915,8 +916,9 @@ async function boot() {
         }
       }
       else if (id === "wars") applyHighlights();      // belligerents, no border reload
-      else if (id === "pins") globe.setLinkPins(enabled ? linkPins : []);
+      else if (id === "pins") { globe.setLinkPins(enabled ? linkPins : []); updateLinkChip(); }
       else if (id === "trade") {
+        layersPanel.refresh(); updateLinkChip();     // the link's route count says whether they show
         tradeSig = null;
         if (enabled) refreshTrade(state.year);
         else {
@@ -948,7 +950,36 @@ async function boot() {
     state.layers.pins.count = pins.length || null;
     globe.setLinkPins(state.layers.pins.enabled ? pins : []);
     layersPanel.refresh();
+    updateLinkChip();
   };
+  // Always on screen while the link's view is on, above the timeline (the card
+  // can cover the layers pill on a phone): what the link added, and Clear.
+  const chip = document.getElementById("linkChip");
+  const timelineEl = document.getElementById("timeline");
+  const placeChip = () => {
+    if (chip.hidden) return;
+    const t = timelineEl.getBoundingClientRect();
+    chip.style.left = t.left + "px";
+    chip.style.bottom = (innerHeight - t.top + 6) + "px";
+  };
+  function updateLinkChip() {
+    chip.hidden = !linkOn;
+    if (!linkOn) return;
+    const n = (k, one, many) => k ? `${k} ${k === 1 ? one : many}` : "";
+    const parts = [
+      linkPins.length && (n(linkPins.length, "pin", "pins") + (state.layers.pins.enabled ? "" : " (hidden)")),
+      linkRoutes.size && (n(linkRoutes.size, "route", "routes") + (state.layers.trade.enabled ? "" : " (layer off)"))
+    ].filter(Boolean);
+    chip.querySelector(".lc-text").textContent = ["From the link you opened", ...parts].join(" · ");
+    placeChip();
+  }
+  new ResizeObserver(placeChip).observe(timelineEl);
+  addEventListener("resize", placeChip);
+  // The button is never rebuilt; touch clears on touchend so a re-layout between
+  // touchstart and click cannot swallow the tap.
+  const chipClear = chip.querySelector(".lc-clear");
+  chipClear.onclick = () => layersPanel.onClearPins();
+  chipClear.addEventListener("touchend", e => { e.preventDefault(); layersPanel.onClearPins(); });
   const showLinkRoutes = ids => {
     linkRoutes = new Set(ids);
     state.layers.pins.routes = ids.length || null;
@@ -956,12 +987,24 @@ async function boot() {
     tradeSig = null;
     refreshTrade(state.year);
     layersPanel.refresh();
+    updateLinkChip();
   };
+  // Clear takes away everything the link brought: its pins, route highlights,
+  // era band and fragment, and its polities while they are still the selection.
   layersPanel.onClearPins = () => {
+    if (!linkOn) return;
+    linkOn = false;
     timeline.clearLinkSpan();
     showLinkPins([]);
     if (linkRoutes.size) showLinkRoutes([]);
+    if (selection?.fromLink) {
+      clearSelection();
+      card.close();
+      timeline.clearOverlays();
+      setContext(DEFAULT_CONTEXT, false);
+    }
     history.replaceState(null, "", location.pathname + location.search);
+    updateLinkChip();
     syncURL();
   };
   // Up to two polities from a link's qid: highlighted through their resolved
@@ -978,13 +1021,14 @@ async function boot() {
     setContext("🗄 " + rows.map(p => p.canonical_name).join(" · "));
     const first = rows[0];
     scopeSlider(groups[0].names, first.start_year, first.end_year ?? 2025, first.canonical_name);
-    selection = { names: groups.flatMap(g => g.names), render: y => card.openDbPolity(first, null, y) };
+    selection = { names: groups.flatMap(g => g.names), render: y => card.openDbPolity(first, null, y), fromLink: true };
     selLabel = first.canonical_name;
     selection.render(timeline.currentYear());
     return points;
   }
 
   async function applyLink(v) {
+    linkOn = true;
     showLinkPins(v.pins.map(p => ({ lat: p.lat, lng: p.lng, label: pinLabel(p) })));
     if (v.span) timeline.setLinkSpan(v.span[0], v.span[1], spanLabel(v.span));
     // Camera: at= wins (exactly), else the pins' bounding box, else the polities,

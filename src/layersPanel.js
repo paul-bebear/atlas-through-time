@@ -42,6 +42,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
     return c != null ? c : "";
   };
 
+  let lastHtml = null;
   function render() {
     const modes = MODES.map(m => `
       <label class="lp-row${m.disabled ? " is-disabled" : ""}">
@@ -71,10 +72,10 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
       </div>` : "") + (lk.routes ? `
       <div class="lp-row lp-pins lp-routes">
         <span class="lp-routes-label">Routes highlighted</span>
-        <span class="lp-count lp-rcount">${lk.routes}</span>
+        <span class="lp-count lp-rcount">${state.layers.trade?.enabled ? lk.routes : `${lk.routes} · layer off`}</span>
         ${lk.count ? "" : clearBtn}
       </div>` : "");
-    root.innerHTML = `${pins ? `
+    const html = `${pins ? `
       <div class="lp-section">
         <div class="lp-heading">From the link you opened</div>
         ${pins}
@@ -89,6 +90,11 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
       </div>
       <p class="lp-note">Layers stack; modes are exclusive. Trade routes are schematic corridors, shown for the years they were in use.</p>
     `;
+    // Rebuilding the same markup would swap the controls under a finger that is
+    // already on one (a Clear tap then lands on a detached node and is lost).
+    if (html === lastHtml) return;
+    lastHtml = html;
+    root.innerHTML = html;
     root.querySelectorAll('input[name="lp-mode"]').forEach(el => {
       el.onchange = () => {
         // On phones the open panel would cover the mode's own UI.

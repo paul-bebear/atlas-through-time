@@ -369,6 +369,17 @@ input[type=range]::-webkit-slider-thumb {
 #searchResults .sr-exp:hover { color: #fff; }
 
 /* Guided story bar */
+/* What the opened link added, above the timeline's left end, always in reach. */
+#linkChip { position: absolute; z-index: 12; display: flex; align-items: center; gap: 8px;
+  max-width: calc(100vw - 24px); padding: 4px 4px 4px 10px; border-radius: 10px;
+  background: rgba(14, 24, 38, 0.92); border: 1px dashed #a78bfa; color: #ddd6fe;
+  font-size: 12px; font-weight: 600; backdrop-filter: blur(8px); }
+#linkChip .lc-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#linkChip .lc-clear { flex: none; min-height: 28px; padding: 0 12px; border-radius: 7px; cursor: pointer;
+  background: rgba(167, 139, 250, 0.22); color: #fff; border: 1px solid #a78bfa; font: inherit;
+  touch-action: manipulation; }
+@media (pointer: coarse) { #linkChip .lc-clear { min-height: 40px; min-width: 64px; } }
+
 #storyBar { position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
   z-index: 13; width: min(680px, calc(94vw - 2 * var(--sax)));
   display: flex; align-items: center; gap: 12px;
