@@ -175,10 +175,14 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     // The page's own panels (card, timeline, chip…) count as taken: a label
     // goes to a side that is not under one, or hides.
     const placed = panels().map(r => ({ l: r.left, r: r.right, t: r.top, b: r.bottom })), out = [];
+    // A label that would run off the screen counts as blocked too.
+    const vw = { l: Math.max(box.left, 0) + 2, r: Math.min(box.right, innerWidth) - 2,
+      t: Math.max(box.top, 0) + 2, b: Math.min(box.bottom, innerHeight) - 2 };
     items.sort((a, b) => a.rank - b.rank);
     let keptSel = false;
     for (const it of items) {
-      const free = q => !placed.some(p => hit(p, q)) && !dots.some(d => d.e !== it.e && hit(d, q));
+      const free = q => q.l >= vw.l && q.r <= vw.r && q.t >= vw.t && q.b <= vw.b
+        && !placed.some(p => hit(p, q)) && !dots.some(d => d.e !== it.e && hit(d, q));
       if (it.city) { const ok = free(it.rect); if (ok) placed.push(it.rect); out.push([it, ok ? "" : "hide"]); continue; }
       const sides = [it.side, ...["up", "right", "down", "left"].filter(s => s !== it.side)];
       const side = sides.find(s => free(rects(s)(it)));
