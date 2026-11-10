@@ -12,7 +12,7 @@ export function createInfoCard({ countries, onDismiss }) {
   // Bumped by every open and by close, so a Wikipedia fetch that lands late can't
   // overwrite a newer card or reopen a closed one (a tap on × "not working").
   let openSeq = 0;
-  const close = () => { card.hidden = true; openSeq++; };
+  const close = () => { card.hidden = true; openSeq++; card.classList.remove("cc-peek"); peekTitle = null; };
 
   const data = (countries && countries.countries) || {};
   const byAlias = new Map();
@@ -59,8 +59,20 @@ export function createInfoCard({ countries, onDismiss }) {
   x.onclick = dismiss;
   x.addEventListener("touchend", e => { e.preventDefault(); dismiss(); });
 
+  // A peek: only the title and one line, so a phone opened from a link shows the
+  // map first. It stays a peek while the same card re-renders (a year step) and
+  // opens fully on a tap, or when a different card opens.
+  let peekNext = false, peekTitle = null;
+  const unpeek = () => { card.classList.remove("cc-peek"); peekTitle = null; };
+  const peek = () => { peekNext = true; };
+  card.addEventListener("click", e => {
+    if (card.classList.contains("cc-peek") && !x.contains(e.target)) unpeek();
+  });
+
   function shell(titleHtml, sub, body) {
     card.hidden = false;
+    if (peekNext) { peekNext = false; peekTitle = titleHtml; card.classList.add("cc-peek"); }
+    else if (titleHtml !== peekTitle) unpeek();
     for (const n of [...card.childNodes]) if (n !== x) n.remove();
     if (x.parentNode !== card) card.prepend(x);
     card.insertAdjacentHTML("beforeend", `<h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`);
@@ -274,7 +286,7 @@ export function createInfoCard({ countries, onDismiss }) {
       + `<div class="cc-note">This pin came from the link you opened: a pointer someone sent, with its own label, not an Atlas record. It is kept only on this page, never stored or sent, and Clear removes it.</div>`);
   }
 
-  return { openCountry, openEntry, openEvent, openDbPolity, openCity, openRoute, openLinkPin, close, catalog, resolve };
+  return { openCountry, openEntry, openEvent, openDbPolity, openCity, openRoute, openLinkPin, close, peek, catalog, resolve };
 }
 
 // docs/routes.md, `certainty`.

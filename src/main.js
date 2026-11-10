@@ -1145,17 +1145,22 @@ async function boot() {
     // Routes: only ids Atlas knows; the trade layer turns on to show them.
     const routes = v.routes.map(id => tradeRoutes?.find(r => r.id === id)).filter(Boolean);
     if (routes.length) showLinkRoutes(routes.map(r => r.id));
+    // Every point of a highlighted route counts, its open end included, so the
+    // routes, their names and the open end's label are in view with the pins.
     const routePoints = routes.flatMap(r => r.points.map(([lng, lat]) => ({ lat, lng })));
-    const cam = v.at ? (globe.flyTo(v.at.lat, v.at.lng, v.at.altitude), true)
-      : flyToFit(v.pins) || (!v.qids.length && flyToFit(routePoints));
+    const base = [...v.pins, ...routePoints];
+    if (!v.at && base.length) flyToFit(base);
+    else if (v.at) globe.flyTo(v.at.lat, v.at.lng, v.at.altitude);
     if (!v.qids.length) return;
     // The registry slice loads only now, and only because the link names polities.
     const rows = (await Promise.all(v.qids.map(q => sliceByQid(q, state.year).catch(() => null)))).filter(Boolean);
-    const routeCam = () => { if (!cam) flyToFit(routePoints); };
-    if (!rows.length) return routeCam();
+    if (!rows.length) return;
     await whenBorders();
+    // On a phone the polity's card opens as a one-line peek: the reader came to
+    // see the map; a tap on the card opens it.
+    if (phoneLayout()) card.peek();
     const points = selectLinkPolities(rows);
-    if (!cam && !flyToFit(points, 1)) routeCam();
+    if (!v.at) flyToFit([...base, ...points], base.length ? 0 : 1);
   }
 
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
