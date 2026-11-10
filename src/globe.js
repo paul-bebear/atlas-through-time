@@ -98,14 +98,104 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   }
   let htmlCities = [];
   const htmlPins = new Map();       // style → pins
-  const pushHtml = () => world.htmlElementsData([...htmlCities, ...[...htmlPins.values()].flat()]);
+  const pushHtml = () => {
+    placeRouteNames();
+    // A route's stop already shown as a link pin or a city keeps that one label.
+    const near = (a, b) => Math.abs(a.lat - b.lat) < 0.12 && Math.abs(a.lng - b.lng) < 0.12;
+    const marks = [...(htmlPins.get("link") || []), ...htmlCities];
+    const shown = [...htmlPins.values()].flat().filter(d => d.style !== "wpt" || !marks.some(m => near(m, d)));
+    world.htmlElementsData([...htmlCities, ...shown]);
+    declutterSoon();
+  };
 
+  // A highlighted route's name sits on its line where it is farthest from the
+  // other pins and the cities (not on Damascus or Jerusalem), within its middle.
+  function placeRouteNames() {
+    const names = (htmlPins.get("route") || []).filter(d => d.along);
+    if (!names.length) return;
+    const others = [...(htmlPins.get("sel") || []), ...(htmlPins.get("link") || []), ...htmlCities];
+    for (const d of names) {
+      let best = null, bestD = -1;
+      for (const t of [0.5, 0.4, 0.6, 0.3, 0.7]) {
+        const p = midway(d.route.points, t);
+        const k = Math.cos(p.lat * Math.PI / 180);
+        const dist = Math.min(9, ...others.map(o => Math.hypot(o.lat - p.lat, (o.lng - p.lng) * k)));
+        if (dist > bestD + 0.05) { best = p; bestD = dist; }
+      }
+      d.lat = best.lat; d.lng = best.lng;
+    }
+  }
+
+  // Label de-collision. Labels are placed greedily by importance (the selected
+  // polity, the link's pins, route names, a route's open end, its stops, city
+  // names): each keeps its own side if that is free, else tries the others, else
+  // is hidden (city names and stops), so a label never prints over another.
+  // Reads all positions first, then writes; at most ~10 times a second.
+  const RANK = { sel: 0, link: 1, route: 2, "route-end": 3, wpt: 4 };
+  const measure = document.createElement("canvas").getContext("2d");
+  const textW = new Map();
+  let dcTimer = null, dcLast = 0;
+  function declutterSoon() {
+    if (dcTimer) return;
+    dcTimer = setTimeout(() => requestAnimationFrame(() => { dcTimer = null; dcLast = performance.now(); declutter(); }),
+      Math.max(0, 100 - (performance.now() - dcLast)));
+  }
+  function declutter() {
+    const box = el.getBoundingClientRect();
+    const items = [], dots = [];
+    for (const e of pinEls.values()) {
+      const d = e.__d;
+      if (!d || !e.isConnected || e.style.display === "none" || !e.getClientRects().length) continue;
+      const a = e.getBoundingClientRect(), lab = e.querySelector(".pin-label");
+      if (a.right < box.left || a.left > box.right || a.bottom < box.top || a.top > box.bottom) continue;
+      const style = d.style.split(" ")[0];
+      const r = style === "wpt" ? 3 : style === "route" ? 0 : 6;
+      if (r) dots.push({ l: a.left - r, r: a.left + r, t: a.top - r, b: a.top + r, e });
+      if (lab && d.label) items.push({ e, x: a.left, y: a.top, w: lab.offsetWidth, h: lab.offsetHeight, rank: RANK[style] ?? 5,
+        side: d.side || "up", style });
+    }
+    if (!el.classList.contains("cities-far")) {
+      const fs = Math.max(9, Math.min(13, parseFloat(getComputedStyle(el).getPropertyValue("--city-size")) || 11));
+      measure.font = `${fs}px -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`;
+      for (const e of cityEls.values()) {
+        if (!e.isConnected || !e.getClientRects().length) continue;
+        const a = e.getBoundingClientRect(), k = e.dataset.name + "|" + fs;
+        if (!textW.has(k)) textW.set(k, measure.measureText(e.dataset.name).width);
+        items.push({ e, city: true, rank: 6, rect: { l: a.right + 3, r: a.right + 3 + textW.get(k), t: a.top + a.height / 2 - fs / 2, b: a.top + a.height / 2 + fs / 2 } });
+      }
+    }
+    const rects = side => it => {
+      const { x, y, w, h } = it, up = it.style === "link" ? 13 : 17;
+      return side === "up" ? { l: x - w / 2, r: x + w / 2, t: y - up - h, b: y - up }
+        : side === "down" ? { l: x - w / 2, r: x + w / 2, t: y + 13, b: y + 13 + h }
+        : side === "right" ? { l: x + 8, r: x + 8 + w, t: y - h / 2, b: y + h / 2 }
+        : { l: x - 8 - w, r: x - 8, t: y - h / 2, b: y + h / 2 };
+    };
+    const hit = (p, q) => p.l < q.r && q.l < p.r && p.t < q.b && q.t < p.b;
+    const placed = [], out = [];
+    items.sort((a, b) => a.rank - b.rank);
+    for (const it of items) {
+      const free = q => !placed.some(p => hit(p, q)) && !dots.some(d => d.e !== it.e && hit(d, q));
+      if (it.city) { const ok = free(it.rect); if (ok) placed.push(it.rect); out.push([it, ok ? "" : "hide"]); continue; }
+      const sides = [it.side, ...["up", "right", "down", "left"].filter(s => s !== it.side)];
+      const side = sides.find(s => free(rects(s)(it)));
+      // The selected polity's label always shows; the others give way.
+      const use = side || (it.rank === 0 ? it.side : null);
+      if (use) placed.push(rects(use)(it));
+      out.push([it, use == null ? "hide" : use === it.side ? "" : use]);
+    }
+    for (const [it, v] of out) {
+      if (it.city) it.e.classList.toggle("dc-hide", v === "hide");
+      else if ((it.e.dataset.dc || "") !== v) it.e.dataset.dc = v;
+    }
+  }
   const controls = world.controls();
   controls.autoRotate = true;
   controls.autoRotateSpeed = IDLE_SPIN_SPEED;
   el.addEventListener("pointerdown", () => { controls.autoRotate = false; }, { once: true });
   el.addEventListener("pointerdown", () => { lastPress = Date.now(); });
   controls.addEventListener("change", sizeCities);
+  controls.addEventListener("change", () => declutterSoon());
 
   // Stop burning GPU when the tab is in the background.
   document.addEventListener("visibilitychange", () =>
@@ -203,7 +293,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
 
   const refresh = () => world.polygonsData(world.polygonsData());
 
-  function resize() { world.width(el.clientWidth).height(el.clientHeight); sizeCities(); }
+  function resize() { world.width(el.clientWidth).height(el.clientHeight); sizeCities(); declutterSoon(); }
   // Labels scale with zoom like the old 3D text (capped in CSS); zoomed out, only the dots show.
   let citySize = 0;
   function sizeCities() {
@@ -279,19 +369,15 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       world.pathsData(paths);
       // Highlighted routes: their name beside the line, the names of their stops,
       // and an open end labelled as what it is ("towards Ophir (location unknown)").
-      const near = (a, b, d) => Math.abs(a.lat - b.lat) < d && Math.abs(a.lng - b.lng) < d;
-      const taken = [...(htmlPins.get("link") || []), ...htmlCities];
       const labels = [];
       list.filter(r => highlight.has(r.id)).forEach((r, i) => {
         const on = inUse(r), color = on ? r.color : null;
         const { lat, lng } = midway(r.points);
-        labels.push({ kind: "pin", style: on ? "route" : "route pin-route-off", key: "route" + i, side: "right", lat, lng, route: r,
+        labels.push({ kind: "pin", style: on ? "route" : "route pin-route-off", key: "route" + i, side: "right", lat, lng, route: r, along: true,
           color, label: on ? r.name : `${r.name} · in use ${yr(r.from)} – ${yr(r.to)}` });
         (r.waypoints || []).forEach((w, j) => {
           if (w.open) labels.push({ kind: "pin", style: "route-end", key: `rend${i}`, side: "down", lat: w.lat, lng: w.lng, route: r, color, label: w.name });
-          // A stop already shown as a link pin or a city keeps that one label.
-          else if (!taken.some(t => near(t, w, 0.12)))
-            labels.push({ kind: "pin", style: "wpt", key: `wpt${i}-${j}`, side: "right", lat: w.lat, lng: w.lng, route: r, color, label: w.name });
+          else labels.push({ kind: "pin", style: "wpt", key: `wpt${i}-${j}`, side: "right", lat: w.lat, lng: w.lng, route: r, color, label: w.name });
         });
       });
       htmlPins.set("route", labels);
@@ -352,11 +438,11 @@ function cut(points, t) {
   }
   return [points, [points.at(-1), points.at(-1)]];
 }
-// The point halfway along a [lng, lat] line by length (flat, cos-lat scaled).
-function midway(points) {
+// The point at fraction `t` (default halfway) along a [lng, lat] line by length (flat, cos-lat scaled).
+function midway(points, t0 = 0.5) {
   const seg = points.slice(1).map((p, i) => Math.hypot(p[1] - points[i][1],
     (p[0] - points[i][0]) * Math.cos(p[1] * Math.PI / 180)));
-  let left = seg.reduce((a, b) => a + b, 0) / 2;
+  let left = seg.reduce((a, b) => a + b, 0) * t0;
   for (let i = 0; i < seg.length; i++) {
     if (left <= seg[i] && seg[i] > 0) {
       const t = left / seg[i], a = points[i], b = points[i + 1];
