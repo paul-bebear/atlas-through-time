@@ -152,7 +152,7 @@
     "kind": "trade",
     "mode": "sea",
     "goods": ["gold", "almug wood", "precious stones"],
-    "certainty": "legendary",
+    "certainty": "schematic",
     "waypoints": [
       {
         "name": "Ezion-Geber (site disputed)",
@@ -198,7 +198,7 @@
       { "title": "Pleiades place records: Aelana/Aila 746700, Kheleifeh 746754", "url": "https://pleiades.stoa.org/places/746700", "licence": "CC BY 3.0", "use": "place ids, coordinates, and Pleiades' own name records for Elath and Ezion-Geber (checked 2026-11-09)" },
       { "title": "Wikidata: Pharaoh's Island Q933219, Straits of Tiran Q208157, Ezion-Geber Q1386052, Ophir Q914073; coastal towns Haql Q97291597, Nuweiba Q1011488, Dahab Q370495, Sharm el-Sheikh Q644", "url": "https://www.wikidata.org/wiki/Q933219", "licence": "CC0", "use": "ids and coordinates; the coastal towns were used to keep the line mid-gulf in the Gulf of Aqaba" },
       { "title": "Years", "use": "−970 to −931: the conventional dates of Solomon's reign, to which the account ties the voyages. They are not extended: Jehoshaphat's attempt in the 9th century failed (1 Kings 22:48), and the later Elath of 2 Kings 14:22 and 16:6 belongs to other stories." },
-      { "title": "Certainty", "use": "legendary, in Atlas's sense: known only from texts written down centuries later, with no contemporary evidence for the voyages, their port or their destination. This says nothing about whether the voyages happened." },
+      { "title": "Certainty", "use": "schematic: the line is drawn by hand down the only sea lane from the Gulf of Aqaba, and it stops short because Ophir is unknown. The voyages themselves are known only from the biblical text, written down centuries later, with no evidence from the time for the voyages, their port or their destination; this says nothing about whether they happened. (Marked legendary until 2026-11-10; Paul chose schematic.)" },
       { "title": "Geometry", "use": "drawn by hand by Atlas: mid-channel down the Gulf of Aqaba between the coastal towns above, through the Strait of Tiran, then down the middle of the Red Sea. Not traced from ORBIS, DARE, a copyrighted atlas or a map in a book. Atlas-authored, CC BY 4.0." }
     ]
   }
