@@ -291,9 +291,9 @@ export function createInfoCard({ countries, onDismiss }) {
 
 // docs/routes.md, `certainty`.
 const CERTAINTY = {
-  attested: "Its use in these years is supported by evidence from the time, and the line follows known stops.",
-  schematic: "Its use is supported, but no source gives the exact line, so it is drawn approximately between real stops.",
-  legendary: "Known only from tradition or from texts written down long after, with no evidence from the time itself. This says nothing about whether it happened."
+  attested: "Its use in these years is supported by evidence from the time (inscriptions, documents, archaeology), and the line follows known stops.",
+  schematic: "Its use is recorded in the sources, but none gives the exact line, so it is drawn approximately between real stops. The text and sources below say what kind of record it is.",
+  legendary: "Known only from myth, legend or saga, not from any historical record. This says nothing about whether it happened."
 };
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
