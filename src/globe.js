@@ -22,7 +22,7 @@ const tip = fn => NO_HOVER ? null : fn;
 
 // NASA Blue Marble colour + topography (public domain, from three-globe's examples), resized to 2048 px / 1024 px.
 
-export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onRouteClick, onReady }) {
+export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onRouteClick, onLinkPinClick, onReady }) {
   let lastPointClick = -1, lastPress = 0;
 
   let readyNow;
@@ -194,9 +194,10 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     onPolygon: clickPolygon,
     onCity: d => { lastPointClick = Date.now(); onCityClick?.(d); },
     cities: () => cityEls.values(),
-    // Route names, stops and open ends answer a click or tap with the route's card.
-    labels: () => [...pinEls.values()].filter(e => e.isConnected && e.__d?.route),
-    onLabel: d => { lastPointClick = Date.now(); if (d.route) onRouteClick?.(d.route); },
+    // Route names, stops and open ends answer a click or tap with the route's card,
+    // a link's pin with its own.
+    labels: () => [...pinEls.values()].filter(e => e.isConnected && (e.__d?.route || e.__d?.pin)),
+    onLabel: d => { lastPointClick = Date.now(); if (d.route) onRouteClick?.(d.route); else if (d.pin) onLinkPinClick?.(d.pin); },
     onRoute: r => { lastPointClick = Date.now(); onRouteClick?.(r); }
   });
 
@@ -314,7 +315,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     // Pins close together (Elath and Ezion-Geber) get their labels on different sides.
     setLinkPins(list) {
       const pins = list || [];
-      htmlPins.set("link", pins.map((q, i) => ({ kind: "pin", style: "link", key: "link" + i, label: q.label || "", lat: q.lat, lng: q.lng,
+      htmlPins.set("link", pins.map((q, i) => ({ kind: "pin", style: "link", key: "link" + i, label: q.label || "", lat: q.lat, lng: q.lng, pin: q,
         side: ["up", "down", "right", "left"][pins.slice(0, i).filter(o => Math.hypot(o.lat - q.lat, (o.lng - q.lng) * Math.cos(q.lat * Math.PI / 180)) < 1.5).length % 4] })));
       pushHtml();
     },

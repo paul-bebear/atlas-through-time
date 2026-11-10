@@ -150,7 +150,8 @@ export function createInfoCard({ countries, onDismiss }) {
   // A polity straight from the Supabase registry. Period-aware: shows the
   // ruler / population relevant to `year` (the viewed moment) rather than
   // dumping every fact. `detail` = { facts, refs } from db.polityDetail().
-  function openDbPolity(p, detail, year) {
+  // `alias`: the name the map's border data gives the same polity, when it differs.
+  function openDbPolity(p, detail, year, { alias = null } = {}) {
     openSeq++;
     const span = `${p.start_year != null ? yr(p.start_year) : "?"} – ${
       p.end_year != null ? yr(p.end_year) : "present"}`;
@@ -185,6 +186,7 @@ export function createInfoCard({ countries, onDismiss }) {
     const gone = y != null && ((p.start_year != null && y < p.start_year) || (p.end_year != null && y > p.end_year));
     shell(p.canonical_name, `${span} · from the Atlas registry${asOf}`,
       (gone ? `<div class="cc-gone">${p.canonical_name} did not exist in ${yr(y)}. It lasted ${span}.</div>` : "")
+      + (alias ? `<div class="cc-small cc-alias">Shown on this map as “${esc(alias)}”.</div>` : "")
       + rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")
       + (wiki ? `<a class="cc-link" href="${wiki.url}" target="_blank" rel="noopener">Read on Wikipedia →</a>` : "")
       + (p._slice
@@ -257,7 +259,22 @@ export function createInfoCard({ countries, onDismiss }) {
       + `<div class="cc-note">An Atlas route (CC BY 4.0), drawn by hand from open sources.</div>`);
   }
 
-  return { openCountry, openEntry, openEvent, openDbPolity, openCity, openRoute, close, catalog, resolve };
+  // A pin from the link the visitor opened: its own label, where it is, the
+  // gazetteer id it carries, and plainly where it came from. Never stored.
+  function openLinkPin(p) {
+    openSeq++;
+    const ll = `${Math.abs(p.lat).toFixed(2)}° ${p.lat < 0 ? "S" : "N"}, ${Math.abs(p.lng).toFixed(2)}° ${p.lng < 0 ? "W" : "E"}`;
+    const [src, id] = (p.id || ":").split(":");
+    const url = { pleiades: `https://pleiades.stoa.org/places/${id}`, wikidata: `https://www.wikidata.org/wiki/${id}`,
+      geonames: `https://www.geonames.org/${id}` }[src];
+    shell(esc(p.label || "Pin"), "From the link you opened",
+      `<div class="cc-row"><span class="k">Position</span><span class="v">${ll}</span></div>`
+      + (p.id ? `<div class="cc-row"><span class="k">Place id</span><span class="v">${url
+        ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(p.id)}</a>` : esc(p.id)}</span></div>` : "")
+      + `<div class="cc-note">This pin came from the link you opened: a pointer someone sent, with its own label, not an Atlas record. It is kept only on this page, never stored or sent, and Clear removes it.</div>`);
+  }
+
+  return { openCountry, openEntry, openEvent, openDbPolity, openCity, openRoute, openLinkPin, close, catalog, resolve };
 }
 
 // docs/routes.md, `certainty`.

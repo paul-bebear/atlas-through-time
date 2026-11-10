@@ -283,7 +283,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 #infoCard .cc-list { margin: 0; padding-left: 16px; font-size: 12.5px; line-height: 1.45; }
 #infoCard .cc-list > li { margin: 0 0 6px; }
 #infoCard .cc-cands { margin: 3px 0 0; padding-left: 14px; }
-#infoCard .cc-list a { color: var(--accent); }
+#infoCard .cc-list a, #infoCard .cc-row a { color: var(--accent); }
+#infoCard .cc-alias { margin: -6px 0 10px; }
 #infoCard .cc-extract + .cc-h { margin-top: 14px; }
 .cc-imgwrap:empty { display: none; }
 .cc-facts { margin-top: 12px; padding: 10px 12px; border-radius: 10px;

@@ -77,6 +77,11 @@ function featureContains(feature, lng, lat) {
 // Centre of a set of border shapes: the area centroid of the largest outer ring,
 // moved onto the ring along its parallel when the ring is C-shaped and the
 // centroid falls outside it. Where a pin stands and the camera flies.
+// Two place names are the same polity name (case, accents, dashes, punctuation aside).
+const normName = s => String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9]+/g, " ").trim();
+const sameName = (a, b) => normName(a) === normName(b);
+
 function shapesCentre(features) {
   let best = null, bestA = 0;
   for (const f of features || []) for (const poly of polysOf(f.geometry)) {
@@ -146,6 +151,7 @@ async function boot() {
   let pickTerritory = () => {};    // us-territorial path click (late-bound like pickFeature)
   let pickCity = () => {};         // city label click (late-bound)
   let openRoute = () => {};        // route line or label click (late-bound)
+  let openLinkPin = () => {};      // a link pin's click (late-bound)
   let layersPanel = null;          // assigned at the end of boot; onChange fires before that
   let quiz = null;                 // assigned at the end of boot
   // Exit us-territorial mode. Returns true if we were in it, so callers
@@ -169,6 +175,7 @@ async function boot() {
   let linkPins = [];               // pins from the opened link: memory only, never stored or sent
   let linkRoutes = new Set();      // route ids the opened link highlights
   let linkOn = false;              // a link's view is on (pins, routes, era band, polities) until Clear
+  let linkSel = null;              // { groups, points } of the link's polities, until Clear
   const syncURL = () => {
     if (!events) return;             // permalink restore hasn't run yet — keep ?sel=/?mode=
     clearTimeout(urlTimer);
@@ -204,6 +211,7 @@ async function boot() {
     onTerritoryClick: name => pickTerritory(name),
     onCityClick: d => pickCity(d),
     onRouteClick: r => openRoute(r),
+    onLinkPinClick: p => openLinkPin(p),
     onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
   });
   document.getElementById("status").textContent = "loading textures & borders…";
@@ -626,10 +634,21 @@ async function boot() {
     if (phoneLayout()) flyToFit(r.points.map(([lng, lat]) => ({ lat, lng })));
   };
 
+  // A link's pin: its own card. Nothing the link brought is dropped.
+  openLinkPin = p => {
+    if (state.mode === "map-quiz" || !p) return;
+    selection = { names: selection?.names || [], fromLink: selection?.fromLink, render: () => card.openLinkPin(p) };
+    selection.render(state.year);
+  };
+
   pickFeature = f => {
     if (state.mode === "map-quiz") return;
     const wasT = exitTerritory();
     const name = featureName(f);
+    // A shape that is one of the link's polities under the map's own name
+    // ("Kingdom of David and Solomon" for Q3185305): the registry card and name stay.
+    const lp = linkSel?.groups.find(g => g.names.some(n => sameName(n, name)));
+    if (lp) { reselectLink(lp, name); return; }
     const entry = card.resolve(name);
     if (entry) { selectCurated(entry); return; }
     if (wasT) timeline.setYear(timeline.currentYear());
@@ -1006,6 +1025,7 @@ async function boot() {
   layersPanel.onClearPins = () => {
     if (!linkOn) return;
     linkOn = false;
+    linkSel = null;
     timeline.clearLinkSpan();
     showLinkPins([]);
     if (linkRoutes.size) showLinkRoutes([]);
@@ -1028,20 +1048,28 @@ async function boot() {
       const ll = p.lat != null ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
       return ll && { label: p.canonical_name, ...ll, from: p.start_year, to: p.end_year };
     }).filter(Boolean);
-    setSelection(groups.map(g => ({ names: g.names, side: "A" })));
-    setSelPins(points);
-    setContext("🗄 " + rows.map(p => p.canonical_name).join(" · "));
-    const first = rows[0];
-    scopeSlider(groups[0].names, first.start_year, first.end_year ?? 2025, first.canonical_name);
-    selection = { names: groups.flatMap(g => g.names), render: y => card.openDbPolity(first, null, y), fromLink: true };
-    selLabel = first.canonical_name;
-    selection.render(timeline.currentYear());
+    linkSel = { groups, points };
+    reselectLink(groups[0]);
     return points;
+  }
+  // The link's polities as the selection again, with `g`'s registry card (and the
+  // map's own name for it, when a tap on its shape brought it back).
+  function reselectLink(g, alias = null) {
+    const { groups, points } = linkSel;
+    setSelection(groups.map(x => ({ names: x.names, side: "A" })));
+    setSelPins(points);
+    setContext("🗄 " + groups.map(x => x.p.canonical_name).join(" · "));
+    scopeSlider(g.names, g.p.start_year, g.p.end_year ?? 2025, g.p.canonical_name);
+    const shown = alias && !sameName(alias, g.p.canonical_name) ? alias : null;
+    selection = { names: groups.flatMap(x => x.names), render: y => card.openDbPolity(g.p, null, y, { alias: shown }), fromLink: true };
+    selLabel = g.p.canonical_name;
+    syncURL();
+    selection.render(timeline.currentYear());
   }
 
   async function applyLink(v) {
     linkOn = true;
-    showLinkPins(v.pins.map(p => ({ lat: p.lat, lng: p.lng, label: pinLabel(p) })));
+    showLinkPins(v.pins.map(p => ({ id: p.id, lat: p.lat, lng: p.lng, label: pinLabel(p) })));
     if (v.span) timeline.setLinkSpan(v.span[0], v.span[1], spanLabel(v.span));
     // Camera: at= wins (exactly), else the pins' bounding box, else the polities,
     // else the routes, else leave it; on phones fitted to what the card leaves visible.
