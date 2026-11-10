@@ -997,6 +997,7 @@ async function boot() {
       else if (id === "pins") { globe.setLinkPins(enabled ? linkPins : []); updateLinkChip(); }
       else if (id === "trade") {
         layersPanel.refresh(); updateLinkChip();     // the link's route count says whether they show
+        tradeByLink = false;                         // the visitor's own choice now; Clear keeps it
         tradeSig = null;
         if (enabled) refreshTrade(state.year);
         else {
@@ -1088,7 +1089,10 @@ async function boot() {
   const showLinkRoutes = ids => {
     linkRoutes = new Set(ids);
     state.layers.pins.routes = ids.length || null;
-    if (ids.length && !state.layers.trade.enabled) state.layers.trade.enabled = true;
+    if (ids.length && !state.layers.trade.enabled) { state.layers.trade.enabled = true; tradeByLink = true; }
+  // Whether the trade routes layer is on only because a link turned it on:
+  // Clear then turns it off again.
+  let tradeByLink = false;
     tradeSig = null;
     refreshTrade(state.year);
     layersPanel.refresh();
@@ -1109,6 +1113,16 @@ async function boot() {
       card.close();
       timeline.clearOverlays();
       setContext(DEFAULT_CONTEXT, false);
+    if (tradeByLink) {
+      // The layer was off before the link: off again, as the visitor had it.
+      tradeByLink = false;
+      state.layers.trade.enabled = false;
+      tradeSig = null;
+      globe.setTradeRoutes([]);
+      state.layers.trade.count = null;
+      layersPanel.refresh();
+      layersPanel.updateCounts();
+    }
     } else if (ls?.quiet && ls.points.some(p => selPins.includes(p))) {
       // The link's polities arrived beside the visitor's own pick: drop just them.
       setSelPins(selPins.filter(p => !ls.points.includes(p)));
