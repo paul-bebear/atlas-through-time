@@ -108,6 +108,22 @@ function shapesCentre(features) {
   return { lat, lng };
 }
 
+// The corners of a polity's main shapes (each outer ring at least a tenth the
+// size of the largest, so far islands and enclaves do not stretch it).
+function extentPoints(features) {
+  const boxes = [];
+  for (const f of features || []) for (const poly of polysOf(f.geometry)) {
+    const r = poly[0], lng0 = r[0][0];
+    const lngs = r.map(([x]) => lng0 + ((x - lng0 + 540) % 360) - 180), lats = r.map(([, y]) => y);
+    const b = { w: Math.min(...lngs), e: Math.max(...lngs), s: Math.min(...lats), n: Math.max(...lats) };
+    b.a = (b.e - b.w) * (b.n - b.s) * Math.cos((b.n + b.s) * Math.PI / 360);
+    boxes.push(b);
+  }
+  const big = Math.max(0, ...boxes.map(b => b.a));
+  return boxes.filter(b => b.a >= big / 10)
+    .flatMap(b => [{ lat: b.s, lng: b.w }, { lat: b.n, lng: b.e }]);
+}
+
 const activeWarsFor = y => warsData.filter(w => y >= w.start && y <= w.end);
 const belligerent = (war, name) =>
   Object.values(war.sides).flat().some(s => s.toLowerCase() === name.toLowerCase());
@@ -230,9 +246,17 @@ async function boot() {
       label: off ? `${p.label} · ${p.from != null ? yearLabel(p.from) : "?"} – ${p.to != null ? yearLabel(p.to) : "present"}` : p.label };
   }));
   const setSelPins = list => { selPins = list; showSelPins(); };
-  const pinSelection = (label, ll, altitude = 1.0, span = null, fly = true) => {
+  // `names`: the polity's shapes in the current borders. When its extent is
+  // larger than the default view but fits the visible part at a sensible
+  // altitude (China, Norway), the camera frames the extent, pin included;
+  // otherwise (a small country, or one too big to fit) it frames the pin.
+  const pinSelection = (label, ll, altitude = 1.0, span = null, fly = true, names = null) => {
     setSelPins(ll ? [{ label, lat: ll.lat, lng: ll.lng, from: span?.[0] ?? null, to: span?.[1] ?? null }] : []);
-    if (ll && fly) flyFramed(ll.lat, ll.lng, altitude);
+    if (!ll || !fly) return;
+    const ext = names ? extentPoints(globe.featuresForNames(names)) : [];
+    const f = ext.length && fitFor([...ext, ll], 0);
+    if (f && f.altitude > altitude && f.raw <= 3.2) flyToFit([...ext, ll], altitude);
+    else flyFramed(ll.lat, ll.lng, altitude);
   };
 
   // Phone layouts: the card covers part of the globe, so the camera aims to put
@@ -301,7 +325,8 @@ async function boot() {
   function fitFor(points, minAlt) {
     const { g, box } = visibleBox();
     const h = box.b - box.t, f = frameFor(points, (box.r - box.l) / h);
-    return f && { lat: f.lat, lng: f.lng, altitude: Math.max(minAlt, Math.min(3, f.altitude * g.height / h)) };
+    const raw = f && f.altitude * g.height / h;     // before the cap: how high it would need to be
+    return f && { lat: f.lat, lng: f.lng, altitude: Math.max(minAlt, Math.min(3, raw)), raw };
   }
   function flyToFit(points, minAlt = 0) {
     const f = fitFor(points, minAlt);
@@ -569,7 +594,7 @@ async function boot() {
       const eras = entry.eras || [];
       const from = eras.length ? Math.min(...eras.map(e => e.from)) : null;
       const to = eras.length ? Math.max(...eras.map(e => (e.to >= 9999 ? 2025 : e.to))) : 2025;
-      pinSelection(entry.name, ll, 1.0, eras.length ? [from, to >= 2025 ? null : to] : null);
+      pinSelection(entry.name, ll, 1.0, eras.length ? [from, to >= 2025 ? null : to] : null, true, names);
       scopeSlider(names, from, to, entry.name);
       // Drive one onChange so borders refresh (incl. leaving territory mode)
       // and the card renders for the current year.
@@ -593,7 +618,7 @@ async function boot() {
     ].filter(Boolean))];
     setContext("🗄 " + p.canonical_name);
     const ll = (p.lat != null) ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
-    pinSelection(p.canonical_name, ll, 1.0, [p.start_year, p.end_year], fly);
+    pinSelection(p.canonical_name, ll, 1.0, [p.start_year, p.end_year], fly, names);
     setSelection([{ names, side: "A" }]);
     scopeSlider(names, p.start_year, p.end_year ?? p.start_year ?? 2025, p.canonical_name);
     let detail = null;
@@ -670,7 +695,7 @@ async function boot() {
     if (entry) { selectCurated(entry); return; }
     if (wasT) timeline.setYear(timeline.currentYear());
     setContext(name);
-    pinSelection(name, shapesCentre([f]), 0.9);
+    pinSelection(name, shapesCentre([f]), 0.9, null, true, [name]);
     setSelection([{ names: [name], side: "A" }]);
     scopeSlider([name], null, null, name);
     selection = {
