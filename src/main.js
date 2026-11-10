@@ -1042,8 +1042,21 @@ async function boot() {
       const m = modesEl.getBoundingClientRect();
       Object.assign(chip.style, { left: m.left + "px", top: m.bottom + 6 + "px", bottom: "", maxWidth: Math.max(m.width, 190) + "px" });
     } else {
+      // Above the timeline's left end, moved right past anything open in that
+      // band (the expanded layers panel, the card, the story bar), never over it.
       const t = timelineEl.getBoundingClientRect();
       Object.assign(chip.style, { left: t.left + "px", top: "", bottom: innerHeight - t.top + 6 + "px", maxWidth: "" });
+      const c = chip.getBoundingClientRect();
+      const obs = ["modesPanel", "infoCard", "storyBar"].map(id => document.getElementById(id))
+        .filter(e => e && !e.hidden && e.getClientRects().length).map(e => e.getBoundingClientRect())
+        .filter(o => o.width && o.top < c.bottom && o.bottom > c.top).sort((a, b) => a.left - b.left);
+      let left = t.left, right = t.right;
+      for (const o of obs) {
+        if (o.right <= left || o.left >= right) continue;
+        if (o.left - left >= Math.min(c.width, 220)) { right = o.left - 8; break; }
+        left = o.right + 8;
+      }
+      if (right - left >= 160) Object.assign(chip.style, { left: left + "px", maxWidth: right - left + "px" });
     }
   };
   function updateLinkChip() {
@@ -1060,6 +1073,7 @@ async function boot() {
   }
   new ResizeObserver(placeChip).observe(timelineEl);
   new ResizeObserver(placeChip).observe(modesEl);
+  new ResizeObserver(placeChip).observe(infoCardEl);
   addEventListener("resize", placeChip);
   // The button is never rebuilt; touch clears on touchend so a re-layout between
   // touchstart and click cannot swallow the tap.
