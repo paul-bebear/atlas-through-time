@@ -57,27 +57,45 @@ pleiades:678378@33.27,35.20~Tyrus
   GeoNames and Wikidata place ids are accepted and kept for later (planned A2/A4); for
   now those pins use their `~label`.
 - Pins are a pointer someone sent, not Atlas facts. They are drawn in their own dashed
-  violet style, counted under *From the link you opened* in the layers panel with a **Clear**
-  control, and are **never stored** (no database, localStorage or IndexedDB), never sent
-  anywhere, and never in the API or exports.
+  violet style, counted under *From the link you opened* (in the layers panel and in a chip
+  above the timeline), and are **never stored** (no database, localStorage or IndexedDB),
+  never sent anywhere, and never in the API or exports.
+- A click or tap on a pin opens its own card: its label, its position, the id it carries
+  (linked for Pleiades, Wikidata and GeoNames), and that it came from the link. It does not
+  select the polity under it.
 
 ## What Atlas does with a link
 
 1. Parse once at boot, before the old permalink restore. Each item is checked on its own;
    a bad item is dropped without breaking the rest.
-2. Set the year, draw the pins and the span.
+2. Set the year, draw the pins and the span. The span is a violet band in its own lane
+   under the timeline's selection span, at least 12 px wide, with its label beside it.
 3. Resolve `qid` (loading the registry slice only when a link carries one), highlight and
-   pin the polities.
+   pin the polities. A click or tap on one of their shapes later brings the link's selection
+   back with the registry name and card; where the map's border data names the polity
+   differently, the card says "Shown on this map as …".
 4. Turn on the trade routes layer and highlight the routes. Sea routes (`mode: "sea"`) are
    dashed, and while in use their dashes move in the direction of travel. A route whose last
-   waypoint is an open end (`open: true`) fades out there instead of ending on a place.
-5. Camera: `at` if given; else the pins' bounding box with padding; else the polities;
-   else the routes; else the camera stays where it is.
+   waypoint is an open end (`open: true`) fades out over its last quarter and is labelled
+   with that waypoint's name ("towards Ophir (location unknown)"), never drawn as a place.
+   A highlighted route shows its named stops. A click or tap on a highlighted route, its
+   name or a stop opens the route's card: name, years, mode, certainty, goods, its summary,
+   its stops with every candidate for a disputed one, and its sources.
+5. Camera: `at` if given (exactly); else the pins' bounding box with padding; else the
+   polities; else the routes; else the camera stays where it is. On a phone the box is fitted
+   into the part of the globe no panel covers (the top row, the layers pill, the card, the
+   chip, the timeline), and fitted again after a rotation or when the card changes size,
+   until the visitor touches the globe.
 6. Whenever the border snapshot is not the timeline year, the timeline says so:
    "Borders shown: c. 1000 BCE" (for every visitor, not only links).
-7. While link pins or route highlights show, the address bar keeps the fragment (the
-   timeline's own `?year=` is written in front of it). **Clear** removes the pins, the route
-   highlights and the fragment; the trade routes layer stays on.
+7. The link's view (pins, route highlights, era band, polities) stays until **Clear**:
+   selecting something else does not drop it. Meanwhile a chip above the timeline (under the
+   layers pill in phone landscape) says what the link added, "From the link you opened ·
+   3 pins · 2 routes", with Clear; the layers panel has the same Clear. The address bar keeps
+   the fragment the whole time, also for a link with only `qid`, `year`, `span` or `at`, so it
+   can be shared again (the timeline's own `?year=` is written in front of it). **Clear**
+   removes the pins, the route highlights, the era band, the fragment, and the link's
+   polities while they are still the selection; the trade routes layer stays on.
 
 ## Rules for anyone building links
 
