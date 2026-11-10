@@ -212,6 +212,8 @@ async function boot() {
     onCityClick: d => pickCity(d),
     onRouteClick: r => openRoute(r),
     onLinkPinClick: p => openLinkPin(p),
+    panels: () => COVERS.map(id => document.getElementById(id))
+      .filter(e => e && !e.hidden && e.getClientRects().length).map(e => e.getBoundingClientRect()),
     onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
   });
   document.getElementById("status").textContent = "loading textures & borders…";
@@ -240,30 +242,41 @@ async function boot() {
   // the visitor moves the globe. Desktop keeps the centre.
   const phoneLayout = () => innerWidth <= 480 || matchMedia("(pointer: coarse) and (max-height: 500px)").matches;
   const infoCardEl = document.getElementById("infoCard");
-  // The part of the globe left visible: on phones, between the search row and the
-  // timeline, minus the card (below it or beside it, whichever is larger).
+  // The part of the globe left visible: on phones, the largest rectangle that
+  // nothing covers (the top row, search, the layers pill, the card, the link
+  // chip, the story bar, the timeline), in portrait and in landscape alike.
+  const COVERS = ["menuBtn", "topbar", "searchInput", "modesPanel", "infoCard", "linkChip", "storyBar", "timeline"];
   function visibleBox() {
     const g = document.getElementById("globe").getBoundingClientRect();
-    if (!phoneLayout()) return { g, box: { l: g.left, r: g.right, t: g.top, b: g.bottom } };
-    const tl = document.getElementById("timeline")?.getBoundingClientRect();
-    const top = Math.max(g.top, document.getElementById("search")?.getBoundingClientRect().bottom ?? g.top);
-    const bottom = Math.min(g.bottom, tl && tl.height ? tl.top : g.bottom);
-    let box = { l: g.left, r: g.right, t: top, b: bottom };
-    const c = infoCardEl.hidden ? null : infoCardEl.getBoundingClientRect();
-    if (c && c.height) {
-      const below = { l: g.left, r: g.right, t: Math.max(top, c.bottom), b: bottom };
-      const beside = { l: g.left, r: Math.min(g.right, c.left), t: top, b: bottom };
-      const area = q => Math.max(0, q.r - q.l - 60) * Math.max(0, q.b - q.t - 60);
-      box = area(below) >= area(beside) ? below : beside;
-      if (!area(box)) box = { l: g.left, r: g.right, t: top, b: bottom };
+    const whole = { l: g.left, r: g.right, t: g.top, b: g.bottom };
+    if (!phoneLayout()) return { g, box: whole };
+    const m = 6;
+    const obs = COVERS.map(id => document.getElementById(id)).filter(e => e && !e.hidden && e.getClientRects().length)
+      .map(e => e.getBoundingClientRect()).filter(r => r.width && r.height)
+      .map(r => ({ l: r.left - m, r: r.right + m, t: r.top - m, b: r.bottom + m }));
+    const xs = [...new Set([g.left, g.right, ...obs.flatMap(o => [o.l, o.r])])].filter(x => x >= g.left && x <= g.right).sort((a, b) => a - b);
+    const ys = [...new Set([g.top, g.bottom, ...obs.flatMap(o => [o.t, o.b])])].filter(y => y >= g.top && y <= g.bottom).sort((a, b) => a - b);
+    let box = null, best = 0;
+    for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) {
+      const w = xs[j] - xs[i];
+      if (w < 80) continue;
+      for (let k = 0; k < ys.length; k++) for (let n = k + 1; n < ys.length; n++) {
+        const h = ys[n] - ys[k];
+        if (h < 80 || w * h <= best) continue;
+        const q = { l: xs[i], r: xs[j], t: ys[k], b: ys[n] };
+        if (obs.some(o => o.l < q.r && q.l < o.r && o.t < q.b && q.t < o.b)) continue;
+        box = q; best = w * h;
+      }
     }
-    return { g, box };
+    return { g, box: box || whole };
   }
   function aimFor(lat, lng, altitude) {
     if (!phoneLayout()) return { lat, lng };
     const { g, box } = visibleBox();
-    // The pin's label stands ~35 px above its dot: aim the dot a little low.
-    const px = (box.l + box.r) / 2, py = Math.min(box.b - 12, (box.t + box.b) / 2 + 18);
+    // The pin's label stands ~35 px above its dot: aim the dot a little low,
+    // never so high that the label goes under whatever is above the box.
+    const px = (box.l + box.r) / 2;
+    const py = Math.max(Math.min(box.t + 48, box.b - 12), Math.min(box.b - 12, (box.t + box.b) / 2 + 18));
     const s = Math.tan(25 * Math.PI / 180) / (g.height / 2);   // 50° vertical field of view
     const k = 1 + altitude;                                    // camera distance in globe radii
     // Angle on the globe between the view centre and a point drawn `d` px off centre.
@@ -297,12 +310,16 @@ async function boot() {
     aim.fit = { points, minAlt };
     return true;
   }
-  new ResizeObserver(() => {
-    if (!aim || !phoneLayout() || infoCardEl.hidden) return;
+  // Aim again for what is visible now (a card that grew, a rotation, a resize).
+  function reaim() {
+    if (!aim) return;
     if (aim.fit) aim = { ...fitFor(aim.fit.points, aim.fit.minAlt), fit: aim.fit };
     const a = aimFor(aim.lat, aim.lng, aim.altitude);
     globe.flyTo(a.lat, a.lng, aim.altitude, 600);
-  }).observe(infoCardEl);
+  }
+  new ResizeObserver(() => { if (phoneLayout() && !infoCardEl.hidden) reaim(); }).observe(infoCardEl);
+  let reaimTimer = null;
+  addEventListener("resize", () => { clearTimeout(reaimTimer); reaimTimer = setTimeout(reaim, 300); });
   // Once the visitor moves the globe, the camera is theirs.
   document.getElementById("globe").addEventListener("pointerdown", () => { aim = null; });
 
@@ -987,11 +1004,22 @@ async function boot() {
   // can cover the layers pill on a phone): what the link added, and Clear.
   const chip = document.getElementById("linkChip");
   const timelineEl = document.getElementById("timeline");
+  // Above the timeline's left end; in phone landscape (about 270 pt of height)
+  // under the layers pill instead, so the strip above the timeline stays free.
+  const modesEl = document.getElementById("modesPanel");
+  const landscapePhone = matchMedia("(pointer: coarse) and (max-height: 500px) and (orientation: landscape)");
+  let chipLong = "", chipShort = "";
   const placeChip = () => {
     if (chip.hidden) return;
-    const t = timelineEl.getBoundingClientRect();
-    chip.style.left = t.left + "px";
-    chip.style.bottom = (innerHeight - t.top + 6) + "px";
+    const side = landscapePhone.matches && modesEl.classList.contains("collapsed");
+    chip.querySelector(".lc-text").textContent = side ? chipShort : chipLong;
+    if (side) {
+      const m = modesEl.getBoundingClientRect();
+      Object.assign(chip.style, { left: m.left + "px", top: m.bottom + 6 + "px", bottom: "", maxWidth: Math.max(m.width, 190) + "px" });
+    } else {
+      const t = timelineEl.getBoundingClientRect();
+      Object.assign(chip.style, { left: t.left + "px", top: "", bottom: innerHeight - t.top + 6 + "px", maxWidth: "" });
+    }
   };
   function updateLinkChip() {
     chip.hidden = !linkOn;
@@ -1001,10 +1029,12 @@ async function boot() {
       linkPins.length && (n(linkPins.length, "pin", "pins") + (state.layers.pins.enabled ? "" : " (hidden)")),
       linkRoutes.size && (n(linkRoutes.size, "route", "routes") + (state.layers.trade.enabled ? "" : " (layer off)"))
     ].filter(Boolean);
-    chip.querySelector(".lc-text").textContent = ["From the link you opened", ...parts].join(" · ");
+    chipLong = ["From the link you opened", ...parts].join(" · ");
+    chipShort = parts.length ? "Link: " + parts.join(" · ") : "From a link";
     placeChip();
   }
   new ResizeObserver(placeChip).observe(timelineEl);
+  new ResizeObserver(placeChip).observe(modesEl);
   addEventListener("resize", placeChip);
   // The button is never rebuilt; touch clears on touchend so a re-layout between
   // touchstart and click cannot swallow the tap.

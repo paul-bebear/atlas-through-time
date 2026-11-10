@@ -22,7 +22,7 @@ const tip = fn => NO_HOVER ? null : fn;
 
 // NASA Blue Marble colour + topography (public domain, from three-globe's examples), resized to 2048 px / 1024 px.
 
-export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onRouteClick, onLinkPinClick, onReady }) {
+export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onRouteClick, onLinkPinClick, onReady, panels = () => [] }) {
   let lastPointClick = -1, lastPress = 0;
 
   let readyNow;
@@ -172,15 +172,19 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
         : { l: x - 8 - w, r: x - 8, t: y - h / 2, b: y + h / 2 };
     };
     const hit = (p, q) => p.l < q.r && q.l < p.r && p.t < q.b && q.t < p.b;
-    const placed = [], out = [];
+    // The page's own panels (card, timeline, chip…) count as taken: a label
+    // goes to a side that is not under one, or hides.
+    const placed = panels().map(r => ({ l: r.left, r: r.right, t: r.top, b: r.bottom })), out = [];
     items.sort((a, b) => a.rank - b.rank);
+    let keptSel = false;
     for (const it of items) {
       const free = q => !placed.some(p => hit(p, q)) && !dots.some(d => d.e !== it.e && hit(d, q));
       if (it.city) { const ok = free(it.rect); if (ok) placed.push(it.rect); out.push([it, ok ? "" : "hide"]); continue; }
       const sides = [it.side, ...["up", "right", "down", "left"].filter(s => s !== it.side)];
       const side = sides.find(s => free(rects(s)(it)));
-      // The selected polity's label always shows; the others give way.
-      const use = side || (it.rank === 0 ? it.side : null);
+      // The (first) selected polity's label always shows; the others give way.
+      const use = side || (it.rank === 0 && !keptSel ? it.side : null);
+      if (it.rank === 0) keptSel = true;
       if (use) placed.push(rects(use)(it));
       out.push([it, use == null ? "hide" : use === it.side ? "" : use]);
     }
