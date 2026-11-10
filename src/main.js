@@ -191,6 +191,7 @@ async function boot() {
   let linkPins = [];               // pins from the opened link: memory only, never stored or sent
   let linkRoutes = new Set();      // route ids the opened link highlights
   let linkOn = false;              // a link's view is on (pins, routes, era band, polities) until Clear
+  let linkSpanOn = false;          // the link's era band is on the timeline
   let linkSel = null;              // { groups, points } of the link's polities, until Clear
   const syncURL = () => {
     if (!events) return;             // permalink restore hasn't run yet — keep ?sel=/?mode=
@@ -996,8 +997,8 @@ async function boot() {
       else if (id === "wars") applyHighlights();      // belligerents, no border reload
       else if (id === "pins") { globe.setLinkPins(enabled ? linkPins : []); updateLinkChip(); }
       else if (id === "trade") {
-        layersPanel.refresh(); updateLinkChip();     // the link's route count says whether they show
         tradeByLink = false;                         // the visitor's own choice now; Clear keeps it
+        layersPanel.refresh(); updateLinkChip();     // the link's route count says whether they show
         tradeSig = null;
         if (enabled) refreshTrade(state.year);
         else {
@@ -1065,9 +1066,12 @@ async function boot() {
       if (right - left >= 160) Object.assign(chip.style, { left: left + "px", maxWidth: right - left + "px" });
     }
   };
+  // The chip shows only while the link has put something on screen that Clear
+  // takes away (pins, routes, the era band, its polities); a link that only set
+  // the year, or whose every item was invalid, has none.
   function updateLinkChip() {
-    chip.hidden = !linkOn;
-    if (!linkOn) return;
+    chip.hidden = !linkOn || !(linkPins.length || linkRoutes.size || linkSpanOn || linkSel);
+    if (chip.hidden) return;
     const n = (k, one, many) => k ? `${k} ${k === 1 ? one : many}` : "";
     const parts = [
       linkPins.length && (n(linkPins.length, "pin", "pins") + (state.layers.pins.enabled ? "" : " (hidden)")),
@@ -1086,13 +1090,13 @@ async function boot() {
   const chipClear = chip.querySelector(".lc-clear");
   chipClear.onclick = () => layersPanel.onClearPins();
   chipClear.addEventListener("touchend", e => { e.preventDefault(); layersPanel.onClearPins(); });
+  // Whether the trade routes layer is on only because a link turned it on:
+  // Clear then turns it off again.
+  let tradeByLink = false;
   const showLinkRoutes = ids => {
     linkRoutes = new Set(ids);
     state.layers.pins.routes = ids.length || null;
     if (ids.length && !state.layers.trade.enabled) { state.layers.trade.enabled = true; tradeByLink = true; }
-  // Whether the trade routes layer is on only because a link turned it on:
-  // Clear then turns it off again.
-  let tradeByLink = false;
     tradeSig = null;
     refreshTrade(state.year);
     layersPanel.refresh();
@@ -1105,14 +1109,10 @@ async function boot() {
     linkOn = false;
     const ls = linkSel;
     linkSel = null;
+    linkSpanOn = false;
     timeline.clearLinkSpan();
     showLinkPins([]);
     if (linkRoutes.size) showLinkRoutes([]);
-    if (selection?.fromLink) {
-      clearSelection();
-      card.close();
-      timeline.clearOverlays();
-      setContext(DEFAULT_CONTEXT, false);
     if (tradeByLink) {
       // The layer was off before the link: off again, as the visitor had it.
       tradeByLink = false;
@@ -1123,6 +1123,11 @@ async function boot() {
       layersPanel.refresh();
       layersPanel.updateCounts();
     }
+    if (selection?.fromLink) {
+      clearSelection();
+      card.close();
+      timeline.clearOverlays();
+      setContext(DEFAULT_CONTEXT, false);
     } else if (ls?.quiet && ls.points.some(p => selPins.includes(p))) {
       // The link's polities arrived beside the visitor's own pick: drop just them.
       setSelPins(selPins.filter(p => !ls.points.includes(p)));
@@ -1170,7 +1175,7 @@ async function boot() {
   async function applyLink(v) {
     linkOn = true;
     showLinkPins(v.pins.map(p => ({ id: p.id, lat: p.lat, lng: p.lng, label: pinLabel(p) })));
-    if (v.span) timeline.setLinkSpan(v.span[0], v.span[1], spanLabel(v.span));
+    if (v.span) { timeline.setLinkSpan(v.span[0], v.span[1], spanLabel(v.span)); linkSpanOn = true; updateLinkChip(); }
     // Camera: at= wins (exactly), else the pins' bounding box, else the polities,
     // else the routes, else leave it; on phones fitted to what the card leaves visible.
     // Routes: only ids Atlas knows; the trade layer turns on to show them.
@@ -1197,6 +1202,7 @@ async function boot() {
     const quiet = selection !== before;
     if (phoneLayout() && !quiet) card.peek();
     const points = selectLinkPolities(rows, quiet);
+    updateLinkChip();
     if (!v.at && !touched) flyToFit([...base, ...points], base.length ? 0 : 1);
   }
 
