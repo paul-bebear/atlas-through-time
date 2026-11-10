@@ -234,6 +234,13 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   controls.autoRotateSpeed = IDLE_SPIN_SPEED;
   el.addEventListener("pointerdown", () => { controls.autoRotate = false; }, { once: true });
   el.addEventListener("pointerdown", () => { lastPress = Date.now(); });
+  // globe.gl starts its pointer at (−2, −2) px, the top-left corner, and hovers whatever
+  // lies there before the mouse has moved: on a zoomed-in globe that is a country, whose
+  // name then sits over the title. Its tooltip stays hidden until a real pointer event.
+  el.classList.add("no-pointer-yet");
+  const pointerSeen = () => el.classList.remove("no-pointer-yet");
+  el.addEventListener("pointermove", pointerSeen, { once: true });
+  el.addEventListener("pointerdown", pointerSeen, { once: true });
   controls.addEventListener("change", sizeCities);
   controls.addEventListener("change", () => declutterSoon());
 

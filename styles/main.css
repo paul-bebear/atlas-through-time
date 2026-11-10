@@ -26,6 +26,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 
 #globe { position: absolute; inset: 0; cursor: grab; isolation: isolate; } /* keeps label z-indexes under the UI */
 #globe:active { cursor: grabbing; }
+#globe.no-pointer-yet .scene-tooltip { visibility: hidden; }   /* see globe.js: no hover before the mouse */
 .city-label { width: clamp(2px, calc(var(--city-size) * .45), 6px); aspect-ratio: 1; border-radius: 50%;
   background: rgba(255, 220, 150, 0.75); pointer-events: auto; cursor: pointer; touch-action: none; }
 .city-label::after { content: attr(data-name); position: absolute; left: calc(100% + 3px); top: 50%; translate: 0 -50%;
