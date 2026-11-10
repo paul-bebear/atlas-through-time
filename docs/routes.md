@@ -97,3 +97,4 @@ Example of a book source (no route uses one yet):
 | `silk-road` … `atlantic-crossing` | — | — | the first 8 corridors (2026): original fields only, schematic |
 | `tyre-jerusalem` | −1000..−586 | land | schematic |
 | `levant-red-sea` | −970..−931 | sea | schematic (the voyages are known only from the biblical text; see its sources) |
+| `tyre-joppa` | −970..−931 | sea | schematic (this shipment is known only from the biblical text; see its sources) |
