@@ -57,7 +57,8 @@ pleiades:678378@33.27,35.20~Tyrus
   GeoNames and Wikidata place ids are accepted and kept for later (planned A2/A4); for
   now those pins use their `~label`.
 - Pins are a pointer someone sent, not Atlas facts. They are drawn in their own dashed
-  violet style, counted under *From the link you opened* (in the layers panel and in a chip
+  violet style, always with their labels (crowded, a label moves out on a short leader line
+  rather than hiding), counted under *From the link you opened* (in the layers panel and in a chip
   above the timeline), and are **never stored** (no database, localStorage or IndexedDB),
   never sent anywhere, and never in the API or exports.
 - A click or tap on a pin opens its own card: its label, its position, the id it carries
@@ -78,14 +79,18 @@ pleiades:678378@33.27,35.20~Tyrus
    dashed, and while in use their dashes move in the direction of travel. A route whose last
    waypoint is an open end (`open: true`) fades out over its last quarter and is labelled
    with that waypoint's name ("towards Ophir (location unknown)"), never drawn as a place.
-   A highlighted route shows its named stops. A click or tap on a highlighted route, its
+   A highlighted route shows its named stops. Route names and the open end's label always
+   show, like the pins' labels; where labels crowd, stops and city names give way first. A click or tap on a highlighted route, its
    name or a stop opens the route's card: name, years, mode, certainty, goods, its summary,
    its stops with every candidate for a disputed one, and its sources.
-5. Camera: `at` if given (exactly); else the pins' bounding box with padding; else the
-   polities; else the routes; else the camera stays where it is. On a phone the box is fitted
-   into the part of the globe no panel covers (the top row, the layers pill, the card, the
-   chip, the timeline), and fitted again after a rotation or when the card changes size,
-   until the visitor touches the globe.
+5. Camera: `at` if given (exactly); else the pins together with every point of the
+   highlighted routes (open end included) and the polities, with padding; else the camera
+   stays where it is. On a phone the box is fitted into the part of the globe no panel covers
+   (the top row, the layers pill, the card, the chip, the timeline), and fitted again after a
+   rotation or when the card changes size, until the visitor touches the globe. On a phone the
+   polity's card first opens as a one-line peek ("Tap for details"), so the map shows first.
+   A tap or click made before the polities arrive is kept: they are still highlighted and
+   pinned, but their card does not replace the one the visitor opened, and the camera stays.
 6. Whenever the border snapshot is not the timeline year, the timeline says so:
    "Borders shown: c. 1000 BCE" (for every visitor, not only links).
 7. The link's view (pins, route highlights, era band, polities) stays until **Clear**:
