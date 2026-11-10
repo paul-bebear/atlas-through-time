@@ -139,9 +139,11 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pathColor(d => d.color || STROKE)
     .pathStroke(d => d.stroke ?? 1.2)   // ≥1 px gives a usable hover hit-box; 0.6 was effectively unreachable
     // Sea routes are dashed; while in use the dashes move in the direction of travel.
-    .pathDashLength(d => d.dashed ? 0.035 : 1)
-    .pathDashGap(d => d.dashed ? 0.02 : 0)
-    .pathDashAnimateTime(d => d.animate ? 14000 : 0)
+    // Dash sizes are fractions of each path's length; a route cut into pieces
+    // (an open end fading out) carries its own so the dashes stay the same size.
+    .pathDashLength(d => d.dashed ? d.dashLen ?? 0.035 : 1)
+    .pathDashGap(d => d.dashed ? d.dashGap ?? 0.02 : 0)
+    .pathDashAnimateTime(d => d.animate ? d.animMs ?? 14000 : 0)
     .pathLabel(tip(d => d.name ? `<b>${d.name}</b>` : ""))
     .onPathHover(p => { el.style.cursor = p ? "pointer" : "grab"; })
     // Only territory outlines resolve to a polity card; trade routes are display-only.
@@ -238,30 +240,51 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     setTradeRoutes(routes, { highlight = new Set(), year = null } = {}) {
       const list = routes || [];
       const inUse = r => year == null || ((r.from == null || year >= r.from) && (r.to == null || year <= r.to));
-      const paths = list.map(r => {
+      const paths = list.flatMap(r => {
         const hl = highlight.has(r.id), on = inUse(r);
         const base = !on ? "#9aa3ad" : r.color || STROKE;
         const alpha = !on ? 0.7 : highlight.size && !hl ? 0.4 : 1;
-        const c = rgba(base, alpha);
         const open = r.waypoints?.at(-1)?.open;
-        return {
-          kind: "trade",
-          name: `${r.name} · ${yr(r.from)} – ${yr(r.to)}`,
-          color: open ? [...Array(8).fill(c), rgba(base, 0)] : c,
-          stroke: hl ? 3 : 1.6,
-          dashed: r.mode === "sea",
-          animate: r.mode === "sea" && on,
-          // Above highlighted borders (0.014), so a link's route is not hidden under its polity.
-          points: r.points.map(([lng, lat]) => [lat, lng, 0.016])
+        const L = length(r.points);
+        const piece = (pts, a) => {
+          const f = length(pts) / L || 1;
+          return {
+            kind: "trade", route: r, hl,
+            name: `${r.name} · ${yr(r.from)} – ${yr(r.to)}`,
+            color: rgba(base, a),
+            stroke: hl ? 3 : 1.6,
+            dashed: r.mode === "sea", dashLen: 0.035 / f, dashGap: 0.02 / f, animMs: 14000 * f,
+            animate: r.mode === "sea" && on,
+            // Above highlighted borders (0.014), so a link's route is not hidden under its polity.
+            points: pts.map(([lng, lat]) => [lat, lng, 0.016])
+          };
         };
+        if (!open) return [piece(r.points, alpha)];
+        // An open end is not a place: the last quarter fades out in steps.
+        const [head, tail] = cut(r.points, 0.75);
+        const steps = 6;
+        return [piece(head, alpha), ...Array.from({ length: steps }, (_, i) =>
+          piece(cut(cut(tail, (i + 1) / steps)[0], i / (i + 1))[1], alpha * (1 - (i + 1) / (steps + 1))))];
       });
       world.pathsData(paths);
-      htmlPins.set("route", list.filter(r => highlight.has(r.id)).map((r, i) => {
+      // Highlighted routes: their name beside the line, the names of their stops,
+      // and an open end labelled as what it is ("towards Ophir (location unknown)").
+      const near = (a, b, d) => Math.abs(a.lat - b.lat) < d && Math.abs(a.lng - b.lng) < d;
+      const taken = [...(htmlPins.get("link") || []), ...htmlCities];
+      const labels = [];
+      list.filter(r => highlight.has(r.id)).forEach((r, i) => {
+        const on = inUse(r), color = on ? r.color : null;
         const { lat, lng } = midway(r.points);
-        const on = inUse(r);
-        return { kind: "pin", style: on ? "route" : "route pin-route-off", key: "route" + i, side: "right", lat, lng,
-          color: on ? r.color : null, label: on ? r.name : `${r.name} · in use ${yr(r.from)} – ${yr(r.to)}` };
-      }));
+        labels.push({ kind: "pin", style: on ? "route" : "route pin-route-off", key: "route" + i, side: "right", lat, lng, route: r,
+          color, label: on ? r.name : `${r.name} · in use ${yr(r.from)} – ${yr(r.to)}` });
+        (r.waypoints || []).forEach((w, j) => {
+          if (w.open) labels.push({ kind: "pin", style: "route-end", key: `rend${i}`, side: "down", lat: w.lat, lng: w.lng, route: r, color, label: w.name });
+          // A stop already shown as a link pin or a city keeps that one label.
+          else if (!taken.some(t => near(t, w, 0.12)))
+            labels.push({ kind: "pin", style: "wpt", key: `wpt${i}-${j}`, side: "right", lat: w.lat, lng: w.lng, route: r, color, label: w.name });
+        });
+      });
+      htmlPins.set("route", labels);
       pushHtml();
     },
     // Features in the current border set whose name matches any of `names`
@@ -303,6 +326,22 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   };
 }
 
+const segLen = (a, b) => Math.hypot(b[1] - a[1], (b[0] - a[0]) * Math.cos(b[1] * Math.PI / 180));
+const length = pts => pts.slice(1).reduce((s, p, i) => s + segLen(pts[i], p), 0);
+// A [lng, lat] line cut at fraction `t` of its length: [before, after], sharing the cut point.
+function cut(points, t) {
+  let left = length(points) * t;
+  for (let i = 0; i < points.length - 1; i++) {
+    const s = segLen(points[i], points[i + 1]);
+    if (left <= s && s > 0) {
+      const a = points[i], b = points[i + 1], k = left / s;
+      const m = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+      return [[...points.slice(0, i + 1), m], [m, ...points.slice(i + 1)]];
+    }
+    left -= s;
+  }
+  return [points, [points.at(-1), points.at(-1)]];
+}
 // The point halfway along a [lng, lat] line by length (flat, cos-lat scaled).
 function midway(points) {
   const seg = points.slice(1).map((p, i) => Math.hypot(p[1] - points[i][1],

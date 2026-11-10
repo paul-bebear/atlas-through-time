@@ -56,6 +56,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .pin-route .pin-label { background: rgba(14, 24, 38, 0.88); color: var(--pin-c, #c3cad3); font-size: 12px; font-weight: 600;
   border: 1px solid var(--pin-c, #9aa3ad); padding: 3px 7px; }
 .pin-route-off .pin-label { font-weight: 500; font-style: italic; }
+/* A highlighted route's open end: plainly not a place, its label says so. */
+.pin-route-end .pin-dot { display: none; }
+.pin-route-end .pin-stem { display: none; }
+.pin-route-end .pin-label { top: 4px; background: rgba(14, 24, 38, 0.75); color: var(--pin-c, #c3cad3);
+  border: 1px dashed var(--pin-c, #9aa3ad); font-size: 11px; font-weight: 600; font-style: italic; padding: 2px 6px; }
+/* The named stops of a highlighted route: a small dot on the line, a quiet name. */
+.pin-wpt .pin-dot { left: -3px; top: -3px; width: 6px; height: 6px; background: var(--pin-c, #9aa3ad);
+  border: 1px solid #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.pin-wpt .pin-label { background: none; box-shadow: none; padding: 0; translate: 7px -50%;
+  color: #f1f5f9; font-size: 11px; font-weight: 600; text-shadow: 0 0 3px #000, 0 0 2px #000; }
 .pin-down .pin-stem { bottom: auto; top: 4px; }
 .pin-down .pin-label { bottom: auto; top: 13px; }
 .pin-right .pin-stem, .pin-left .pin-stem { display: none; }
