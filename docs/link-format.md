@@ -96,11 +96,15 @@ pleiades:678378@33.27,35.20~Tyrus
 7. The link's view (pins, route highlights, era band, polities) stays until **Clear**:
    selecting something else does not drop it. Meanwhile a chip above the timeline (under the
    layers pill in phone landscape) says what the link added, "From the link you opened ·
-   3 pins · 2 routes", with Clear; the layers panel has the same Clear. The address bar keeps
+   3 pins · 2 routes", with Clear; the layers panel has the same Clear. The chip shows only
+   when the link put something on screen that Clear takes away: a link with only `year` or
+   `at`, or one whose every item was invalid, gets none. The address bar keeps
    the fragment the whole time, also for a link with only `qid`, `year`, `span` or `at`, so it
    can be shared again (the timeline's own `?year=` is written in front of it). **Clear**
    removes the pins, the route highlights, the era band, the fragment, and the link's
-   polities while they are still the selection; the trade routes layer stays on.
+   polities while they are still the selection. If the link turned the trade routes layer on,
+   Clear turns it off again; if the visitor had it on, or toggled it themselves after opening
+   the link, it stays as they set it.
 
 ## Rules for anyone building links
 
