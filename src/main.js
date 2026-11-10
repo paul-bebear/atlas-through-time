@@ -1029,7 +1029,7 @@ async function boot() {
         tradeSig = null;
         if (enabled) refreshTrade(state.year);
         else {
-          globe.setTradeRoutes([]);
+          if (state.mode === "discovery") globe.setTradeRoutes([]);   // territory owns the paths layer
           state.layers.trade.count = null;
           layersPanel.updateCounts();
         }
@@ -1145,7 +1145,7 @@ async function boot() {
       tradeByLink = false;
       state.layers.trade.enabled = false;
       tradeSig = null;
-      globe.setTradeRoutes([]);
+      if (state.mode === "discovery") globe.setTradeRoutes([]);   // territory owns the paths layer
       state.layers.trade.count = null;
       layersPanel.refresh();
       layersPanel.updateCounts();
