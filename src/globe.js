@@ -181,23 +181,26 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     const vw = { l: Math.max(box.left, 0) + 2, r: Math.min(box.right, innerWidth) - 2,
       t: Math.max(box.top, 0) + 2, b: Math.min(box.bottom, innerHeight) - 2 };
     items.sort((a, b) => a.rank - b.rank);
-    // Further out for a label that must show: its sides pushed out step by step,
-    // up and down for one above or below, along the vertical for one beside.
+    // Further out for a label that must show: its sides pushed out step by step
+    // (up, down, sideways, and diagonally), nearest to the anchor first.
     const moved = it => {
       const out = [];
       for (let k = 1; k <= 6; k++) {
-        const dy = k * (it.h + 4), dx = k * 14;
+        const dy = k * (it.h + 4), dx = k * 24;
         for (const s of ["up", "down", "right", "left"]) {
           const r = rects(s)(it);
-          if (s === "up") out.push({ ...r, t: r.t - dy, b: r.b - dy });
-          else if (s === "down") out.push({ ...r, t: r.t + dy, b: r.b + dy });
-          else for (const v of [-dy, dy]) {
+          if (s === "up" || s === "down") for (const h of [0, -dx, dx]) {
+            const v = s === "up" ? -dy : dy;
+            out.push({ l: r.l + h, r: r.r + h, t: r.t + v, b: r.b + v });
+          }
+          else for (const v of [0, -dy, dy]) {
             const h = s === "right" ? dx : -dx;
             out.push({ l: r.l + h, r: r.r + h, t: r.t + v, b: r.b + v });
           }
         }
       }
-      return out;
+      const reach = r => Math.hypot(Math.max(r.l - it.x, 0, it.x - r.r), Math.max(r.t - it.y, 0, it.y - r.b));
+      return out.sort((a, b) => reach(a) - reach(b));
     };
     for (const it of items) {
       const free = q => q.l >= vw.l && q.r <= vw.r && q.t >= vw.t && q.b <= vw.b

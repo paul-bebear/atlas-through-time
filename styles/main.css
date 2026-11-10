@@ -87,10 +87,11 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .map-pin[data-dc="hide"] .pin-label { visibility: hidden; }
 /* Moved further out (a label that must show, with no free side): placed at its
    corner offset from the anchor, a thin leader line back to the point. */
-.map-pin .pin-leader { display: none; left: 0; top: 0; width: var(--ll, 0); height: 1px;
-  background: rgba(241, 245, 249, 0.75); box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+.map-pin .pin-leader { display: none; left: 0; top: -1px; width: var(--ll, 0); height: 2px;
+  background: var(--pin-c, rgba(241, 245, 249, 0.8)); box-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
   transform-origin: 0 50%; rotate: var(--la, 0rad); }
 .map-pin[data-dc="free"] .pin-leader { display: block; }
+.pin-link .pin-leader { background: #a78bfa; }
 .map-pin[data-dc="free"] .pin-label { left: var(--dcx); top: var(--dcy); right: auto; bottom: auto; translate: none; }
 .map-pin[data-dc="free"] .pin-stem { display: none; }
 .city-label.dc-hide::after { visibility: hidden; }
