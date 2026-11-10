@@ -79,8 +79,11 @@ pleiades:678378@33.27,35.20~Tyrus
    dashed, and while in use their dashes move in the direction of travel. A route whose last
    waypoint is an open end (`open: true`) fades out over its last quarter and is labelled
    with that waypoint's name ("towards Ophir (location unknown)"), never drawn as a place.
-   A highlighted route shows its named stops. Route names and the open end's label always
-   show, like the pins' labels; where labels crowd, stops and city names give way first. A click or tap on a highlighted route, its
+   A highlighted route shows its named stops, each name once: a stop two routes share is
+   labelled once, a stop on a link pin is named by the pin, and one on a city by the city's
+   name (at a route's end by the stop's own label, the city's name then left out). Route
+   names, the open end's label and a route's first and last stop always show, like the
+   pins' labels; where labels crowd, the other stops and city names give way first. A click or tap on a highlighted route, its
    name or a stop opens the route's card: name, years, mode, certainty, goods, its summary,
    its stops with every candidate for a disputed one, and its sources.
 5. Camera: `at` if given (exactly); else the pins together with every point of the
