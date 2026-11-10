@@ -270,7 +270,10 @@ async function boot() {
   // nothing covers (the top row, search, the layers pill, the card, the link
   // chip, the story bar, the timeline), in portrait and in landscape alike.
   const COVERS = ["menuBtn", "topbar", "searchInput", "modesPanel", "infoCard", "linkChip", "storyBar", "timeline"];
-  function visibleBox() {
+  // `fit`: for framing a set of points (fitted as a circle, see frameFor) the
+  // box whose shorter side is longest wins, not the largest one: a wide strip
+  // under a peek card would shrink the view to its height.
+  function visibleBox(fit = false) {
     const g = document.getElementById("globe").getBoundingClientRect();
     const whole = { l: g.left, r: g.right, t: g.top, b: g.bottom };
     if (!phoneLayout()) return { g, box: whole };
@@ -286,17 +289,18 @@ async function boot() {
       if (w < 80) continue;
       for (let k = 0; k < ys.length; k++) for (let n = k + 1; n < ys.length; n++) {
         const h = ys[n] - ys[k];
-        if (h < 80 || w * h <= best) continue;
+        const sc = fit ? Math.min(w, h) + w * h * 1e-6 : w * h;
+        if (h < 80 || sc <= best) continue;
         const q = { l: xs[i], r: xs[j], t: ys[k], b: ys[n] };
         if (obs.some(o => o.l < q.r && q.l < o.r && o.t < q.b && q.t < o.b)) continue;
-        box = q; best = w * h;
+        box = q; best = sc;
       }
     }
     return { g, box: box || whole };
   }
-  function aimFor(lat, lng, altitude) {
+  function aimFor(lat, lng, altitude, fit = false) {
     if (!phoneLayout()) return { lat, lng };
-    const { g, box } = visibleBox();
+    const { g, box } = visibleBox(fit);
     // The pin's label stands ~35 px above its dot: aim the dot a little low,
     // never so high that the label goes under whatever is above the box.
     const px = (box.l + box.r) / 2;
@@ -316,14 +320,14 @@ async function boot() {
     };
   }
   let aim = null;                                  // the last framed target, while the card may still change
-  function flyFramed(lat, lng, altitude, ms = 1400) {
+  function flyFramed(lat, lng, altitude, ms = 1400, fit = false) {
     aim = { lat, lng, altitude };
-    const a = aimFor(lat, lng, altitude);
+    const a = aimFor(lat, lng, altitude, fit);
     globe.flyTo(a.lat, a.lng, altitude, ms);
   }
   // A set of points (a link's pins, polities or routes) framed into the visible part.
   function fitFor(points, minAlt) {
-    const { g, box } = visibleBox();
+    const { g, box } = visibleBox(true);
     const h = box.b - box.t, f = frameFor(points, (box.r - box.l) / h);
     const raw = f && f.altitude * g.height / h;     // before the cap: how high it would need to be
     return f && { lat: f.lat, lng: f.lng, altitude: Math.max(minAlt, Math.min(3, raw)), raw };
@@ -331,7 +335,7 @@ async function boot() {
   function flyToFit(points, minAlt = 0) {
     const f = fitFor(points, minAlt);
     if (!f) return false;
-    flyFramed(f.lat, f.lng, f.altitude);
+    flyFramed(f.lat, f.lng, f.altitude, 1400, true);
     aim.fit = { points, minAlt };
     return true;
   }
@@ -339,7 +343,7 @@ async function boot() {
   function reaim() {
     if (!aim) return;
     if (aim.fit) aim = { ...fitFor(aim.fit.points, aim.fit.minAlt), fit: aim.fit };
-    const a = aimFor(aim.lat, aim.lng, aim.altitude);
+    const a = aimFor(aim.lat, aim.lng, aim.altitude, !!aim.fit);
     globe.flyTo(a.lat, a.lng, aim.altitude, 600);
   }
   new ResizeObserver(() => { if (phoneLayout() && !infoCardEl.hidden) reaim(); }).observe(infoCardEl);
