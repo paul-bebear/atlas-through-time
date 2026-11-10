@@ -22,7 +22,7 @@ const tip = fn => NO_HOVER ? null : fn;
 
 // NASA Blue Marble colour + topography (public domain, from three-globe's examples), resized to 2048 px / 1024 px.
 
-export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onReady }) {
+export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick, onCityClick, onRouteClick, onReady }) {
   let lastPointClick = -1, lastPress = 0;
 
   let readyNow;
@@ -91,6 +91,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       e.innerHTML = `<span class="pin-label"></span><span class="pin-stem"></span><span class="pin-dot"></span>`;
     }
     e.className = "map-pin pin-" + d.style + (d.side && d.side !== "up" ? " pin-" + d.side : "");
+    e.__d = d;
     e.querySelector(".pin-label").textContent = d.label;
     e.style.setProperty("--pin-c", d.color || "");
     return e;
@@ -146,8 +147,12 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pathDashAnimateTime(d => d.animate ? d.animMs ?? 14000 : 0)
     .pathLabel(tip(d => d.name ? `<b>${d.name}</b>` : ""))
     .onPathHover(p => { el.style.cursor = p ? "pointer" : "grab"; })
-    // Only territory outlines resolve to a polity card; trade routes are display-only.
-    .onPathClick(d => { if (touch.isTouch()) return; if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name); })
+    // Territory outlines resolve to a polity card; a highlighted trade route opens its own card.
+    .onPathClick(d => {
+      if (touch.isTouch() || lastPointClick >= lastPress) return;
+      if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name);
+      else if (d?.kind === "trade" && d.hl) onRouteClick?.(d.route);
+    })
     .pathTransitionDuration(0);
 
   world
@@ -188,7 +193,11 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     onPath: d => { if (d.name) onTerritoryClick?.(d.name); },
     onPolygon: clickPolygon,
     onCity: d => { lastPointClick = Date.now(); onCityClick?.(d); },
-    cities: () => cityEls.values()
+    cities: () => cityEls.values(),
+    // Route names, stops and open ends answer a click or tap with the route's card.
+    labels: () => [...pinEls.values()].filter(e => e.isConnected && e.__d?.route),
+    onLabel: d => { lastPointClick = Date.now(); if (d.route) onRouteClick?.(d.route); },
+    onRoute: r => { lastPointClick = Date.now(); onRouteClick?.(r); }
   });
 
   const refresh = () => world.polygonsData(world.polygonsData());

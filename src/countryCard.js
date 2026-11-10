@@ -228,7 +228,44 @@ export function createInfoCard({ countries, onDismiss }) {
     }
   }
 
-  return { openCountry, openEntry, openEvent, openDbPolity, openCity, close, catalog, resolve };
+  // A route from the registry (data/trade-routes.json, docs/routes.md): its own
+  // short explanation, how sure it is, what travelled, its stops (every sourced
+  // candidate for a disputed one) and its sources. All of it is set as text.
+  function openRoute(r, year) {
+    openSeq++;
+    const span = `${yr(r.from)} – ${yr(r.to)}`;
+    const off = year != null && ((r.from != null && year < r.from) || (r.to != null && year > r.to));
+    const sub = [span, r.mode && `${r.mode} route`, r.kind].filter(Boolean).join(" · ");
+    const rows = [];
+    if (r.certainty) rows.push(["Certainty", r.certainty]);
+    if (r.goods?.length) rows.push(["Goods", r.goods.join(", ")]);
+    const stop = w => `<li><b>${esc(w.name)}</b>${w.note ? `<div class="cc-small">${esc(w.note)}</div>` : ""}${
+      w.candidates?.length ? `<ul class="cc-cands">${w.candidates.map(c =>
+        `<li>${esc(c.name)}${c.note ? ` <span class="cc-small">— ${esc(c.note)}</span>` : ""}</li>`).join("")}</ul>` : ""}</li>`;
+    const source = s => {
+      const t = s.book ? `${esc(s.title)}${s.author ? ", " + esc(s.author) : ""}` : esc(s.title);
+      const title = /^https:\/\//.test(s.url || "") ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${t}</a>` : t;
+      return `<li>${title}${s.licence ? ` <span class="cc-small">(${esc(s.licence)})</span>` : ""}${s.use ? `<div class="cc-small">${esc(s.use)}</div>` : ""}</li>`;
+    };
+    shell(esc(r.name), esc(sub),
+      (off ? `<div class="cc-gone">Not in use in ${yr(year)}. Atlas shows it for ${span}.</div>` : "")
+      + rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${esc(v)}</span></div>`).join("")
+      + (CERTAINTY[r.certainty] ? `<div class="cc-small">${CERTAINTY[r.certainty]}</div>` : "")
+      + (r.summary ? `<div class="cc-extract">${esc(r.summary)}</div>` : "")
+      + (r.waypoints?.length ? `<div class="cc-h">Stops</div><ul class="cc-list">${r.waypoints.map(stop).join("")}</ul>` : "")
+      + (r.sources?.length ? `<div class="cc-h">Sources</div><ul class="cc-list">${r.sources.map(source).join("")}</ul>` : "")
+      + `<div class="cc-note">An Atlas route (CC BY 4.0), drawn by hand from open sources.</div>`);
+  }
+
+  return { openCountry, openEntry, openEvent, openDbPolity, openCity, openRoute, close, catalog, resolve };
 }
+
+// docs/routes.md, `certainty`.
+const CERTAINTY = {
+  attested: "Its use in these years is supported by evidence from the time, and the line follows known stops.",
+  schematic: "Its use is supported, but no source gives the exact line, so it is drawn approximately between real stops.",
+  legendary: "Known only from tradition or from texts written down long after, with no evidence from the time itself. This says nothing about whether it happened."
+};
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 function yr(y) { return y < 0 ? Math.abs(y) + " BCE" : y + " CE"; }

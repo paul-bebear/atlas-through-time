@@ -145,6 +145,7 @@ async function boot() {
   let pickFeature = () => {};
   let pickTerritory = () => {};    // us-territorial path click (late-bound like pickFeature)
   let pickCity = () => {};         // city label click (late-bound)
+  let openRoute = () => {};        // route line or label click (late-bound)
   let layersPanel = null;          // assigned at the end of boot; onChange fires before that
   let quiz = null;                 // assigned at the end of boot
   // Exit us-territorial mode. Returns true if we were in it, so callers
@@ -202,6 +203,7 @@ async function boot() {
     onEventClick: ev => { clearSelection(); card?.openEvent(ev); },
     onTerritoryClick: name => pickTerritory(name),
     onCityClick: d => pickCity(d),
+    onRouteClick: r => openRoute(r),
     onReady: () => document.getElementById("globePlaceholder")?.classList.add("ready")
   });
   document.getElementById("status").textContent = "loading textures & borders…";
@@ -612,6 +614,16 @@ async function boot() {
     const c = d.city || d;
     pinSelection(d.name, { lat: d.lat, lng: d.lng }, globe.altitude(), [c.founded ?? null, c.until ?? null]);
     card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
+  };
+
+  // A highlighted route's card. The link's pins, routes, era band and the
+  // selection's tint stay; a year step re-renders the route's card, not the polity's.
+  openRoute = r => {
+    if (state.mode === "map-quiz" || !r) return;
+    selection = { names: selection?.names || [], fromLink: selection?.fromLink, render: y => card.openRoute(r, y) };
+    selection.render(state.year);
+    // On a phone the card covers the top: bring the route into what is left.
+    if (phoneLayout()) flyToFit(r.points.map(([lng, lat]) => ({ lat, lng })));
   };
 
   pickFeature = f => {

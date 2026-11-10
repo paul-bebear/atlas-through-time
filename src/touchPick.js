@@ -5,7 +5,9 @@
 // Here a tap (short, barely moving, one finger) is hit-tested where it
 // lifted: city dots and names first, then event dots within a finger-sized
 // radius, then territory outlines, then border polygons.
-// Mouse and pen input keep globe.gl's own click path.
+// Mouse and pen input keep globe.gl's own click path, except for the labels
+// of a link's pins and highlighted routes (`labels`), which no layer of
+// globe.gl hit-tests: a click or tap on one goes to onLabel for any input.
 
 const TAP_SLOP = 10;        // px the finger may wander and still count as a tap
 const TAP_MS = 700;         // longer presses are not taps
@@ -13,7 +15,10 @@ const POINT_RADIUS = 12;    // px around an event dot that counts as hitting it
 const CITY_RADIUS = 16;     // px around a city dot while names show; the name counts too
 const DOT_RADIUS = 6;       // zoomed out (names hidden): only a tap on the dot itself
 
-export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity, cities }) {
+const LABEL_PAD = 6;        // px around a tappable label or pin dot that still counts
+const ROUTE_RADIUS = 12;    // px from a highlighted route's line that counts as a tap on it
+
+export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity, cities, labels = () => [], onLabel, onRoute }) {
   let lastType = "mouse";
   let down = null;
 
@@ -21,8 +26,8 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity
     if (!e.isTrusted) return;           // city labels forward a synthetic press to the canvas
     lastType = e.pointerType;
     // A second finger (pinch) or a press on a city label is never a globe tap.
-    down = e.pointerType === "touch" && e.isPrimary && !e.target.closest?.(".city-label")
-      ? { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp } : null;
+    down = e.isPrimary && !e.target.closest?.(".city-label")
+      ? { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, touch: e.pointerType === "touch" } : null;
   }, { capture: true });
   el.addEventListener("pointercancel", () => { down = null; }, { capture: true });
 
@@ -31,15 +36,36 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity
     down = null;
     if (!d || e.pointerId !== d.id) return;
     if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > TAP_SLOP || e.timeStamp - d.t > TAP_MS) return;
+    const label = labelAt(e.clientX, e.clientY, d.touch ? LABEL_PAD : 2);
+    if (label) return onLabel?.(label);
+    if (!d.touch) return;
     const r = el.getBoundingClientRect();
     pick(e.clientX - r.left, e.clientY - r.top);
   }, { capture: true });
+
+  // A pin's label or dot under the pointer (client coordinates), topmost first.
+  function labelAt(x, y, pad) {
+    let best = null, bestZ = -Infinity;
+    for (const pin of labels()) {
+      if (!pin.getClientRects().length || pin.style.display === "none") continue;
+      for (const part of pin.querySelectorAll(".pin-label, .pin-dot")) {
+        const r = part.getBoundingClientRect();
+        if (!r.width || getComputedStyle(part).visibility === "hidden") continue;
+        if (x < r.left - pad || x > r.right + pad || y < r.top - pad || y > r.bottom + pad) continue;
+        const z = +getComputedStyle(pin).zIndex || 0;
+        if (z >= bestZ) { best = pin.__d; bestZ = z; }
+      }
+    }
+    return best;
+  }
 
   function pick(x, y) {
     const city = cityAt(x, y);
     if (city) return onCity(city.__d);
     const pt = nearestPoint(x, y);
     if (pt) return onPoint(pt);
+    const route = routeAt(x, y);
+    if (route) return onRoute?.(route);
     const ll = world.toGlobeCoords(x, y);
     if (!ll) return;                    // off the globe
     const path = world.pathsData().find(p => p.kind === "territory" && p.name &&
@@ -52,6 +78,27 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity
       if (a < bestArea) { best = f; bestArea = a; }
     }
     if (best) onPolygon(best);          // ocean: nothing is selected
+  }
+
+  // A highlighted trade route whose line passes within ROUTE_RADIUS of the finger.
+  function routeAt(x, y) {
+    const cam = world.camera().position;
+    let best = null, bestD = ROUTE_RADIUS;
+    for (const p of world.pathsData()) {
+      if (p.kind !== "trade" || !p.hl) continue;
+      let prev = null;
+      for (const [lat, lng, alt] of p.points) {
+        const g = world.getCoords(lat, lng, alt);
+        const s = g.x * cam.x + g.y * cam.y + g.z * cam.z > g.x * g.x + g.y * g.y + g.z * g.z
+          ? world.getScreenCoords(lat, lng, alt) : null;   // null: far side of the globe
+        if (s && prev) {
+          const d = segDist(x, y, prev, s);
+          if (d < bestD) { best = p.route; bestD = d; }
+        }
+        prev = s;
+      }
+    }
+    return best;
   }
 
   // Nearest visible event dot to the finger, within POINT_RADIUS.
@@ -89,6 +136,12 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity
   }
 
   return { isTouch: () => lastType === "touch" };
+}
+
+function segDist(x, y, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, l = dx * dx + dy * dy;
+  const t = l ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / l)) : 0;
+  return Math.hypot(x - a.x - t * dx, y - a.y - t * dy);
 }
 
 const polysOf = g =>
