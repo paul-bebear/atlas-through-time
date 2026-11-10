@@ -582,7 +582,8 @@ async function boot() {
       // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
       setSelPins([]);
-      globe.flyTo(39, -98, 1.6);
+      // The mainland, in the part of the globe the card leaves visible on phones.
+      flyFramed(39, -98, 1.6);
       timeline.clearOverlays();
       timeline.setSpan(1776, 2025, "USA territorial growth");
       timeline.setMarkers(
