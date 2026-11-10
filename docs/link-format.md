@@ -1,8 +1,8 @@
 # Atlas link format, v2
 
 A link can open Atlas at a year and place, with pins, an era band, highlighted
-polities and highlighted routes. Atlas owns this format. Other projects (Paul's
-reading app, Shelf, is the first) build links from this page and pin a version.
+polities and highlighted routes. Atlas owns this format. Other projects (a reading
+app, Shelf, is the first) build links from this page and pin a version.
 Design and reasons: the vault note *Shelf Connection*, §3.3.
 
 ```
