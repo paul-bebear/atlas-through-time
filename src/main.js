@@ -958,6 +958,7 @@ async function boot() {
     layersPanel.refresh();
   };
   layersPanel.onClearPins = () => {
+    timeline.clearLinkSpan();
     showLinkPins([]);
     if (linkRoutes.size) showLinkRoutes([]);
     history.replaceState(null, "", location.pathname + location.search);
@@ -985,7 +986,7 @@ async function boot() {
 
   async function applyLink(v) {
     showLinkPins(v.pins.map(p => ({ lat: p.lat, lng: p.lng, label: pinLabel(p) })));
-    if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));
+    if (v.span) timeline.setLinkSpan(v.span[0], v.span[1], spanLabel(v.span));
     // Camera: at= wins (exactly), else the pins' bounding box, else the polities,
     // else the routes, else leave it; on phones fitted to what the card leaves visible.
     // Routes: only ids Atlas knows; the trade layer turns on to show them.
@@ -1001,7 +1002,6 @@ async function boot() {
     if (!rows.length) return routeCam();
     await whenBorders();
     const points = selectLinkPolities(rows);
-    if (v.span) timeline.setSpan(v.span[0], v.span[1], spanLabel(v.span));   // the link's era, not the polity's
     if (!cam && !flyToFit(points, 1)) routeCam();
   }
 

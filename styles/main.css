@@ -317,9 +317,17 @@ input[type=range]::-webkit-slider-thumb {
   box-shadow: 0 2px 6px rgba(0,0,0,.4);
 }
 #trackMarks { position: relative; height: 18px; margin-bottom: 2px; }
-.tspan { position: absolute; top: 7px; height: 7px; border-radius: 4px;
+.tspan { position: absolute; top: 7px; height: 7px; border-radius: 4px; translate: -50% 0;
   background: rgba(93,169,255,0.55); border: 1px solid rgba(93,169,255,0.9);
   cursor: pointer; }
+/* The link's era band: violet like the link's pins, in its own lane below the
+   selection's span, its label beside it. */
+#trackMarks.has-link { height: 32px; }
+.tlink-bar { position: absolute; bottom: 2px; height: 8px; border-radius: 4px; translate: -50% 0;
+  background: rgba(167, 139, 250, 0.6); border: 1px solid #a78bfa; cursor: pointer; }
+.tlink-label { position: absolute; bottom: -1px; font-size: 11px; font-weight: 700; color: #c4b5fd;
+  white-space: nowrap; pointer-events: none; }
+.tlink-left { translate: -100% 0; }
 .tspan-label { position: absolute; top: -3px; transform: translateX(-50%);
   font-size: 11px; font-weight: 700; color: var(--accent);
   white-space: nowrap; pointer-events: none; }
@@ -616,6 +624,7 @@ body.quiz-active #search { display: none; }
   #status { order: 1; flex: 1 1 0; min-width: 0; text-align: right; line-height: 1.25;
     overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   #trackMarks { height: 16px; }
+  #trackMarks.has-link { height: 30px; }
   #slider { display: block; height: 32px; margin: 0; background: transparent; }
   #slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
     background: linear-gradient(90deg, var(--accent), var(--accent2)); }
@@ -653,6 +662,7 @@ body.quiz-active #search { display: none; }
   #yearLabel { flex: 0 0 auto; min-width: 96px; font-size: 20px; }
   #stepGroup button { height: 44px; }
   #trackMarks { height: 14px; }
+  #trackMarks.has-link { height: 26px; }
   #slider { height: 26px; }
   #ticks { height: 12px; }
 }

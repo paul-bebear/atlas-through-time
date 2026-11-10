@@ -49,7 +49,8 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   const marksEl = document.getElementById("trackMarks");
   const clamp01 = v => Math.max(0, Math.min(1, v));
 
-  function clearOverlays() { marksEl.innerHTML = ""; }
+  // The link's era band (.tlink) is not an overlay: it stays until clearLinkSpan.
+  function clearOverlays() { marksEl.querySelectorAll(":scope > :not(.tlink)").forEach(n => n.remove()); }
 
   function setSpan(start, end, label) {
     clearOverlays();
@@ -57,8 +58,9 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
     const a = clamp01(yearToPos(start)), b = clamp01(yearToPos(end));
     const bar = document.createElement("div");
     bar.className = "tspan";
-    bar.style.left = a * 100 + "%";
-    bar.style.width = Math.max(0.6, (b - a) * 100) + "%";
+    // Centred on the span, never narrower than a few px (a 40-year span in antiquity is a dot).
+    bar.style.left = ((a + b) / 2) * 100 + "%";
+    bar.style.width = `max(8px, ${(b - a) * 100}%)`;
     bar.title = `${label}: ${yearLabel(start)} – ${yearLabel(end)}`;
     bar.onclick = () => setYear(start);
     const tag = document.createElement("div");
@@ -66,6 +68,31 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
     tag.style.left = ((a + b) / 2) * 100 + "%";
     tag.textContent = label;
     marksEl.append(bar, tag);
+  }
+
+  // The era band a link carries ("c. 970–931 BCE"), in its own lane under the
+  // selection's span: a selection never replaces it, only clearLinkSpan does.
+  // At least 12 px wide; its label sits beside it, never on it.
+  function setLinkSpan(start, end, label) {
+    clearLinkSpan();
+    if (start == null) return;
+    const a = clamp01(yearToPos(start)), b = clamp01(yearToPos(end)), m = (a + b) / 2;
+    const bar = document.createElement("div");
+    bar.className = "tlink tlink-bar";
+    bar.style.left = m * 100 + "%";
+    bar.style.width = `max(12px, ${(b - a) * 100}%)`;
+    bar.title = `${label}: ${yearLabel(start)} – ${yearLabel(end)} (from the link you opened)`;
+    bar.onclick = () => setYear(start);
+    const tag = document.createElement("div");
+    tag.className = "tlink tlink-label" + (m > 0.7 ? " tlink-left" : "");
+    tag.style.left = `calc(${m * 100}% ${m > 0.7 ? "-" : "+"} max(6px, ${(b - a) * 50}%) ${m > 0.7 ? "-" : "+"} 6px)`;
+    tag.textContent = label;
+    marksEl.append(bar, tag);
+    marksEl.classList.add("has-link");
+  }
+  function clearLinkSpan() {
+    marksEl.querySelectorAll(".tlink").forEach(n => n.remove());
+    marksEl.classList.remove("has-link");
   }
 
   // years: array of { year, label } — clickable key-moment ticks.
@@ -120,5 +147,5 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   document.getElementById("surprise").onclick = () => { stop(); onSurprise(); };
 
   apply();
-  return { setStatus, setYear, setSpan, setMarkers, clearOverlays, currentYear: () => year };
+  return { setStatus, setYear, setSpan, setLinkSpan, clearLinkSpan, setMarkers, clearOverlays, currentYear: () => year };
 }
