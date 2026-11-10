@@ -1095,6 +1095,7 @@ async function boot() {
   layersPanel.onClearPins = () => {
     if (!linkOn) return;
     linkOn = false;
+    const ls = linkSel;
     linkSel = null;
     timeline.clearLinkSpan();
     showLinkPins([]);
@@ -1104,6 +1105,10 @@ async function boot() {
       card.close();
       timeline.clearOverlays();
       setContext(DEFAULT_CONTEXT, false);
+    } else if (ls?.quiet && ls.points.some(p => selPins.includes(p))) {
+      // The link's polities arrived beside the visitor's own pick: drop just them.
+      setSelPins(selPins.filter(p => !ls.points.includes(p)));
+      setSelection(selection?.names?.length ? [{ names: selection.names, side: "A" }] : []);
     }
     history.replaceState(null, "", location.pathname + location.search);
     updateLinkChip();
@@ -1111,15 +1116,22 @@ async function boot() {
   };
   // Up to two polities from a link's qid: highlighted through their resolved
   // border names, each with the red selection pin; the card shows the first.
-  function selectLinkPolities(rows) {
+  // `quiet`: the visitor has already opened something else; the polities are
+  // highlighted and pinned, but their card does not take over.
+  function selectLinkPolities(rows, quiet = false) {
     exitTerritory();
     const groups = rows.map(p => ({ p, names: [...new Set([p.canonical_name, ...p._names])] }));
     const points = groups.map(({ p, names }) => {
       const ll = p.lat != null ? { lat: p.lat, lng: p.lng } : shapesCentre(globe.featuresForNames(names));
       return ll && { label: p.canonical_name, ...ll, from: p.start_year, to: p.end_year };
     }).filter(Boolean);
-    linkSel = { groups, points };
-    reselectLink(groups[0]);
+    linkSel = { groups, points, quiet };
+    if (quiet) {
+      setSelection([...(selection?.names?.length ? [{ names: selection.names, side: "A" }] : []),
+        ...groups.map(x => ({ names: x.names, side: "A" }))]);
+      selPins = [...selPins, ...points];
+      showSelPins();
+    } else reselectLink(groups[0]);
     return points;
   }
   // The link's polities as the selection again, with `g`'s registry card (and the
@@ -1150,6 +1162,11 @@ async function boot() {
     // routes, their names and the open end's label are in view with the pins.
     const routePoints = routes.flatMap(r => r.points.map(([lng, lat]) => ({ lat, lng })));
     const base = [...v.pins, ...routePoints];
+    // A tap or drag before the polities arrive (the registry slice and the
+    // borders take a moment on a phone) wins: it is not undone below.
+    const before = selection;
+    let touched = false;
+    document.getElementById("globe").addEventListener("pointerdown", () => { touched = true; }, { once: true });
     if (!v.at && base.length) flyToFit(base);
     else if (v.at) globe.flyTo(v.at.lat, v.at.lng, v.at.altitude);
     if (!v.qids.length) return;
@@ -1159,9 +1176,10 @@ async function boot() {
     await whenBorders();
     // On a phone the polity's card opens as a one-line peek: the reader came to
     // see the map; a tap on the card opens it.
-    if (phoneLayout()) card.peek();
-    const points = selectLinkPolities(rows);
-    if (!v.at) flyToFit([...base, ...points], base.length ? 0 : 1);
+    const quiet = selection !== before;
+    if (phoneLayout() && !quiet) card.peek();
+    const points = selectLinkPolities(rows, quiet);
+    if (!v.at && !touched) flyToFit([...base, ...points], base.length ? 0 : 1);
   }
 
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
