@@ -85,7 +85,8 @@ pleiades:678378@33.27,35.20~Tyrus
    its stops with every candidate for a disputed one, and its sources.
 5. Camera: `at` if given (exactly); else the pins together with every point of the
    highlighted routes (open end included) and the polities, with padding; else the camera
-   stays where it is. On a phone the box is fitted into the part of the globe no panel covers
+   stays where it is. On desktop the box is fitted, centred, into the band between the top
+   row and the chip and timeline. On a phone the box is fitted into the part of the globe no panel covers
    (the top row, the layers pill, the card, the chip, the timeline), and fitted again after a
    rotation or when the card changes size, until the visitor touches the globe. On a phone the
    polity's card first opens as a one-line peek ("Tap for details"), so the map shows first.
