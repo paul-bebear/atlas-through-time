@@ -54,8 +54,8 @@ only the original fields keeps working.
 | Value | Meaning |
 |---|---|
 | `attested` | Use in these years is supported by evidence from the time (inscriptions, documents, archaeology), and the line follows known stops. |
-| `schematic` | Use is supported, but no source gives the exact line, so it is drawn approximately between real stops. |
-| `legendary` | Known only from tradition, or from texts written down long after the time, with no evidence from the time itself. This says nothing about whether it happened. |
+| `schematic` | Use is recorded in the sources, but no source gives the exact line, so it is drawn approximately between real stops. What kind of record it is (evidence from the time, or a later text only) is said in `summary` and `sources`. |
+| `legendary` | Known only from myth, legend or saga (for example the Argonauts' voyage), not from any historical record. This says nothing about whether it happened. Kept for future routes; no route uses it yet. |
 
 ### `waypoints[]`
 
@@ -96,4 +96,5 @@ Example of a book source (no route uses one yet):
 |---|---|---|---|
 | `silk-road` … `atlantic-crossing` | — | — | the first 8 corridors (2026): original fields only, schematic |
 | `tyre-jerusalem` | −1000..−586 | land | schematic |
-| `levant-red-sea` | −970..−931 | sea | legendary |
+| `levant-red-sea` | −970..−931 | sea | schematic (the voyages are known only from the biblical text; see its sources) |
+| `tyre-joppa` | −970..−931 | sea | schematic (this shipment is known only from the biblical text; see its sources) |
