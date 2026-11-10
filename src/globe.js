@@ -88,7 +88,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     let e = pinEls.get(d.key);
     if (!e) {
       pinEls.set(d.key, e = document.createElement("div"));
-      e.innerHTML = `<span class="pin-label"></span><span class="pin-stem"></span><span class="pin-dot"></span>`;
+      e.innerHTML = `<span class="pin-leader"></span><span class="pin-label"></span><span class="pin-stem"></span><span class="pin-dot"></span>`;
     }
     e.className = "map-pin pin-" + d.style + (d.side && d.side !== "up" ? " pin-" + d.side : "");
     e.__d = d;
@@ -127,9 +127,11 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   }
 
   // Label de-collision. Labels are placed greedily by importance (the selected
-  // polity, the link's pins, route names, a route's open end, its stops, city
-  // names): each keeps its own side if that is free, else tries the others, else
-  // is hidden (city names and stops), so a label never prints over another.
+  // polities, the link's pins, route names, a route's open end, its stops, city
+  // names). Each keeps its own side if that is free, else tries the others. The
+  // first four kinds always show: with no free side they move further out along
+  // a short leader line (stacking beside a neighbour), and only if nothing is free
+  // do they keep their own side. Stops and city names give way: they hide.
   // Reads all positions first, then writes; at most ~10 times a second.
   const RANK = { sel: 0, link: 1, route: 2, "route-end": 3, wpt: 4 };
   const measure = document.createElement("canvas").getContext("2d");
@@ -179,22 +181,49 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     const vw = { l: Math.max(box.left, 0) + 2, r: Math.min(box.right, innerWidth) - 2,
       t: Math.max(box.top, 0) + 2, b: Math.min(box.bottom, innerHeight) - 2 };
     items.sort((a, b) => a.rank - b.rank);
-    let keptSel = false;
+    // Further out for a label that must show: its sides pushed out step by step,
+    // up and down for one above or below, along the vertical for one beside.
+    const moved = it => {
+      const out = [];
+      for (let k = 1; k <= 6; k++) {
+        const dy = k * (it.h + 4), dx = k * 14;
+        for (const s of ["up", "down", "right", "left"]) {
+          const r = rects(s)(it);
+          if (s === "up") out.push({ ...r, t: r.t - dy, b: r.b - dy });
+          else if (s === "down") out.push({ ...r, t: r.t + dy, b: r.b + dy });
+          else for (const v of [-dy, dy]) {
+            const h = s === "right" ? dx : -dx;
+            out.push({ l: r.l + h, r: r.r + h, t: r.t + v, b: r.b + v });
+          }
+        }
+      }
+      return out;
+    };
     for (const it of items) {
       const free = q => q.l >= vw.l && q.r <= vw.r && q.t >= vw.t && q.b <= vw.b
         && !placed.some(p => hit(p, q)) && !dots.some(d => d.e !== it.e && hit(d, q));
       if (it.city) { const ok = free(it.rect); if (ok) placed.push(it.rect); out.push([it, ok ? "" : "hide"]); continue; }
       const sides = [it.side, ...["up", "right", "down", "left"].filter(s => s !== it.side)];
       const side = sides.find(s => free(rects(s)(it)));
-      // The (first) selected polity's label always shows; the others give way.
-      const use = side || (it.rank === 0 && !keptSel ? it.side : null);
-      if (it.rank === 0) keptSel = true;
-      if (use) placed.push(rects(use)(it));
-      out.push([it, use == null ? "hide" : use === it.side ? "" : use]);
+      if (side) { placed.push(rects(side)(it)); out.push([it, side === it.side ? "" : side]); continue; }
+      if (it.rank > 3) { out.push([it, "hide"]); continue; }
+      const r = moved(it).find(free);
+      if (!r) { placed.push(rects(it.side)(it)); out.push([it, ""]); continue; }
+      placed.push(r);
+      out.push([it, "free", r]);
     }
-    for (const [it, v] of out) {
-      if (it.city) it.e.classList.toggle("dc-hide", v === "hide");
-      else if ((it.e.dataset.dc || "") !== v) it.e.dataset.dc = v;
+    for (const [it, v, r] of out) {
+      if (it.city) { it.e.classList.toggle("dc-hide", v === "hide"); continue; }
+      if ((it.e.dataset.dc || "") !== v) it.e.dataset.dc = v;
+      if (v !== "free") continue;
+      // The label's corner relative to the anchor, and a leader from the anchor
+      // to the label's nearest point.
+      const dx = r.l - it.x, dy = r.t - it.y;
+      const cx = Math.max(dx, Math.min(0, dx + it.w)), cy = Math.max(dy, Math.min(0, dy + it.h));
+      it.e.style.setProperty("--dcx", dx.toFixed(1) + "px");
+      it.e.style.setProperty("--dcy", dy.toFixed(1) + "px");
+      it.e.style.setProperty("--ll", Math.hypot(cx, cy).toFixed(1) + "px");
+      it.e.style.setProperty("--la", Math.atan2(cy, cx).toFixed(3) + "rad");
     }
   }
   const controls = world.controls();

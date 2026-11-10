@@ -85,6 +85,14 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .map-pin[data-dc="right"] .pin-stem, .map-pin[data-dc="left"] .pin-stem { display: none; }
 .pin-route[data-dc] .pin-stem, .pin-wpt[data-dc] .pin-stem, .pin-route-end[data-dc] .pin-stem { display: none; }
 .map-pin[data-dc="hide"] .pin-label { visibility: hidden; }
+/* Moved further out (a label that must show, with no free side): placed at its
+   corner offset from the anchor, a thin leader line back to the point. */
+.map-pin .pin-leader { display: none; left: 0; top: 0; width: var(--ll, 0); height: 1px;
+  background: rgba(241, 245, 249, 0.75); box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  transform-origin: 0 50%; rotate: var(--la, 0rad); }
+.map-pin[data-dc="free"] .pin-leader { display: block; }
+.map-pin[data-dc="free"] .pin-label { left: var(--dcx); top: var(--dcy); right: auto; bottom: auto; translate: none; }
+.map-pin[data-dc="free"] .pin-stem { display: none; }
 .city-label.dc-hide::after { visibility: hidden; }
 .pin-off .pin-dot { background: #8b95a1; box-shadow: 0 0 0 3px rgba(139, 149, 161, 0.3), 0 1px 4px rgba(0, 0, 0, 0.6); }
 .pin-off .pin-label { background: #4b5563; color: #e5e7eb; font-weight: 600; font-style: italic; }
