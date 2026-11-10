@@ -179,6 +179,7 @@ async function boot() {
     state.lastSig = null;
     globe.clearTerritoryOutlines();
     tradeSig = null;                  // territory just wiped the shared paths layer
+    setSelPins([]);                   // the USA's or a territory's pin goes with the mode
     layersPanel?.refresh();
     return true;
   };
@@ -225,7 +226,7 @@ async function boot() {
   const globe = createGlobe(document.getElementById("globe"), {
     onCountryClick: f => pickFeature(f),
     onEventClick: ev => { clearSelection(); card?.openEvent(ev); },
-    onTerritoryClick: name => pickTerritory(name),
+    onTerritoryClick: (name, d) => pickTerritory(name, d),
     onCityClick: d => pickCity(d),
     onRouteClick: r => openRoute(r),
     onLinkPinClick: p => openLinkPin(p),
@@ -586,7 +587,7 @@ async function boot() {
       // setTerritoryOutlines (driven by the first onChange below) clears
       // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
-      setSelPins([]);
+      setSelPins([{ label: entry.name, lat: 39, lng: -98 }]);
       // The mainland, in the part of the globe the card leaves visible on phones.
       flyFramed(39, -98, 1.6);
       timeline.clearOverlays();
@@ -637,14 +638,32 @@ async function boot() {
     else selection.render(timeline.currentYear());
   }
 
+  // Centre of an outline ring ([lat, lng] points): its area centroid, or the mean
+  // of its points when the ring is degenerate.
+  const ringCentre = pts => {
+    if (!pts?.length) return null;
+    let a = 0, x = 0, y = 0;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [yi, xi] = pts[i], [yj, xj] = pts[j], k = xj * yi - xi * yj;
+      a += k; x += (xi + xj) * k; y += (yi + yj) * k;
+    }
+    if (Math.abs(a) < 1e-9) return {
+      lat: pts.reduce((t, p) => t + p[0], 0) / pts.length,
+      lng: pts.reduce((t, p) => t + p[1], 0) / pts.length };
+    return { lat: y / (3 * a), lng: x / (3 * a) };
+  };
+
   // Click on a state/territory outline in us-territorial mode → open its
   // polity card WITHOUT leaving the mode (states exist as DB polities from
   // the OHM pilot load).
   let territoryClickSeq = 0;
-  pickTerritory = async name => {
+  pickTerritory = async (name, d) => {
     if (!name) return;
     const mine = ++territoryClickSeq;
     setContext("🇺🇸 " + name);
+    // The red pin on the tapped outline, as for any other selection.
+    const at = ringCentre(d?.points);
+    setSelPins(at ? [{ label: name, ...at }] : []);
     try {
       const hits = await searchPolities(name, 5);
       const p = hits.find(h => h.canonical_name.toLowerCase() === name.toLowerCase()) || hits[0];

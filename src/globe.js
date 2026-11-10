@@ -280,7 +280,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     // Territory outlines resolve to a polity card; a highlighted trade route opens its own card.
     .onPathClick(d => {
       if (touch.isTouch() || lastPointClick >= lastPress) return;
-      if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name);
+      if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name, d);
       else if (d?.kind === "trade" && d.hl) onRouteClick?.(d.route);
     })
     .pathTransitionDuration(0);
@@ -320,7 +320,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   // taps get their own hit test at the finger (src/touchPick.js).
   const touch = installTouchPick(world, el, {
     onPoint: onEventClick,
-    onPath: d => { if (d.name) onTerritoryClick?.(d.name); },
+    onPath: d => { if (d.name) onTerritoryClick?.(d.name, d); },
     onPolygon: clickPolygon,
     onCity: d => { lastPointClick = Date.now(); onCityClick?.(d); },
     cities: () => cityEls.values(),
