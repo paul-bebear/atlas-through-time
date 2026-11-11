@@ -638,7 +638,14 @@ async function boot() {
   // Closing the card also takes the selection's pin away (and nothing brings the card back).
   // A route's card closed by the visitor: the camera aims again into the room the card leaves.
   card = createInfoCard({ countries,
-    onDismiss: () => { if (selection) selection.dismissed = true; setSelPins([]); if (aim?.fit?.link === "route") reaim(); aim = null; },
+    onDismiss: () => {
+      if (selection) selection.dismissed = true;
+      setSelPins([]);
+      // In US territorial growth the top bar named the territory whose card this was: back to the mode's name.
+      if (state.mode === "us-territorial") setContext("🇺🇸 USA — territorial growth");
+      if (aim?.fit?.link === "route") reaim();
+      aim = null;
+    },
     onRoute: r => {
       chosenRoute = r;
       tradeSig = null;
@@ -929,6 +936,7 @@ async function boot() {
     },
     onExit: () => {
       document.getElementById("storyPicker").hidden = true;
+      card?.close();                      // the stage's card goes with the story
       if (state.mode === "empire-story") { state.mode = "discovery"; state.modeState = null; layersPanel?.refresh(); }
       clearSelection();
       timeline.clearOverlays();
@@ -1116,6 +1124,10 @@ async function boot() {
     onRoutePick: r => pickRoute(r),
     onModeChange: mode => {
       if (mode === state.mode) return;
+      // Leaving a mode takes its card with it (a territory's, a story stage's, a
+      // country's): nothing stays on screen describing a state the app has left.
+      // The new mode opens its own (US territorial growth opens the USA's).
+      card.close();
       if (state.mode === "map-quiz") quiz.exit();       // tear down quiz before any switch
       if (state.mode === "empire-story") story.exit();  // hides picker/story, resets to discovery
       if (mode === "map-quiz") { enterQuiz(); return; }
