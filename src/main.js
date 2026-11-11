@@ -497,7 +497,9 @@ async function boot() {
   function updateRouteHint() {
     const el = document.getElementById("routeHint");
     let text = null;
-    if (tradeRoutes && state.layers.trade.enabled && !hintDismissed
+    // While the route list is open the visitor is already where the hint points ("See
+    // routes" opens it): the hint stays away until the list is folded again.
+    if (tradeRoutes && state.layers.trade.enabled && !hintDismissed && !layersPanel?.listOpen()
         && state.mode !== "us-territorial" && state.mode !== "map-quiz" && state.mode !== "empire-story") {
       if (globe.isFlying()) { routeHintSoon(); return; }
       const n = state.layers.trade.count || 0;
@@ -519,9 +521,14 @@ async function boot() {
     const c = document.getElementById("linkChip");
     const top = !c.hidden && c.getClientRects().length ? Math.min(c.getBoundingClientRect().top, t.top) : t.top;
     Object.assign(el.style, { left: t.left + "px", bottom: innerHeight - top + 6 + "px", maxWidth: t.width + "px" });
+    // On a wide screen, moved right past the open layers panel rather than over it.
+    const m = document.getElementById("modesPanel").getBoundingClientRect(), h = el.getBoundingClientRect();
+    if (!phoneLayout() && m.width && m.bottom > h.top && m.top < h.bottom && m.right > t.left && t.right - m.right - 8 >= 200)
+      Object.assign(el.style, { left: m.right + 8 + "px", maxWidth: t.right - m.right - 8 + "px" });
   }
   addEventListener("resize", placeHint);
-  new ResizeObserver(() => placeHint()).observe(document.getElementById("modesPanel"));
+  // The panel folding or unfolding (its title) also opens or hides the route list.
+  new ResizeObserver(() => { placeHint(); routeHintSoon(); }).observe(document.getElementById("modesPanel"));
   globe.onCamera(routeHintSoon);
   document.querySelector("#routeHint .rh-see").onclick = () => layersPanel?.showRoutes();
   document.querySelector("#routeHint .rh-x").onclick = () => { hintDismissed = true; updateRouteHint(); };
@@ -1155,6 +1162,7 @@ async function boot() {
     routes: () => tradeRoutes || [],
     chosen: () => chosenRoute?.id ?? null,
     onRoutePick: r => pickRoute(r),
+    onListToggle: () => updateRouteHint(),
     onModeChange: mode => {
       if (mode === state.mode) return;
       // Leaving a mode takes its card with it (a territory's, a story stage's, a

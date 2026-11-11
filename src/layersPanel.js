@@ -27,8 +27,10 @@ const yr = y => y < 0 ? Math.abs(y) + " BCE" : y + " CE";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 // `routes()`: the route registry; `onRoutePick(route)`: a route chosen from the list;
-// `chosen()`: the id of the route whose card is open.
-export function createLayersPanel({ state, onModeChange, onLayerToggle, routes = () => [], onRoutePick, chosen = () => null } = {}) {
+// `chosen()`: the id of the route whose card is open; `onListToggle(open)`: the list
+// expanded or collapsed.
+export function createLayersPanel({ state, onModeChange, onLayerToggle, routes = () => [], onRoutePick, chosen = () => null,
+  onListToggle } = {}) {
   const root = document.getElementById("layersPanel");
   if (!root) return { refresh: () => {}, updateCounts: () => {} };
 
@@ -91,6 +93,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle, routes =
     const b = root.querySelector(".lp-browse");
     if (b) b.setAttribute("aria-expanded", String(v));
     if (v) updateRoutes();
+    onListToggle?.(v);
   }
 
   const countOf = id => {
@@ -193,7 +196,9 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle, routes =
   }
 
   // onClearPins is assigned by main.js once the link view is wired.
-  const api = { refresh: render, updateCounts, updateRoutes: () => { if (open) updateRoutes(); }, showRoutes, onClearPins: null };
+  // `listOpen()`: the route list is expanded in a panel that is itself open.
+  const api = { refresh: render, updateCounts, updateRoutes: () => { if (open) updateRoutes(); }, showRoutes,
+    listOpen: () => open && !aside?.classList.contains("collapsed"), onClearPins: null };
   render();
   return api;
 }
