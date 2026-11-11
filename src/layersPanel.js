@@ -58,11 +58,32 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle, routes =
     const b = e.target.closest?.(".lr-item");
     const r = b && routes().find(x => x.id === b.dataset.id);
     if (!r) return;
+    const focused = list.contains(document.activeElement);
     if (compact()) aside?.classList.add("collapsed");   // on a phone the open panel covers the globe
     onRoutePick?.(r);
+    // The row keeps focus (keepFocus); where the panel folded away, the route's card takes it.
+    if (focused && !root.contains(document.activeElement))
+      document.querySelector("#infoCard:not([hidden]) .cc-close")?.focus({ preventScroll: true });
   });
   let listSig = null;
-  function updateRoutes() {
+  // Keyboard focus survives a rebuild of the rows or the panel: a route chosen with the
+  // keyboard (or a box ticked) keeps focus on the same control in its new node,
+  // instead of dropping to the page.
+  const focusKey = el => {
+    if (!el || !root.contains(el)) return null;
+    const row = el.closest?.(".lr-item");
+    if (row) return `.lr-item[data-id="${CSS.escape(row.dataset.id)}"]`;
+    if (el.matches("input[name][value]")) return `input[name="${CSS.escape(el.name)}"][value="${CSS.escape(el.value)}"]`;
+    for (const c of ["lp-browse", "lp-clear"]) if (el.classList.contains(c)) return "." + c;
+    return null;
+  };
+  const keepFocus = rebuild => {
+    const key = focusKey(document.activeElement);
+    rebuild();
+    if (key && !root.contains(document.activeElement)) root.querySelector(key)?.focus({ preventScroll: true });
+  };
+  function updateRoutes() { keepFocus(rebuildRoutes); }
+  function rebuildRoutes() {
     const all = routes() || [];
     const y = state.year;
     const on = r => (r.from == null || y >= r.from) && (r.to == null || y <= r.to);
@@ -167,6 +188,9 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle, routes =
     // already on one (a Clear tap then lands on a detached node and is lost).
     if (html === lastHtml) return;
     lastHtml = html;
+    keepFocus(() => build(html));
+  }
+  function build(html) {
     list.remove();
     root.innerHTML = html;
     root.querySelector(".lp-route-slot")?.replaceWith(list);
