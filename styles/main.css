@@ -660,6 +660,8 @@ body.quiz-active #search { display: none; }
   html, body { height: 100%; height: -webkit-fill-available; height: 100dvh; }
   body { position: relative; -webkit-text-size-adjust: 100%; }
   button, input, label, .cc-close { touch-action: manipulation; }
+  /* Two quick taps just beside a step button land on the panel itself: no page zoom there. */
+  #timeline { touch-action: manipulation; }
 
   /* Row 1 */
   #menuBtn { top: var(--top); left: var(--l); width: 44px; height: 44px;
