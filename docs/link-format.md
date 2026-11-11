@@ -135,7 +135,11 @@ pleiades:678378@33.27,35.20~Tyrus
    instead, "This link's places and routes could not be read.", with Dismiss; if some items
    survived, the chip counts those as usual. In Map Quiz and Empire Story the chip is put
    away (their own panels take its place) and comes back with Discovery or US territorial
-   growth; the layers panel's Clear stays reachable meanwhile. The address bar keeps
+   growth; the layers panel's Clear stays reachable meanwhile. On a phone the chip also gives
+   way while the layers panel is open (the panel covers its place) and comes back when the
+   panel closes. Clear removes everything the link put on screen, its polities included,
+   whatever the visitor opened in between; what the visitor chose themselves (a route from
+   the list, a country) stays. The address bar keeps
    the fragment the whole time, also for a link with only `qid`, `year`, `span` or `at`, so it
    can be shared again (the timeline's own `?year=` is written in front of it). **Clear**
    removes the pins, the route highlights, the era band, the fragment, and the link's
