@@ -378,8 +378,11 @@ async function boot() {
   }
   // One route, close up: the box around its points with a little padding, without the
   // floors a link's fit keeps (a route 150 km long would be a few px at those).
-  // Not lower than ROUTE_MIN_ALT, where the globe's imagery is still readable.
-  const ROUTE_MIN_ALT = 0.18;
+  // Not lower than ROUTE_MIN_ALT. The globe's imagery is a 2048 px map (about 6 px a
+  // degree), so close up it only gets blurrier: at 0.25 the shortest routes (Tyre–Jerusalem,
+  // the cedar rafts, 1.3–1.6°) are still 70–120 pt long on a phone, with both ends and
+  // their name clear, and the coast is still recognisable; at 0.18 it was plainly blocky.
+  const ROUTE_MIN_ALT = 0.25;
   function routeFrame(points, aspect = 1, pad = 1.35) {
     if (!points.length) return null;
     const lng0 = points[0].lng;
