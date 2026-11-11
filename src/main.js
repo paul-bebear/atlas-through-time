@@ -1249,8 +1249,25 @@ async function boot() {
   // A link that asked for pins, polities or routes but brought none of them (each
   // item invalid, or unknown to Atlas): the chip's place says so, quietly, until dismissed.
   let unreadNote = false;
+  // On a wide screen the layers panel ends above whatever sits under it at the bottom
+  // (the timeline, the link's chip when it is below the panel rather than beside it, the
+  // story bar, the quiz), and scrolls inside itself when its content is taller, so
+  // nothing of it runs under them. Phones keep their own layout (styles/main.css).
+  const fitPanel = () => {
+    if (phoneLayout()) { if (modesEl.style.maxHeight) modesEl.style.maxHeight = ""; return; }
+    const m = modesEl.getBoundingClientRect();
+    let floor = innerHeight - 12;
+    for (const e of [timelineEl, chip, document.getElementById("storyBar"), document.getElementById("quizPanel")]) {
+      if (!e || e.hidden || !e.getClientRects().length) continue;
+      const r = e.getBoundingClientRect();
+      if (r.width && r.left < m.right && r.right > m.left && r.top > m.top) floor = Math.min(floor, r.top);
+    }
+    // Never taller than the stylesheet's own cap (100vh − 250px) either.
+    const v = Math.max(120, Math.floor(Math.min(innerHeight - 250, floor - 10 - m.top))) + "px";
+    if (modesEl.style.maxHeight !== v) modesEl.style.maxHeight = v;
+  };
   const placeChip = () => {
-    if (chip.hidden) return;
+    if (chip.hidden) { fitPanel(); return; }
     const side = landscapePhone.matches && modesEl.classList.contains("collapsed");
     chip.querySelector(".lc-text").textContent = side ? chipShort : chipLong;
     if (side) {
@@ -1273,6 +1290,7 @@ async function boot() {
       }
       if (right - left >= 160) Object.assign(chip.style, { left: left + "px", maxWidth: right - left + "px" });
     }
+    fitPanel();
     placeHint();
   };
   // The chip shows only while the link has put something on screen that Clear
@@ -1291,7 +1309,7 @@ async function boot() {
     chip.hidden = chipAway() || (!has && !note);
     chip.classList.toggle("lc-unread", note);
     chipClear.textContent = note ? "Dismiss" : "Clear";
-    if (chip.hidden) { placeHint(); return; }
+    if (chip.hidden) { fitPanel(); placeHint(); return; }
     if (note) {
       chipLong = chipShort = "This link’s places and routes could not be read.";
       placeChip();
@@ -1309,7 +1327,9 @@ async function boot() {
   new ResizeObserver(placeChip).observe(timelineEl);
   new ResizeObserver(() => updateLinkChip()).observe(modesEl);   // the panel opening or closing
   new ResizeObserver(placeChip).observe(infoCardEl);
+  for (const id of ["storyBar", "quizPanel"]) new ResizeObserver(placeChip).observe(document.getElementById(id));
   addEventListener("resize", placeChip);
+  placeChip();
   // The button is never rebuilt; touch clears on touchend so a re-layout between
   // touchstart and click cannot swallow the tap. On the unread note it dismisses the note.
   const chipAct = () => {
