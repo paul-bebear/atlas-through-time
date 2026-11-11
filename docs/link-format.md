@@ -133,7 +133,9 @@ pleiades:678378@33.27,35.20~Tyrus
    `at` gets none. A link that asked for `pins`, `qid` or `route` but from which nothing could
    be shown (every item invalid, or unknown to Atlas) gets a quiet note in the chip's place
    instead, "This link's places and routes could not be read.", with Dismiss; if some items
-   survived, the chip counts those as usual. The address bar keeps
+   survived, the chip counts those as usual. In Map Quiz and Empire Story the chip is put
+   away (their own panels take its place) and comes back with Discovery or US territorial
+   growth; the layers panel's Clear stays reachable meanwhile. The address bar keeps
    the fragment the whole time, also for a link with only `qid`, `year`, `span` or `at`, so it
    can be shared again (the timeline's own `?year=` is written in front of it). **Clear**
    removes the pins, the route highlights, the era band, the fragment, and the link's

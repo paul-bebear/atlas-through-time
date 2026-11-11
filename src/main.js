@@ -171,6 +171,9 @@ async function boot() {
   let openLinkPin = () => {};      // a link pin's click (late-bound)
   let layersPanel = null;          // assigned at the end of boot; onChange fires before that
   let quiz = null;                 // assigned at the end of boot
+  // Whatever shows or hides with the mode beyond the panel (the link's chip, the routes hint).
+  let onModeUi = () => {};         // assigned once the chip is set up
+  const modeChanged = () => { layersPanel?.refresh(); onModeUi(); };
   // Exit us-territorial mode. Returns true if we were in it, so callers
   // can force a normal-border refresh.
   const exitTerritory = () => {
@@ -182,7 +185,7 @@ async function boot() {
     tradeSig = null;                  // territory just wiped the shared paths layer
     tradeDrawn = false;
     setSelPins([]);                   // the USA's or a territory's pin goes with the mode
-    layersPanel?.refresh();
+    modeChanged();
     return true;
   };
   // Shareable view: the URL always mirrors {year, mode, selection} so any
@@ -465,7 +468,7 @@ async function boot() {
     const el = document.getElementById("routeHint");
     let text = null;
     if (tradeRoutes && state.layers.trade.enabled && !hintDismissed
-        && state.mode !== "us-territorial" && state.mode !== "map-quiz") {
+        && state.mode !== "us-territorial" && state.mode !== "map-quiz" && state.mode !== "empire-story") {
       if (globe.isFlying()) { routeHintSoon(); return; }
       const n = state.layers.trade.count || 0;
       const y = yearLabel(state.year);
@@ -699,7 +702,7 @@ async function boot() {
       state.mode = "us-territorial";
       state.modeState = { source: "ohm-usa", label: "🇺🇸 USA territorial growth", sig: null, eventsCleared: false };
       state.lastSig = null;
-      layersPanel?.refresh();
+      modeChanged();
       // setTerritoryOutlines (driven by the first onChange below) clears
       // both highlights AND the selected-key, so no need to do it here.
       setContext("🇺🇸 USA — territorial growth");
@@ -937,7 +940,7 @@ async function boot() {
     onExit: () => {
       document.getElementById("storyPicker").hidden = true;
       card?.close();                      // the stage's card goes with the story
-      if (state.mode === "empire-story") { state.mode = "discovery"; state.modeState = null; layersPanel?.refresh(); }
+      if (state.mode === "empire-story") { state.mode = "discovery"; state.modeState = null; modeChanged(); }
       clearSelection();
       timeline.clearOverlays();
       setContext(DEFAULT_CONTEXT, false);
@@ -962,7 +965,7 @@ async function boot() {
     document.getElementById("storyPicker").hidden = true;
     // Playing a thread IS Empire Story mode — reflect it on the mode radio
     // whether we got here from the picker or the search bar.
-    if (state.mode !== "empire-story") { state.mode = "empire-story"; state.modeState = null; layersPanel?.refresh(); }
+    if (state.mode !== "empire-story") { state.mode = "empire-story"; state.modeState = null; modeChanged(); }
     const members = await threadMembers(th.id);
     const beats = members
       .filter(m => m.polity)
@@ -1040,7 +1043,7 @@ async function boot() {
     globe.setHighlights([]);
     citySig = null;
     setContext(DEFAULT_CONTEXT, false);
-    layersPanel?.refresh();
+    modeChanged();
     timeline.setYear(timeline.currentYear());   // re-render borders/cities/events
   };
   quiz = createQuiz({
@@ -1063,7 +1066,7 @@ async function boot() {
     setContext("🎯 Map Quiz");
     timeline.clearOverlays();
     timeline.setYear(2025);              // present-day borders as the quiz basis
-    layersPanel?.refresh();
+    modeChanged();
     quiz.start();
   };
 
@@ -1110,7 +1113,7 @@ async function boot() {
     state.mode = "empire-story";
     state.modeState = null;
     setContext("🧵 Empire Story");
-    layersPanel?.refresh();
+    modeChanged();
     showStoryPicker();
   };
 
@@ -1238,10 +1241,14 @@ async function boot() {
   // The chip shows only while the link has put something on screen that Clear
   // takes away (pins, routes, the era band, its polities); a link that only set
   // the year, or whose every item was invalid, has none.
+  // In Map Quiz (no timeline) and Empire Story (its bar and picker take the chip's
+  // place) the chip is put away, not left half-covered; it returns with Discovery or
+  // US territorial growth. The layers panel keeps its own Clear meanwhile.
+  const chipAway = () => state.mode === "map-quiz" || state.mode === "empire-story";
   function updateLinkChip() {
     const has = linkOn && !!(linkPins.length || linkRoutes.size || linkSpanOn || linkSel);
     const note = unreadNote && linkOn && !has;
-    chip.hidden = !has && !note;
+    chip.hidden = chipAway() || (!has && !note);
     chip.classList.toggle("lc-unread", note);
     chipClear.textContent = note ? "Dismiss" : "Clear";
     if (chip.hidden) { placeHint(); return; }
@@ -1270,6 +1277,7 @@ async function boot() {
     else layersPanel.onClearPins();
   };
   chipClear.onclick = chipAct;
+  onModeUi = () => { updateLinkChip(); routeHintSoon(); };
   chipClear.addEventListener("touchend", e => { e.preventDefault(); chipAct(); });
   // Whether the trade routes layer is on only because a link turned it on:
   // Clear then turns it off again.
