@@ -20,6 +20,26 @@ const num = (s, lo, hi) => { if (!NUM.test(s)) return null; const v = +s; return
 const dec = s => { try { return decodeURIComponent(s.replace(/\+/g, " ")); } catch { return null; } };
 const list = (raw, sep) => raw.split(sep).map(dec).filter(Boolean);
 
+// A separator may be written literally or percent-encoded (a URL library
+// writes `,` as %2C). Each value decides for itself: a literal separator wins,
+// and only a value with none of the literal kind reads the encoded one as the
+// separator. So every link that was read before is read the same way, and an
+// encoded separator next to literal ones stays text. Encoding is undone once;
+// %252C is not a separator.
+const ENC = { ",": /%2C/i, "@": /%40/i, "~": /%7E/i };
+const sepOf = (raw, ch) => raw.includes(ch) || !ENC[ch].test(raw) ? ch : ENC[ch];
+// The first separator, literal if there is one, else encoded: [before, after] or null.
+function cut(raw, ch) {
+  const i = raw.indexOf(ch);
+  if (i >= 0) return [raw.slice(0, i), raw.slice(i + 1)];
+  const m = raw.search(ENC[ch]);
+  return m < 0 ? null : [raw.slice(0, m), raw.slice(m + 3)];
+}
+// An encoded ; ends a pin only where a new pin starts after it
+// (`[src:id]@lat,lng`, any of its separators encoded or not), so a single
+// pin's label keeps an encoded ; as text ("a%3Bb", "a%3B@b").
+const PIN_SEP = /%3B(?=(?:[a-z]+(?::|%3A)[A-Za-z0-9._-]{1,24})?(?:@|%40)-?[0-9]{1,3}(?:\.[0-9]{1,7})?(?:,|%2C)-?[0-9])/i;
+
 // Plain text, no control characters, at most MAX_LABEL characters.
 function label(raw) {
   const s = dec(raw);
@@ -29,12 +49,15 @@ function label(raw) {
 }
 
 // `[src:id]@lat,lng[~label]`, split on the raw text so an encoded ; @ ~ in a label survives.
+// The first @ and the first ~ after it cut the pin (literal first, else encoded);
+// the coordinates are only numbers, so their comma may be literal or %2C.
 function pin(raw) {
-  const at = raw.indexOf("@");
-  if (at < 0) return null;
-  const idRaw = raw.slice(0, at), rest = raw.slice(at + 1);
-  const tilde = rest.indexOf("~");
-  const [latS, lngS, extra] = (tilde < 0 ? rest : rest.slice(0, tilde)).split(",");
+  const head = cut(raw, "@");
+  if (!head) return null;
+  const [idRaw, rest] = head;
+  const tail = cut(rest, "~");
+  const coords = tail ? tail[0] : rest;
+  const [latS, lngS, extra] = coords.split(sepOf(coords, ","));
   const lat = num(latS ?? "", -90, 90), lng = num(lngS ?? "", -180, 180);
   if (lat == null || lng == null || extra !== undefined) return null;
   let id = null;
@@ -42,7 +65,7 @@ function pin(raw) {
     id = dec(idRaw);
     if (!id || !ID.test(id) || !SOURCES.has(id.split(":")[0])) return null;
   }
-  return { id, lat, lng, label: tilde < 0 ? null : label(rest.slice(tilde + 1)) };
+  return { id, lat, lng, label: tail ? label(tail[1]) : null };
 }
 
 // Returns null when the fragment is not a v2 link view.
@@ -66,9 +89,13 @@ export function parseLink(hash) {
     if (a != null && b != null && a <= b) view.span = [clampYear(a), clampYear(b)];
   }
 
-  if (kv.has("qid")) view.qids = [...new Set(list(kv.get("qid"), ",").filter(q => QID.test(q)))].slice(0, MAX_QIDS);
-  if (kv.has("pins")) view.pins = kv.get("pins").split(";").map(pin).filter(Boolean).slice(0, MAX_PINS);
-  if (kv.has("route")) view.routes = [...new Set(list(kv.get("route"), ",").filter(r => ROUTE.test(r)))].slice(0, MAX_ROUTES);
+  const ids = raw => list(raw, sepOf(raw, ","));
+  if (kv.has("qid")) view.qids = [...new Set(ids(kv.get("qid")).filter(q => QID.test(q)))].slice(0, MAX_QIDS);
+  if (kv.has("pins")) {
+    const p = kv.get("pins");
+    view.pins = p.split(p.includes(";") ? ";" : PIN_SEP).map(pin).filter(Boolean).slice(0, MAX_PINS);
+  }
+  if (kv.has("route")) view.routes = [...new Set(ids(kv.get("route")).filter(r => ROUTE.test(r)))].slice(0, MAX_ROUTES);
 
   const scene = dec(kv.get("scene") ?? "");
   if (scene && ROUTE.test(scene)) view.scene = scene;   // A5: parsed, not used yet

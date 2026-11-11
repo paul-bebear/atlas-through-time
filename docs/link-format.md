@@ -6,7 +6,7 @@ app, Shelf, is the first) build links from this page and pin a version.
 Design and reasons: the vault note *Shelf Connection*, §3.3.
 
 ```
-https://atlas-through-time.vercel.app/#v=2&year=-950&span=-970,-931&qid=Q3185305,Q41642&pins=@33.27,35.20~Tyre;@29.56,34.95~Elath;@29.48,34.98~Ezion-Geber&route=levant-red-sea
+https://atlas-through-time.vercel.app/#v=2&year=-950&route=levant-red-sea&span=-970,-931&qid=Q3185305,Q41642&pins=@33.27,35.20~Tyre;@29.56,34.95~Elath;@29.48,34.98~Ezion-Geber
 ```
 
 ## Where the view lives
@@ -17,10 +17,38 @@ https://atlas-through-time.vercel.app/#v=2&year=-950&span=-970,-931&qid=Q3185305
   ignored.
 - The older query form `?year=&sel=&mode=&thread=&beat=` keeps working. If a `v=2`
   fragment is present, it wins and the query is ignored.
+- The view must be in the fragment. `?v=2&…` as a query is not read (only the older
+  `?year=` is): a query reaches the server, the fragment does not.
 - Keys are separated by `&`, and a key is separated from its value by `=`. If a key
-  appears twice, the first value counts. Unknown keys are ignored.
+  appears twice, the first value counts. Unknown keys are ignored. `&` and `=` must be
+  literal: `%26` and `%3D` are not read as separators.
 - Values are percent-encoded. Inside a label, encode `;` `@` `~` `&` `#` and `%` (as
   `%3B %40 %7E %26 %23 %25`); `+` reads as a space.
+- **Recommended key order:** `v`, `year`, `route`, `span`, `qid`, then `pins` last. A link
+  cut short (a chat app, a length limit) then loses only its last pins and still shows its
+  routes and polities.
+
+## Separators, literal or encoded
+
+The separators inside a value (`,` in `span`, `at`, `qid`, `route` and a pin's
+coordinates; `;` `@` `~` in `pins`) may be written literally or percent-encoded
+(`%2C %3B %40 %7E`, either case), as a URL library writes them. Both forms mean the same.
+
+- **Each value decides for itself.** A value that has a literal separator of a kind reads
+  only the literal ones; an encoded one beside them is text (or makes that item invalid).
+  Only a value with no literal separator of that kind reads the encoded one as the
+  separator. So `qid=Q1%2CQ2` gives two polities, `qid=Q1,Q2%2CQ3` gives only `Q1`.
+- In a pin, the first `@` and then the first `~` cut it (literal if there is one, else
+  encoded); everything after that `~` is the label. The coordinates are numbers only, so
+  their comma may be `,` or `%2C`.
+- **Labels** are decoded once, after the pin has been cut, so an encoded `;` `,` `~` `@`
+  in a label is text: `~a%3Bb%2Cc` shows "a;b,c". One case is read as a separator: in a
+  `pins` value with no literal `;`, an encoded `;` followed straight by the start of a pin
+  (`@lat,lng` or `src:id@lat,lng`) starts a new pin. To keep such text in a label, write
+  the `;` between pins literally.
+- **Double encoding is not undone.** `%252C` is not a separator; the item is dropped. In
+  a label it shows decoded once (`%252C` shows as "%2C").
+- `year`, `span`, `at` and `scene` are decoded first, as before.
 
 ## Keys
 
@@ -120,4 +148,6 @@ pleiades:678378@33.27,35.20~Tyrus
 ## Checks
 
 `node tools/check-link-format.mjs` runs the parser against good and malformed links
-(bad ids, 20 pins, markup in a label, out-of-range numbers, encoded separators).
+(bad ids, 20 pins, markup in a label, out-of-range numbers, separators fully, partly and
+doubly encoded, encoded separators inside labels), and against a list of links with the
+result the parser gave before encoded separators were accepted, which must not change.
