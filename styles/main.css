@@ -468,6 +468,18 @@ input[type=range]::-webkit-slider-thumb {
   background: rgba(167, 139, 250, 0.22); color: #fff; border: 1px solid #a78bfa; font: inherit;
   touch-action: manipulation; }
 @media (pointer: coarse) { #linkChip .lc-clear { min-height: 40px; min-width: 64px; } }
+/* Trade routes on but none drawn, or none on this side of the globe (main.js). */
+#routeHint { position: absolute; z-index: 12; display: flex; align-items: center; gap: 8px;
+  max-width: calc(100vw - 24px); padding: 4px 4px 4px 10px; border-radius: 10px;
+  background: rgba(14, 24, 38, 0.88); border: 1px solid var(--border); color: var(--muted);
+  font-size: 12px; backdrop-filter: blur(8px); }
+#routeHint .rh-text { min-width: 0; }
+#routeHint button { flex: none; min-height: 28px; padding: 0 10px; border-radius: 7px; cursor: pointer; font: inherit;
+  background: rgba(93, 169, 255, 0.16); color: var(--text); border: 1px solid rgba(93, 169, 255, 0.45);
+  touch-action: manipulation; }
+#routeHint .rh-x { background: none; border-color: transparent; color: var(--muted); padding: 0 8px; font-size: 15px; }
+@media (pointer: coarse) { #routeHint button { min-height: 40px; } #routeHint .rh-x { min-width: 40px; } }
+
 #storyBar { position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
   z-index: 13; width: min(680px, calc(94vw - 2 * var(--sax)));
   display: flex; align-items: center; gap: 12px;

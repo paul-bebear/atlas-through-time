@@ -279,7 +279,7 @@ async function boot() {
   // the bottom panels (timeline, chip, story bar); the side panels leave the middle open.
   // A route's fit (`fit` "route", a route chosen or tapped) also uses it on desktop: the
   // same band, and beside the open layers panel and the card.
-  const COVERS = ["menuBtn", "topbar", "searchInput", "modesPanel", "infoCard", "linkChip", "storyBar", "timeline"];
+  const COVERS = ["menuBtn", "topbar", "searchInput", "modesPanel", "infoCard", "linkChip", "routeHint", "storyBar", "timeline"];
   const DESKTOP_COVERS = ["menuBtn", "topbar", "searchInput", "linkChip", "storyBar", "timeline"];
   const DESKTOP_SIDES = ["modesPanel", "infoCard"];
   // `fit`: for framing a set of points (fitted as a circle, see frameFor) the
@@ -449,7 +449,49 @@ async function boot() {
     tradeDrawn = true;
     state.layers.trade.count = active.length;
     layersPanel?.updateCounts();
+    routeHintSoon();
   };
+
+  // Trade routes on, but nothing of them to see: none in use this year, or none in
+  // view. Said quietly above the timeline (above the link's chip when it shows),
+  // with the way to the list. Checked at most twice a second, never mid-flight.
+  let hintDismissed = false, hintTimer = null, hintLast = 0;
+  function routeHintSoon() {
+    if (hintTimer) return;
+    hintTimer = setTimeout(() => { hintTimer = null; hintLast = performance.now(); updateRouteHint(); },
+      Math.max(150, 500 - (performance.now() - hintLast)));
+  }
+  function updateRouteHint() {
+    const el = document.getElementById("routeHint");
+    let text = null;
+    if (tradeRoutes && state.layers.trade.enabled && !hintDismissed
+        && state.mode !== "us-territorial" && state.mode !== "map-quiz") {
+      if (globe.isFlying()) { routeHintSoon(); return; }
+      const n = state.layers.trade.count || 0;
+      const y = yearLabel(state.year);
+      if (!n) text = `No trade route in use in ${y}.`;
+      else if (!globe.routesInView()) text = n === 1 ? `The trade route of ${y} is out of view.` : `The ${n} trade routes of ${y} are out of view.`;
+    }
+    const t = el.querySelector(".rh-text");
+    if (text && t.textContent !== text) t.textContent = text;
+    if (el.hidden !== !text) el.hidden = !text;
+    placeHint();
+  }
+  // On a phone the open layers panel covers the globe and holds the list: the hint waits.
+  function placeHint() {
+    const el = document.getElementById("routeHint");
+    if (el.hidden) return;
+    el.style.visibility = phoneLayout() && !document.getElementById("modesPanel").classList.contains("collapsed") ? "hidden" : "";
+    const t = document.getElementById("timeline").getBoundingClientRect();
+    const c = document.getElementById("linkChip");
+    const top = !c.hidden && c.getClientRects().length ? Math.min(c.getBoundingClientRect().top, t.top) : t.top;
+    Object.assign(el.style, { left: t.left + "px", bottom: innerHeight - top + 6 + "px", maxWidth: t.width + "px" });
+  }
+  addEventListener("resize", placeHint);
+  new ResizeObserver(() => placeHint()).observe(document.getElementById("modesPanel"));
+  globe.onCamera(routeHintSoon);
+  document.querySelector("#routeHint .rh-see").onclick = () => layersPanel?.showRoutes();
+  document.querySelector("#routeHint .rh-x").onclick = () => { hintDismissed = true; updateRouteHint(); };
 
   // --- Composite globe highlights ---------------------------------------
   // The current selection and the Wars layer both want to tint countries.
@@ -524,6 +566,7 @@ async function boot() {
       refreshCities(year);
       refreshTrade(year);
       layersPanel?.updateRoutes();
+      routeHintSoon();
 
       // Events layer (gated). Disabled → render empty so existing points clear.
       const vis = events && state.layers.events.enabled ? events.forYear(year) : [];
@@ -778,6 +821,7 @@ async function boot() {
     exitTerritory();
     if (!state.layers.trade.enabled) state.layers.trade.enabled = true;
     tradeByLink = false;
+    hintDismissed = false;
     layersPanel.refresh(); updateLinkChip();
     const y = Math.max(r.from ?? SLIDER_MIN, Math.min(r.to ?? SLIDER_MAX, state.year));
     tradeSig = null;
@@ -1104,6 +1148,7 @@ async function boot() {
       else if (id === "pins") { globe.setLinkPins(enabled ? linkPins : []); updateLinkChip(); }
       else if (id === "trade") {
         tradeByLink = false;                         // the visitor's own choice now; Clear keeps it
+        hintDismissed = false;
         layersPanel.refresh(); updateLinkChip();     // the link's route count says whether they show
         tradeSig = null;
         if (enabled) refreshTrade(state.year);
@@ -1112,6 +1157,7 @@ async function boot() {
           state.layers.trade.count = null;
           layersPanel.updateCounts();
         }
+        routeHintSoon();
       }
       else timeline.setYear(timeline.currentYear());   // borders + events re-render via onChange
     },
@@ -1171,13 +1217,14 @@ async function boot() {
       }
       if (right - left >= 160) Object.assign(chip.style, { left: left + "px", maxWidth: right - left + "px" });
     }
+    placeHint();
   };
   // The chip shows only while the link has put something on screen that Clear
   // takes away (pins, routes, the era band, its polities); a link that only set
   // the year, or whose every item was invalid, has none.
   function updateLinkChip() {
     chip.hidden = !linkOn || !(linkPins.length || linkRoutes.size || linkSpanOn || linkSel);
-    if (chip.hidden) return;
+    if (chip.hidden) { placeHint(); return; }
     const n = (k, one, many) => k ? `${k} ${k === 1 ? one : many}` : "";
     const parts = [
       linkPins.length && (n(linkPins.length, "pin", "pins") + (state.layers.pins.enabled ? "" : " (hidden)")),

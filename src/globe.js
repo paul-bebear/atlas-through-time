@@ -536,7 +536,24 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       controls.autoRotate = false;
       ready.then(() => fly({ lat, lng, altitude, ms }));
     },
-    altitude: () => world.pointOfView().altitude
+    altitude: () => world.pointOfView().altitude,
+    // How many of the drawn routes have a point on the near side of the globe, on screen.
+    routesInView() {
+      const cam = world.camera().position, box = el.getBoundingClientRect();
+      const ids = new Set();
+      for (const p of world.pathsData()) {
+        if (p.kind !== "trade" || ids.has(p.route.id)) continue;
+        for (const [lat, lng, alt] of p.points) {
+          const g = world.getCoords(lat, lng, alt);
+          if (g.x * cam.x + g.y * cam.y + g.z * cam.z <= g.x * g.x + g.y * g.y + g.z * g.z) continue;
+          const s = world.getScreenCoords(lat, lng, alt);
+          if (s.x >= 0 && s.y >= 0 && s.x <= box.width && s.y <= box.height) { ids.add(p.route.id); break; }
+        }
+      }
+      return ids.size;
+    },
+    onCamera: fn => controls.addEventListener("change", fn),
+    isFlying: () => flying || !!nextFlight
   };
 }
 
