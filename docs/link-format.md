@@ -130,7 +130,10 @@ pleiades:678378@33.27,35.20~Tyrus
    layers pill in phone landscape) says what the link added, "From the link you opened ·
    3 pins · 2 routes", with Clear; the layers panel has the same Clear. The chip shows only
    when the link put something on screen that Clear takes away: a link with only `year` or
-   `at`, or one whose every item was invalid, gets none. The address bar keeps
+   `at` gets none. A link that asked for `pins`, `qid` or `route` but from which nothing could
+   be shown (every item invalid, or unknown to Atlas) gets a quiet note in the chip's place
+   instead, "This link's places and routes could not be read.", with Dismiss; if some items
+   survived, the chip counts those as usual. The address bar keeps
    the fragment the whole time, also for a link with only `qid`, `year`, `span` or `at`, so it
    can be shared again (the timeline's own `?year=` is written in front of it). **Clear**
    removes the pins, the route highlights, the era band, the fragment, and the link's
@@ -149,5 +152,5 @@ pleiades:678378@33.27,35.20~Tyrus
 
 `node tools/check-link-format.mjs` runs the parser against good and malformed links
 (bad ids, 20 pins, markup in a label, out-of-range numbers, separators fully, partly and
-doubly encoded, encoded separators inside labels), and against a list of links with the
+doubly encoded, encoded separators inside labels), when a link counts as unreadable, and against a list of links with the
 result the parser gave before encoded separators were accepted, which must not change.

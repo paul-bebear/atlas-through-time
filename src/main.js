@@ -20,7 +20,7 @@ import { initPanel } from "./panel.js";
 import { createLayersPanel } from "./layersPanel.js";
 import { createQuiz } from "./quiz.js";
 import { sliceByName, sliceByQid, rowForYear } from "./politySlice.js";
-import { parseLink, frameFor, spanLabel } from "./linkView.js";
+import { parseLink, frameFor, spanLabel, linkUnread } from "./linkView.js";
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
@@ -1187,12 +1187,16 @@ async function boot() {
   // Always on screen while the link's view is on, above the timeline (the card
   // can cover the layers pill on a phone): what the link added, and Clear.
   const chip = document.getElementById("linkChip");
+  const chipClear = chip.querySelector(".lc-clear");
   const timelineEl = document.getElementById("timeline");
   // Above the timeline's left end; in phone landscape (about 270 pt of height)
   // under the layers pill instead, so the strip above the timeline stays free.
   const modesEl = document.getElementById("modesPanel");
   const landscapePhone = matchMedia("(pointer: coarse) and (max-height: 500px) and (orientation: landscape)");
   let chipLong = "", chipShort = "";
+  // A link that asked for pins, polities or routes but brought none of them (each
+  // item invalid, or unknown to Atlas): the chip's place says so, quietly, until dismissed.
+  let unreadNote = false;
   const placeChip = () => {
     if (chip.hidden) return;
     const side = landscapePhone.matches && modesEl.classList.contains("collapsed");
@@ -1223,8 +1227,17 @@ async function boot() {
   // takes away (pins, routes, the era band, its polities); a link that only set
   // the year, or whose every item was invalid, has none.
   function updateLinkChip() {
-    chip.hidden = !linkOn || !(linkPins.length || linkRoutes.size || linkSpanOn || linkSel);
+    const has = linkOn && !!(linkPins.length || linkRoutes.size || linkSpanOn || linkSel);
+    const note = unreadNote && linkOn && !has;
+    chip.hidden = !has && !note;
+    chip.classList.toggle("lc-unread", note);
+    chipClear.textContent = note ? "Dismiss" : "Clear";
     if (chip.hidden) { placeHint(); return; }
+    if (note) {
+      chipLong = chipShort = "This link’s places and routes could not be read.";
+      placeChip();
+      return;
+    }
     const n = (k, one, many) => k ? `${k} ${k === 1 ? one : many}` : "";
     const parts = [
       linkPins.length && (n(linkPins.length, "pin", "pins") + (state.layers.pins.enabled ? "" : " (hidden)")),
@@ -1239,10 +1252,13 @@ async function boot() {
   new ResizeObserver(placeChip).observe(infoCardEl);
   addEventListener("resize", placeChip);
   // The button is never rebuilt; touch clears on touchend so a re-layout between
-  // touchstart and click cannot swallow the tap.
-  const chipClear = chip.querySelector(".lc-clear");
-  chipClear.onclick = () => layersPanel.onClearPins();
-  chipClear.addEventListener("touchend", e => { e.preventDefault(); layersPanel.onClearPins(); });
+  // touchstart and click cannot swallow the tap. On the unread note it dismisses the note.
+  const chipAct = () => {
+    if (chip.classList.contains("lc-unread")) { unreadNote = false; updateLinkChip(); }
+    else layersPanel.onClearPins();
+  };
+  chipClear.onclick = chipAct;
+  chipClear.addEventListener("touchend", e => { e.preventDefault(); chipAct(); });
   // Whether the trade routes layer is on only because a link turned it on:
   // Clear then turns it off again.
   let tradeByLink = false;
@@ -1324,7 +1340,7 @@ async function boot() {
     selection.render(timeline.currentYear());
   }
 
-  async function applyLink(v) {
+  async function applyLink(v, hash) {
     linkOn = true;
     showLinkPins(v.pins.map(p => ({ id: p.id, lat: p.lat, lng: p.lng, label: pinLabel(p) })));
     if (v.span) { timeline.setLinkSpan(v.span[0], v.span[1], spanLabel(v.span)); linkSpanOn = true; updateLinkChip(); }
@@ -1344,9 +1360,15 @@ async function boot() {
     document.getElementById("globe").addEventListener("pointerdown", () => { touched = true; }, { once: true });
     if (!v.at && base.length) flyToFit(base, 0, true);
     else if (v.at) globe.flyTo(v.at.lat, v.at.lng, v.at.altitude);
-    if (!v.qids.length) return;
+    // Once it is known what the link brought: if it asked for something and nothing came of it, say so.
+    const settle = (polities = 0) => {
+      unreadNote = linkUnread(hash, { pins: v.pins.length, routes: routes.length, polities });
+      updateLinkChip();
+    };
+    if (!v.qids.length) { settle(); return; }
     // The registry slice loads only now, and only because the link names polities.
     const rows = (await Promise.all(v.qids.map(q => sliceByQid(q, state.year).catch(() => null)))).filter(Boolean);
+    settle(rows.length);
     if (!rows.length) return;
     await whenBorders();
     // On a phone the polity's card opens as a one-line peek: the reader came to
@@ -1361,7 +1383,7 @@ async function boot() {
   // Permalink restore — ?year=1503&sel=France, or ?mode=us-territorial.
   // The shared year is already on the slider (initialYear); a selection may
   // still move it (the USA clamps to 1776+).
-  if (link) applyLink(link);
+  if (link) applyLink(link, location.hash);
   // A new link pasted into this tab only changes the fragment: start it fresh.
   addEventListener("hashchange", () => { if (parseLink(location.hash)) location.reload(); });
   const qMode = bootParams.get("mode");

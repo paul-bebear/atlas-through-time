@@ -108,6 +108,22 @@ export function parseLink(hash) {
   return view;
 }
 
+// Whether a link asked for something to show: a `pins`, `qid` or `route` key with a
+// value. `shown` counts what Atlas could put on screen from it (pins drawn, routes it
+// knows, polities found); when the link asked and nothing came of it, the page says
+// so instead of showing nothing (docs/link-format.md, "What Atlas does with a link").
+export function linkUnread(hash, { pins = 0, routes = 0, polities = 0 } = {}) {
+  const raw = String(hash || "").replace(/^#/, "");
+  const kv = new Map();
+  for (const part of raw.split("&")) {
+    const eq = part.indexOf("=");
+    if (eq > 0 && !kv.has(part.slice(0, eq))) kv.set(part.slice(0, eq), part.slice(eq + 1));
+  }
+  if (kv.get("v") !== "2") return false;
+  const asked = ["pins", "qid", "route"].some(k => (kv.get(k) || "").length > 0);
+  return asked && !pins && !routes && !polities;
+}
+
 // The camera for a set of points: the centre of their bounding box, high
 // enough that the box plus padding fits the narrower screen side (globe.gl's
 // camera has a 50° vertical field of view). Longitudes are unwrapped around

@@ -474,6 +474,10 @@ input[type=range]::-webkit-slider-thumb {
   background: rgba(167, 139, 250, 0.22); color: #fff; border: 1px solid #a78bfa; font: inherit;
   touch-action: manipulation; }
 @media (pointer: coarse) { #linkChip .lc-clear { min-height: 40px; min-width: 64px; } }
+/* A link whose places and routes could not be read: a quiet note in the chip's place. */
+#linkChip.lc-unread { border: 1px solid var(--border); color: var(--muted); font-weight: 500; }
+#linkChip.lc-unread .lc-text { white-space: normal; }
+#linkChip.lc-unread .lc-clear { background: rgba(255, 255, 255, 0.08); border-color: var(--border); color: var(--text); }
 /* Trade routes on but none drawn, or none on this side of the globe (main.js). */
 #routeHint { position: absolute; z-index: 12; display: flex; align-items: center; gap: 8px;
   max-width: calc(100vw - 24px); padding: 4px 4px 4px 10px; border-radius: 10px;

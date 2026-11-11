@@ -4,7 +4,7 @@
 // separators literal or percent-encoded, and links read on main read the same.
 //   node tools/check-link-format.mjs
 
-import { parseLink, spanLabel, frameFor } from "../src/linkView.js";
+import { parseLink, spanLabel, frameFor, linkUnread } from "../src/linkView.js";
 
 // Regression: links read on main at 3f78295, before encoded separators were
 // accepted, with the result that parser gave (generated from it, not edited).
@@ -186,6 +186,20 @@ eq("stray % and empty pieces", parseLink("#v=2&pins=%;%3B;%40;@%2C;~%7E&qid=%2C%
 eq("encoded & and = are not keys", parseLink("#v=2&year=-950%26qid%3DQ1").qids, []);
 const before = BEFORE.filter(([h, w]) => JSON.stringify(parseLink(h)) !== w);
 eq(`regression: ${BEFORE.length} links read as on main`, before.map(([h]) => h), []);
+
+// A link that asked for pins, polities or routes, with nothing of them shown: say so.
+const shownBy = h => { const v = parseLink(h); return { pins: v.pins.length, routes: v.routes.length, polities: v.qids.length }; };
+const unread = h => linkUnread(h, shownBy(h));
+eq("unread: every pin invalid", unread("#v=2&year=-950&pins=@91,0~x;foo:1@1,1"), true);
+eq("unread: every item invalid", unread("#v=2&pins=@91,0&qid=X1&route=B!"), true);
+eq("unread: double-encoded", unread("#v=2&qid=Q1%252CQ2"), true);
+eq("unread: route id Atlas does not know", linkUnread("#v=2&route=no-such-route", { routes: 0 }), true);
+eq("not unread: some items survived", unread("#v=2&pins=@91,0;@1,2~ok&route=B!"), false);
+eq("not unread: only year", unread("#v=2&year=-950"), false);
+eq("not unread: only at", unread("#v=2&at=31.5,35,1.2"), false);
+eq("not unread: empty values", unread("#v=2&qid=&route=&pins="), false);
+eq("not unread: the solomon link", unread(lit), false);
+eq("not unread: not a link view", linkUnread("#about"), false);
 
 eq("span label BCE", spanLabel([-970, -931]), "c. 970–931 BCE");
 eq("span label across 0", spanLabel([-30, 14]), "c. 30 BCE – 14 CE");
