@@ -69,13 +69,18 @@ export function createInfoCard({ countries, onDismiss }) {
     if (card.classList.contains("cc-peek") && !x.contains(e.target)) unpeek();
   });
 
+  // A different card opens at its top; the same card drawn again (a year step) keeps its place.
+  let shownTitle = null;
   function shell(titleHtml, sub, body) {
+    const fresh = card.hidden || titleHtml !== shownTitle;
     card.hidden = false;
+    shownTitle = titleHtml;
     if (peekNext) { peekNext = false; peekTitle = titleHtml; card.classList.add("cc-peek"); }
     else if (titleHtml !== peekTitle) unpeek();
     for (const n of [...card.childNodes]) if (n !== x) n.remove();
     if (x.parentNode !== card) card.prepend(x);
     card.insertAdjacentHTML("beforeend", `<h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`);
+    if (fresh) card.scrollTop = 0;
   }
 
   // Core renderer shared by click + search/story paths.
