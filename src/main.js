@@ -174,8 +174,19 @@ async function boot() {
   // Whatever shows or hides with the mode beyond the panel (the link's chip, the routes hint).
   let onModeUi = () => {};         // assigned once the chip is set up
   const modeChanged = () => { layersPanel?.refresh(); onModeUi(); };
-  // Exit us-territorial mode. Returns true if we were in it, so callers
-  // can force a normal-border refresh.
+  // Leaving a mode, by whatever path, takes away everything the mode put on screen.
+  // Each mode has one exit that does all of it, and every way out goes through it:
+  //   US territorial growth: exitTerritory (below);
+  //   Map Quiz: quiz.exit() → exitQuiz;
+  //   Empire Story: story.exit() → the story's onExit.
+  // leaveMode() picks the right one; callers that select something else set their own
+  // card, top bar and timeline lane afterwards.
+  //
+  // US territorial growth put on screen: the state outlines, the USA's or a territory's
+  // pin and card, the top bar's "USA — territorial growth" (or a territory's name), the
+  // "USA territorial growth" lane and marks on the timeline, and the USA as the
+  // selection. All of it goes. Returns true if we were in the mode, so callers can
+  // force a normal-border refresh.
   const exitTerritory = () => {
     if (state.mode !== "us-territorial") return false;
     state.mode = "discovery";
@@ -184,8 +195,20 @@ async function boot() {
     globe.clearTerritoryOutlines();
     tradeSig = null;                  // territory just wiped the shared paths layer
     tradeDrawn = false;
-    setSelPins([]);                   // the USA's or a territory's pin goes with the mode
+    setSelPins([]);
+    card?.close();
+    selection = null;
+    selLabel = null;
+    setSelection([]);
+    timeline.clearOverlays();
+    setContext(DEFAULT_CONTEXT, false);
     modeChanged();
+    return true;
+  };
+  const leaveMode = () => {
+    if (state.mode === "map-quiz") quiz.exit();
+    else if (state.mode === "empire-story") story.exit();
+    else return exitTerritory();
     return true;
   };
   // Shareable view: the URL always mirrors {year, mode, selection} so any
@@ -826,12 +849,12 @@ async function boot() {
   };
   // A route chosen from the list: the layer turns on (the visitor's own choice, so Clear
   // keeps it), the year moves into the route's years if it is outside them (to the
-  // nearest year it was in use), and its card opens. A mode that cannot show routes
-  // (the quiz, US territorial growth) gives way to Discovery first.
+  // nearest year it was in use), and its card opens. Any other mode gives way to
+  // Discovery first, through its own exit: the quiz and US territorial growth cannot
+  // show routes, and a story's stage would no longer match the year.
   const pickRoute = r => {
     if (!r) return;
-    if (state.mode === "map-quiz") quiz.exit();
-    exitTerritory();
+    leaveMode();
     if (!state.layers.trade.enabled) state.layers.trade.enabled = true;
     tradeByLink = false;
     hintDismissed = false;
@@ -1134,8 +1157,7 @@ async function boot() {
       // country's): nothing stays on screen describing a state the app has left.
       // The new mode opens its own (US territorial growth opens the USA's).
       card.close();
-      if (state.mode === "map-quiz") quiz.exit();       // tear down quiz before any switch
-      if (state.mode === "empire-story") story.exit();  // hides picker/story, resets to discovery
+      leaveMode();                                      // the old mode's own exit, whole
       if (mode === "map-quiz") { enterQuiz(); return; }
       if (mode === "empire-story") { enterEmpireStory(); return; }
       if (mode === "us-territorial") {
