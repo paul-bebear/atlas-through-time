@@ -7,12 +7,15 @@ import { featureName } from "./data.js";
 const WIKI = "https://en.wikipedia.org/api/rest_v1/page/summary/";
 const FLAG = "https://flagcdn.com/w80/";
 
-export function createInfoCard({ countries, onDismiss }) {
+export function createInfoCard({ countries, onDismiss, onRoute }) {
   const card = document.getElementById("infoCard");
   // Bumped by every open and by close, so a Wikipedia fetch that lands late can't
   // overwrite a newer card or reopen a closed one (a tap on × "not working").
   let openSeq = 0;
-  const close = () => { card.hidden = true; openSeq++; card.classList.remove("cc-peek"); peekTitle = null; };
+  const close = () => { card.hidden = true; openSeq++; card.classList.remove("cc-peek"); peekTitle = null; showing(null); };
+  // The route whose card is open (null for any other card, or none): main.js marks it on the globe.
+  let shownRoute = null;
+  const showing = r => { if (r !== shownRoute) { shownRoute = r; onRoute?.(r); } };
 
   const data = (countries && countries.countries) || {};
   const byAlias = new Map();
@@ -71,7 +74,7 @@ export function createInfoCard({ countries, onDismiss }) {
 
   // A different card opens at its top; the same card drawn again (a year step) keeps its place.
   let shownTitle = null;
-  function shell(titleHtml, sub, body) {
+  function shell(titleHtml, sub, body, route = null) {
     const fresh = card.hidden || titleHtml !== shownTitle;
     card.hidden = false;
     shownTitle = titleHtml;
@@ -81,6 +84,7 @@ export function createInfoCard({ countries, onDismiss }) {
     if (x.parentNode !== card) card.prepend(x);
     card.insertAdjacentHTML("beforeend", `<h2>${titleHtml}</h2><div class="cc-sub">${sub}</div>${body}`);
     if (fresh) card.scrollTop = 0;
+    showing(route);
   }
 
   // Core renderer shared by click + search/story paths.
@@ -273,7 +277,7 @@ export function createInfoCard({ countries, onDismiss }) {
       + (r.summary ? `<div class="cc-extract">${esc(r.summary)}</div>` : "")
       + (r.waypoints?.length ? `<div class="cc-h">Stops</div><ul class="cc-list">${r.waypoints.map(stop).join("")}</ul>` : "")
       + (r.sources?.length ? `<div class="cc-h">Sources</div><ul class="cc-list">${r.sources.map(source).join("")}</ul>` : "")
-      + `<div class="cc-note">An Atlas route (CC BY 4.0), drawn by hand from open sources.</div>`);
+      + `<div class="cc-note">An Atlas route (CC BY 4.0), drawn by hand from open sources.</div>`, r);
   }
 
   // A pin from the link the visitor opened: its own label, where it is, the
@@ -291,7 +295,8 @@ export function createInfoCard({ countries, onDismiss }) {
       + `<div class="cc-note">This pin came from the link you opened: a pointer someone sent, with its own label, not an Atlas record. It is kept only on this page, never stored or sent, and Clear removes it.</div>`);
   }
 
-  return { openCountry, openEntry, openEvent, openDbPolity, openCity, openRoute, openLinkPin, close, peek, catalog, resolve };
+  return { openCountry, openEntry, openEvent, openDbPolity, openCity, openRoute, openLinkPin, close, peek, catalog, resolve,
+    route: () => shownRoute };
 }
 
 // docs/routes.md, `certainty`.

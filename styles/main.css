@@ -227,6 +227,26 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 #layersPanel .lp-routes-label { color: #ddd6fe; }
 #layersPanel .lp-clear { font: inherit; font-size: 12px; color: var(--text); cursor: pointer;
   background: rgba(167, 139, 250, 0.16); border: 1px dashed #a78bfa; border-radius: 6px; padding: 2px 10px; }
+/* Routes: the layer toggle and the list of every route by period (layersPanel.js). */
+#layersPanel .lp-browse { width: 100%; font: inherit; font-size: 13px; color: var(--accent); text-align: left;
+  background: none; border: 0; margin: 0; }
+#layersPanel .lp-browse .lp-chev { margin-left: auto; color: var(--muted); transition: transform .2s ease; }
+#layersPanel .lp-browse[aria-expanded="true"] .lp-chev { transform: rotate(90deg); }
+#layersPanel .lp-route-list { margin: 2px 0 0 6px; padding-left: 8px; border-left: 1px solid var(--border); }
+#layersPanel .lr-group { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted); margin: 8px 0 2px; }
+#layersPanel .lr-group:first-child { margin-top: 4px; }
+#layersPanel .lr-none { font-size: 12px; color: var(--muted); font-style: italic; padding: 2px 0 4px; }
+/* Name on the first line, years under it, the route's colour beside both. */
+#layersPanel .lr-item { display: grid; grid-template-columns: 4px 1fr; column-gap: 9px; align-items: center;
+  width: 100%; padding: 4px 6px; margin: 0; font: inherit; font-size: 12.5px; line-height: 1.25; text-align: left;
+  color: var(--text); background: none; border: 0; border-radius: 6px; cursor: pointer; }
+#layersPanel .lr-item:hover { background: rgba(255, 255, 255, 0.06); }
+#layersPanel .lr-item.is-on { background: rgba(93, 169, 255, 0.16); }
+#layersPanel .lr-sw { grid-row: 1 / 3; align-self: stretch; border-radius: 2px; background: var(--c); }
+#layersPanel .lr-name { min-width: 0; }
+#layersPanel .lr-years { grid-column: 2; font-size: 11px; color: var(--muted); white-space: nowrap; }
+#layersPanel .lr-years:empty { display: none; }
 #layersPanel .lp-note {
   font-size: 11px; color: var(--muted); margin: 4px 2px 0;
   font-style: italic; line-height: 1.4;
@@ -448,7 +468,6 @@ input[type=range]::-webkit-slider-thumb {
   background: rgba(167, 139, 250, 0.22); color: #fff; border: 1px solid #a78bfa; font: inherit;
   touch-action: manipulation; }
 @media (pointer: coarse) { #linkChip .lc-clear { min-height: 40px; min-width: 64px; } }
-
 #storyBar { position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
   z-index: 13; width: min(680px, calc(94vw - 2 * var(--sax)));
   display: flex; align-items: center; gap: 12px;
@@ -655,6 +674,11 @@ body.quiz-active #search { display: none; }
   #layersPanel .lp-row { min-height: 44px; font-size: 15px; }
   #layersPanel .lp-pins label, #layersPanel .lp-routes { min-height: 44px; }
   #layersPanel .lp-clear { min-height: 40px; min-width: 64px; font-size: 14px; }
+  #layersPanel .lp-browse { font-size: 15px; }
+  #layersPanel .lr-item { min-height: 44px; font-size: 15px; }
+  #layersPanel .lr-years { font-size: 12px; }
+  /* Open, the panel is above a card (both drop in under the search row). */
+  #modesPanel:not(.collapsed) { z-index: 11; }
 
   /* Country / event card: full width under the search row, globe stays
      visible below it; big close target in the corner */

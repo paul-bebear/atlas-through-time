@@ -167,6 +167,7 @@ async function boot() {
   let pickTerritory = () => {};    // us-territorial path click (late-bound like pickFeature)
   let pickCity = () => {};         // city label click (late-bound)
   let openRoute = () => {};        // route line or label click (late-bound)
+  let chosenRoute = null;          // the route whose card is open: highlighted like a link's routes
   let openLinkPin = () => {};      // a link pin's click (late-bound)
   let layersPanel = null;          // assigned at the end of boot; onChange fires before that
   let quiz = null;                 // assigned at the end of boot
@@ -276,8 +277,11 @@ async function boot() {
   // chip, the story bar, the timeline), in portrait and in landscape alike.
   // On desktop only a link's fit (`fit` "link") uses it, clear of the top row and
   // the bottom panels (timeline, chip, story bar); the side panels leave the middle open.
+  // A route's fit (`fit` "route", a route chosen or tapped) also uses it on desktop: the
+  // same band, and beside the open layers panel and the card.
   const COVERS = ["menuBtn", "topbar", "searchInput", "modesPanel", "infoCard", "linkChip", "storyBar", "timeline"];
   const DESKTOP_COVERS = ["menuBtn", "topbar", "searchInput", "linkChip", "storyBar", "timeline"];
+  const DESKTOP_SIDES = ["modesPanel", "infoCard"];
   // `fit`: for framing a set of points (fitted as a circle, see frameFor) the
   // box whose shorter side is longest wins, not the largest one: a wide strip
   // under a peek card would shrink the view to its height.
@@ -285,20 +289,24 @@ async function boot() {
     const g = document.getElementById("globe").getBoundingClientRect();
     const whole = { l: g.left, r: g.right, t: g.top, b: g.bottom };
     const phone = phoneLayout();
-    if (!phone && fit !== "link") return { g, box: whole };
+    if (!phone && fit !== "link" && fit !== "route") return { g, box: whole };
     const m = 6;
-    const obs = (phone ? COVERS : DESKTOP_COVERS).map(id => document.getElementById(id)).filter(e => e && !e.hidden && e.getClientRects().length)
+    const rects = ids => ids.map(id => document.getElementById(id)).filter(e => e && !e.hidden && e.getClientRects().length)
       .map(e => e.getBoundingClientRect()).filter(r => r.width && r.height)
-      .map(r => ({ l: r.left - m, r: r.right + m, t: r.top - m, b: r.bottom + m }))
+      .map(r => ({ l: r.left - m, r: r.right + m, t: r.top - m, b: r.bottom + m }));
+    const obs = phone ? rects(COVERS)
       // Desktop: each cover counts across the full width, so a fit takes the open
       // band between the top row and the chip, centred, not a taller box beside the chip.
-      .map(o => phone ? o : { ...o, l: g.left, r: g.right });
+      : [...rects(DESKTOP_COVERS).map(o => ({ ...o, l: g.left, r: g.right })), ...(fit === "route" ? rects(DESKTOP_SIDES) : [])];
     const xs = [...new Set([g.left, g.right, ...obs.flatMap(o => [o.l, o.r])])].filter(x => x >= g.left && x <= g.right).sort((a, b) => a - b);
     const ys = [...new Set([g.top, g.bottom, ...obs.flatMap(o => [o.t, o.b])])].filter(y => y >= g.top && y <= g.bottom).sort((a, b) => a - b);
     let box = null, best = 0;
+    // A route needs width for its name and its stops' names beside the line, so a
+    // narrow strip beside the chip is no place for it, however tall.
+    const minW = fit === "route" ? Math.min(240, g.width * 0.6) : 80;
     for (let i = 0; i < xs.length; i++) for (let j = i + 1; j < xs.length; j++) {
       const w = xs[j] - xs[i];
-      if (w < 80) continue;
+      if (w < minW) continue;
       for (let k = 0; k < ys.length; k++) for (let n = k + 1; n < ys.length; n++) {
         const h = ys[n] - ys[k];
         const sc = fit ? Math.min(w, h) + w * h * 1e-6 : w * h;
@@ -311,12 +319,14 @@ async function boot() {
     return { g, box: box || whole };
   }
   function aimFor(lat, lng, altitude, fit = false) {
-    if (!phoneLayout() && fit !== "link") return { lat, lng };
+    if (!phoneLayout() && fit !== "link" && fit !== "route") return { lat, lng };
     const { g, box } = visibleBox(fit);
     // The pin's label stands ~35 px above its dot: aim the dot a little low,
     // never so high that the label goes under whatever is above the box.
+    // A route has no pin: its middle goes to the middle of the box.
     const px = (box.l + box.r) / 2;
-    const py = Math.max(Math.min(box.t + 48, box.b - 12), Math.min(box.b - 12, (box.t + box.b) / 2 + 18));
+    const py = fit === "route" ? (box.t + box.b) / 2
+      : Math.max(Math.min(box.t + 48, box.b - 12), Math.min(box.b - 12, (box.t + box.b) / 2 + 18));
     const s = Math.tan(25 * Math.PI / 180) / (g.height / 2);   // 50° vertical field of view
     const k = 1 + altitude;                                    // camera distance in globe radii
     // Angle on the globe between the view centre and a point drawn `d` px off centre.
@@ -338,17 +348,21 @@ async function boot() {
     globe.flyTo(a.lat, a.lng, altitude, ms);
   }
   // A set of points (a link's pins, polities or routes) framed into the visible part.
-  // `link`: what a link brings, framed into the band on desktop too.
+  // `link`: what a link brings, framed into the band on desktop too; "route": one
+  // route, framed close (routeFrame) into the band and beside the side panels.
+  const fitKind = link => link === "route" ? "route" : link ? "link" : true;
   function fitFor(points, minAlt, link = false) {
-    const { g, box } = visibleBox(link ? "link" : true);
-    const h = box.b - box.t, f = frameFor(points, (box.r - box.l) / h);
+    const { g, box } = visibleBox(fitKind(link));
+    const h = box.b - box.t, aspect = (box.r - box.l) / h;
+    const f = link === "route" ? routeFrame(points, aspect) : frameFor(points, aspect);
     const raw = f && f.altitude * g.height / h;     // before the cap: how high it would need to be
-    return f && { lat: f.lat, lng: f.lng, altitude: Math.max(minAlt, Math.min(3, raw)), raw };
+    const lo = link === "route" ? Math.max(minAlt, ROUTE_MIN_ALT) : minAlt;
+    return f && { lat: f.lat, lng: f.lng, altitude: Math.max(lo, Math.min(3, raw)), raw };
   }
   function flyToFit(points, minAlt = 0, link = false) {
     const f = fitFor(points, minAlt, link);
     if (!f) return false;
-    flyFramed(f.lat, f.lng, f.altitude, 1400, link ? "link" : true);
+    flyFramed(f.lat, f.lng, f.altitude, 1400, fitKind(link));
     aim.fit = { points, minAlt, link };
     return true;
   }
@@ -356,9 +370,25 @@ async function boot() {
   function reaim() {
     if (!aim) return;
     if (aim.fit) aim = { ...fitFor(aim.fit.points, aim.fit.minAlt, aim.fit.link), fit: aim.fit };
-    const a = aimFor(aim.lat, aim.lng, aim.altitude, aim.fit ? (aim.fit.link ? "link" : true) : false);
+    const a = aimFor(aim.lat, aim.lng, aim.altitude, aim.fit ? fitKind(aim.fit.link) : false);
     globe.flyTo(a.lat, a.lng, aim.altitude, 600);
   }
+  // One route, close up: the box around its points with a little padding, without the
+  // floors a link's fit keeps (a route 150 km long would be a few px at those).
+  // Not lower than ROUTE_MIN_ALT, where the globe's imagery is still readable.
+  const ROUTE_MIN_ALT = 0.18;
+  function routeFrame(points, aspect = 1, pad = 1.35) {
+    if (!points.length) return null;
+    const lng0 = points[0].lng;
+    const lngs = points.map(p => lng0 + ((p.lng - lng0 + 540) % 360) - 180), lats = points.map(p => p.lat);
+    const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
+    const lng = ((Math.min(...lngs) + Math.max(...lngs)) / 2 + 540) % 360 - 180;
+    const dLat = Math.max(...lats) - Math.min(...lats);
+    const dLng = (Math.max(...lngs) - Math.min(...lngs)) * Math.cos(lat * Math.PI / 180);
+    const half = Math.max(0.4, Math.hypot(dLat, dLng) / 2 * pad) * Math.PI / 180;
+    return { lat, lng, altitude: half / (Math.tan(25 * Math.PI / 180) * Math.min(1, aspect)) };
+  }
+  const flyToRoute = r => flyToFit(r.points.map(([lng, lat]) => ({ lat, lng })), 0, "route");
   new ResizeObserver(() => { if (phoneLayout() && !infoCardEl.hidden) reaim(); }).observe(infoCardEl);
   let reaimTimer = null;
   addEventListener("resize", () => { clearTimeout(reaimTimer); reaimTimer = setTimeout(reaim, 300); });
@@ -409,10 +439,13 @@ async function boot() {
     const inUse = r => (r.from == null || y >= r.from) && (r.to == null || y <= r.to);
     // Routes a link highlights stay drawn outside their years (greyed, with dates).
     const active = tradeRoutes.filter(r => inUse(r) || linkRoutes.has(r.id));
-    const sig = active.map(r => r.id + (inUse(r) ? "" : "~")).join("|") + "#" + [...linkRoutes].join("|");
+    // The route whose card is open is highlighted too, while it is drawn.
+    const hl = new Set(linkRoutes);
+    if (chosenRoute && active.includes(chosenRoute)) hl.add(chosenRoute.id);
+    const sig = active.map(r => r.id + (inUse(r) ? "" : "~")).join("|") + "#" + [...hl].join("|");
     if (sig === tradeSig) return;
     tradeSig = sig;
-    globe.setTradeRoutes(active, { highlight: linkRoutes, year: y });
+    globe.setTradeRoutes(active, { highlight: hl, year: y });
     tradeDrawn = true;
     state.layers.trade.count = active.length;
     layersPanel?.updateCounts();
@@ -490,6 +523,7 @@ async function boot() {
 
       refreshCities(year);
       refreshTrade(year);
+      layersPanel?.updateRoutes();
 
       // Events layer (gated). Disabled → render empty so existing points clear.
       const vis = events && state.layers.events.enabled ? events.forYear(year) : [];
@@ -559,7 +593,15 @@ async function boot() {
   // A closed card stays closed while the year steps; the selection's tint and
   // slider span stay, and any new pick (a fresh selection) opens the card again.
   // Closing the card also takes the selection's pin away (and nothing brings the card back).
-  card = createInfoCard({ countries, onDismiss: () => { if (selection) selection.dismissed = true; setSelPins([]); aim = null; } });
+  // A route's card closed by the visitor: the camera aims again into the room the card leaves.
+  card = createInfoCard({ countries,
+    onDismiss: () => { if (selection) selection.dismissed = true; setSelPins([]); if (aim?.fit?.link === "route") reaim(); aim = null; },
+    onRoute: r => {
+      chosenRoute = r;
+      tradeSig = null;
+      refreshTrade(state.year);
+      layersPanel?.updateRoutes();
+    } });
   buildLegend();
   initPanel();
 
@@ -715,14 +757,32 @@ async function boot() {
     card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
   };
 
-  // A highlighted route's card. The link's pins, routes, era band and the
-  // selection's tint stay; a year step re-renders the route's card, not the polity's.
-  openRoute = r => {
+  // A route's card (a tap or click on its line or name). The link's pins, routes, era
+  // band and the selection's tint stay; a year step re-renders the route's card, not
+  // the polity's. On a phone the card first opens as a one-line peek, so the route
+  // shows; the route is framed into the part of the globe left free.
+  openRoute = (r, fromList = false) => {
     if (state.mode === "map-quiz" || !r) return;
-    selection = { names: selection?.names || [], fromLink: selection?.fromLink, render: y => card.openRoute(r, y) };
+    selection = { names: selection?.names || [], fromLink: fromList ? false : selection?.fromLink, render: y => card.openRoute(r, y) };
+    if (phoneLayout() && card.route() !== r) card.peek();
     selection.render(state.year);
-    // On a phone the card covers the top: bring the route into what is left.
-    if (phoneLayout()) flyToFit(r.points.map(([lng, lat]) => ({ lat, lng })));
+    flyToRoute(r);
+  };
+  // A route chosen from the list: the layer turns on (the visitor's own choice, so Clear
+  // keeps it), the year moves into the route's years if it is outside them (to the
+  // nearest year it was in use), and its card opens. A mode that cannot show routes
+  // (the quiz, US territorial growth) gives way to Discovery first.
+  const pickRoute = r => {
+    if (!r) return;
+    if (state.mode === "map-quiz") quiz.exit();
+    exitTerritory();
+    if (!state.layers.trade.enabled) state.layers.trade.enabled = true;
+    tradeByLink = false;
+    layersPanel.refresh(); updateLinkChip();
+    const y = Math.max(r.from ?? SLIDER_MIN, Math.min(r.to ?? SLIDER_MAX, state.year));
+    tradeSig = null;
+    timeline.setYear(y);
+    openRoute(r, true);
   };
 
   // A link's pin: its own card. Nothing the link brought is dropped.
@@ -1007,6 +1067,9 @@ async function boot() {
   // `let` because onChange fires (and null-chains) before this line runs.
   layersPanel = createLayersPanel({
     state,
+    routes: () => tradeRoutes || [],
+    chosen: () => chosenRoute?.id ?? null,
+    onRoutePick: r => pickRoute(r),
     onModeChange: mode => {
       if (mode === state.mode) return;
       if (state.mode === "map-quiz") quiz.exit();       // tear down quiz before any switch

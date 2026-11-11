@@ -1,4 +1,4 @@
-// Left-drawer panel: mode radio + layer checkboxes.
+// Left-drawer panel: the routes (layer toggle and the list of every route), mode radio, layer checkboxes.
 // View-only: emits onModeChange / onLayerToggle callbacks. State mutation
 // happens in main.js (so e.g. entering us-territorial via the radio routes
 // through the same selectCurated() path as the search bar).
@@ -16,10 +16,19 @@ const LAYERS = [
   { id: "cities",  label: "Cities" },
   { id: "events",  label: "Events" },
   { id: "wars",    label: "Wars" },
-  { id: "trade",   label: "Trade routes" },
 ];
 
-export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
+// "1000–586 BCE", "130 BCE – 1450 CE".
+const years = (a, b) => {
+  const era = y => y < 0 ? "BCE" : "CE";
+  return era(a) === era(b) ? `${Math.abs(a)}–${Math.abs(b)} ${era(a)}` : `${Math.abs(a)} ${era(a)} – ${Math.abs(b)} ${era(b)}`;
+};
+const yr = y => y < 0 ? Math.abs(y) + " BCE" : y + " CE";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// `routes()`: the route registry; `onRoutePick(route)`: a route chosen from the list;
+// `chosen()`: the id of the route whose card is open.
+export function createLayersPanel({ state, onModeChange, onLayerToggle, routes = () => [], onRoutePick, chosen = () => null } = {}) {
   const root = document.getElementById("layersPanel");
   if (!root) return { refresh: () => {}, updateCounts: () => {} };
 
@@ -35,6 +44,53 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
     title.innerHTML += `<span class="modes-chev">▾</span>`;
     title.onclick = () => aside.classList.toggle("collapsed");
     if (compact()) aside.classList.add("collapsed");
+  }
+
+  // The list of every route, grouped by the timeline year. One node for the panel's
+  // lifetime, put back after each re-render; its rows are rebuilt only when the
+  // grouping changes, so a finger on a row never lands on a replaced one.
+  const list = document.createElement("div");
+  list.className = "lp-route-list";
+  list.hidden = true;
+  list.addEventListener("click", e => {
+    const b = e.target.closest?.(".lr-item");
+    const r = b && routes().find(x => x.id === b.dataset.id);
+    if (!r) return;
+    if (compact()) aside?.classList.add("collapsed");   // on a phone the open panel covers the globe
+    onRoutePick?.(r);
+  });
+  let listSig = null;
+  function updateRoutes() {
+    const all = routes() || [];
+    const y = state.year;
+    const on = r => (r.from == null || y >= r.from) && (r.to == null || y <= r.to);
+    const by = (a, b) => (a.from ?? -1e9) - (b.from ?? -1e9);
+    const now = all.filter(on).sort(by), other = all.filter(r => !on(r)).sort(by);
+    const pick = chosen();
+    const sig = now.map(r => r.id).join() + "|" + pick;
+    const head = `In use in ${yr(y)}`;
+    if (sig === listSig) { const h = list.querySelector(".lr-now"); if (h && h.textContent !== head) h.textContent = head; return; }
+    listSig = sig;
+    const item = r => `<button type="button" class="lr-item${r.id === pick ? " is-on" : ""}" data-id="${esc(r.id)}"${r.id === pick ? ` aria-current="true"` : ""}>
+        <span class="lr-sw" style="--c:${esc(r.color || "#9aa3ad")}"></span><span class="lr-name">${esc(r.name)}</span>
+        <span class="lr-years">${r.from != null && r.to != null ? years(r.from, r.to) : ""}</span></button>`;
+    list.innerHTML = `<div class="lr-group lr-now">${head}</div>`
+      + (now.length ? now.map(item).join("") : `<div class="lr-none">None</div>`)
+      + (other.length ? `<div class="lr-group">Other periods</div>${other.map(item).join("")}` : "");
+  }
+  // Opens the panel on the list (the "See routes" of the globe's hint).
+  function showRoutes() {
+    aside?.classList.remove("collapsed");
+    setOpen(true);
+    (aside?.querySelector(".lp-browse") || list).scrollIntoView({ block: "nearest" });
+  }
+  let open = false;
+  function setOpen(v) {
+    open = v;
+    list.hidden = !v;
+    const b = root.querySelector(".lp-browse");
+    if (b) b.setAttribute("aria-expanded", String(v));
+    if (v) updateRoutes();
   }
 
   const countOf = id => {
@@ -75,11 +131,25 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
         <span class="lp-count lp-rcount">${state.layers.trade?.enabled ? lk.routes : `${lk.routes} · layer off`}</span>
         ${lk.count ? "" : clearBtn}
       </div>` : "");
+    const tr = state.layers.trade || {}, n = (routes() || []).length;
+    const routesSec = n ? `
+      <div class="lp-section lp-routes-sec">
+        <div class="lp-heading">Routes</div>
+        <label class="lp-row">
+          <input type="checkbox" name="lp-layer" value="trade" ${tr.enabled ? "checked" : ""}>
+          <span>Trade routes</span>
+          <span class="lp-count" data-count="trade">${countOf("trade")}</span>
+        </label>
+        <button type="button" class="lp-row lp-browse" aria-expanded="${open}">
+          <span>Browse all ${n} routes</span><span class="lp-chev" aria-hidden="true">▸</span>
+        </button>
+        <div class="lp-route-slot"></div>
+      </div>` : "";
     const html = `${pins ? `
       <div class="lp-section">
         <div class="lp-heading">From the link you opened</div>
         ${pins}
-      </div>` : ""}
+      </div>` : ""}${routesSec}
       <div class="lp-section">
         <div class="lp-heading">Mode</div>
         ${modes}
@@ -94,7 +164,11 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
     // already on one (a Clear tap then lands on a detached node and is lost).
     if (html === lastHtml) return;
     lastHtml = html;
+    list.remove();
     root.innerHTML = html;
+    root.querySelector(".lp-route-slot")?.replaceWith(list);
+    const browse = root.querySelector(".lp-browse");
+    if (browse) browse.onclick = () => setOpen(!open);
     root.querySelectorAll('input[name="lp-mode"]').forEach(el => {
       el.onchange = () => {
         // On phones the open panel would cover the mode's own UI.
@@ -113,12 +187,13 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle } = {}) {
   // re-render (that would rebuild inputs mid-interaction).
   function updateCounts() {
     root.querySelectorAll(".lp-count[data-count]").forEach(el => {
-      el.textContent = countOf(el.dataset.count);
+      const t = String(countOf(el.dataset.count));
+      if (el.textContent !== t) el.textContent = t;
     });
   }
 
   // onClearPins is assigned by main.js once the link view is wired.
-  const api = { refresh: render, updateCounts, onClearPins: null };
+  const api = { refresh: render, updateCounts, updateRoutes: () => { if (open) updateRoutes(); }, showRoutes, onClearPins: null };
   render();
   return api;
 }
