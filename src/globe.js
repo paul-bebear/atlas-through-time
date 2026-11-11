@@ -39,7 +39,9 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .polygonSideColor(() => "rgba(0,0,0,0)")
     // One HTML layer: city labels plus map pins, one array tagged by kind.
     .htmlElement(d => d.kind === "pin" ? pinEl(d) : cityEl(d))
-    .htmlAltitude(d => d.kind === "pin" ? 0.035 : 0)
+    // A route's name and stops sit at its line's height, so close up (a route framed
+    // from 0.2 radii, seen at a slant) they stay on the line instead of drifting off it.
+    .htmlAltitude(d => d.kind !== "pin" ? 0 : d.route ? 0.016 : 0.035)
     .pointLat(d => d.lat).pointLng(d => d.lng)
     .pointColor(d => d._color)
     .pointAltitude(0.006)
@@ -123,32 +125,55 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     declutterSoon();
   };
 
-  // A highlighted route's name sits on its line where it is farthest from the
-  // other pins and the cities (not on Damascus or Jerusalem), within its middle.
+  // A route's name sits on its line where it is farthest from the other pins and
+  // the cities (not on Damascus or Jerusalem), within its middle. Names already
+  // placed count too, but only nearby (within 2°), so routes that run side by side
+  // (Tyre to Joppa and Tyre to Jerusalem) are named at different points.
   function placeRouteNames() {
     const names = (htmlPins.get("route") || []).filter(d => d.along);
     if (!names.length) return;
     const others = [...(htmlPins.get("sel") || []), ...(htmlPins.get("link") || []), ...htmlCities];
+    const placed = [];
     for (const d of names) {
       let best = null, bestD = -1;
       for (const t of [0.5, 0.4, 0.6, 0.3, 0.7]) {
         const p = midway(d.route.points, t);
         const k = Math.cos(p.lat * Math.PI / 180);
-        const dist = Math.min(9, ...others.map(o => Math.hypot(o.lat - p.lat, (o.lng - p.lng) * k)));
+        const far = o => Math.hypot(o.lat - p.lat, (o.lng - p.lng) * k);
+        const dist = Math.min(9, ...others.map(far), ...placed.map(o => far(o) < 2 ? far(o) : 9));
         if (dist > bestD + 0.05) { best = p; bestD = dist; }
       }
       d.lat = best.lat; d.lng = best.lng;
+      placed.push(best);
     }
   }
 
   // Label de-collision. Labels are placed greedily by importance (the selected
-  // polities, the link's pins, route names, a route's open end, its stops, city
-  // names). Each keeps its own side if that is free, else tries the others. The
-  // first four kinds always show: with no free side they move further out along
-  // a short leader line (stacking beside a neighbour), and only if nothing is free
-  // do they keep their own side. Stops and city names give way: they hide.
+  // polities, the link's pins, highlighted route names, a route's open end, the
+  // names of the other routes, its stops, city names). Each keeps its own side if
+  // that is free, else tries the others. The first four kinds always show: with no
+  // free side they move further out along a short leader line (stacking beside a
+  // neighbour), and only if nothing is free do they keep their own side. The other
+  // routes' names may move out the same way while no route is highlighted, and
+  // otherwise hide; stops and city names give way: they hide.
+  // A route drawn shorter than SHORT px on screen gets a ring at its name's
+  // anchor, so its name is plainly attached to something on the globe; the ring
+  // goes with the name when the name hides.
   // Reads all positions first, then writes; at most ~10 times a second.
   const RANK = { sel: 0, link: 1, route: 2, "route-end": 3, wpt: 4 };
+  const SHORT = 44;
+  // The on-screen size (bounding box diagonal, px) of a route's near-side points.
+  function screenSize(r) {
+    const cam = world.camera().position;
+    let l = Infinity, t = Infinity, rr = -Infinity, b = -Infinity;
+    for (const [lng, lat] of r.points) {
+      const g = world.getCoords(lat, lng, 0.016);
+      if (g.x * cam.x + g.y * cam.y + g.z * cam.z <= g.x * g.x + g.y * g.y + g.z * g.z) continue;
+      const s = world.getScreenCoords(lat, lng, 0.016);
+      l = Math.min(l, s.x); rr = Math.max(rr, s.x); t = Math.min(t, s.y); b = Math.max(b, s.y);
+    }
+    return rr < l ? 0 : Math.hypot(rr - l, b - t);
+  }
   const measure = document.createElement("canvas").getContext("2d");
   const textW = new Map();
   let dcTimer = null, dcLast = 0;
@@ -167,11 +192,15 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       if (a.right < box.left || a.left > box.right || a.bottom < box.top || a.top > box.bottom) continue;
       const style = d.style.split(" ")[0];
       e.classList.toggle("pin-on-city", !!d.onCity);
+      const short = style === "route" && d.along && screenSize(d.route) < SHORT;
+      e.classList.toggle("pin-short", short);
+      // The ring is not an obstacle: the labels around it are laid out as without it.
       const r = style === "wpt" ? 3 : style === "route" ? 0 : 6;
       if (r) dots.push({ l: a.left - r, r: a.left + r, t: a.top - r, b: a.top + r, e });
       // A route's first and last stop are named like its open end: moved out, never hidden.
       if (lab && d.label) items.push({ e, x: a.left, y: a.top, w: lab.offsetWidth, h: lab.offsetHeight,
-        rank: style === "wpt" && d.end ? RANK["route-end"] : RANK[style] ?? 5, side: d.side || "up", style });
+        rank: d.quiet ? (d.dim ? 4.5 : 3.5) : style === "wpt" && d.end ? RANK["route-end"] : RANK[style] ?? 5,
+        mayMove: d.quiet && !d.dim, side: d.side || "up", style });
     }
     {
       // A city standing in for a stop in the middle of a highlighted route is named
@@ -241,8 +270,9 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       const sides = [it.side, ...["up", "right", "down", "left"].filter(s => s !== it.side)];
       const side = sides.find(s => free(rects(s)(it)));
       if (side) { placed.push(rects(side)(it)); out.push([it, side === it.side ? "" : side]); continue; }
-      if (it.rank > 3) { out.push([it, "hide"]); continue; }
+      if (it.rank > 3 && !it.mayMove) { out.push([it, "hide"]); continue; }
       const r = moved(it).find(free);
+      if (!r && it.mayMove) { out.push([it, "hide"]); continue; }
       if (!r) { placed.push(rects(it.side)(it)); out.push([it, ""]); continue; }
       placed.push(r);
       out.push([it, "free", r]);
@@ -316,11 +346,11 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     .pathDashAnimateTime(d => d.animate ? d.animMs ?? 14000 : 0)
     .pathLabel(tip(d => d.name ? `<b>${d.name}</b>` : ""))
     .onPathHover(p => { el.style.cursor = p ? "pointer" : "grab"; })
-    // Territory outlines resolve to a polity card; a highlighted trade route opens its own card.
+    // Territory outlines resolve to a polity card; a trade route opens its own card.
     .onPathClick(d => {
       if (touch.isTouch() || lastPointClick >= lastPress) return;
       if (d?.kind === "territory" && d.name) onTerritoryClick?.(d.name, d);
-      else if (d?.kind === "trade" && d.hl) onRouteClick?.(d.route);
+      else if (d?.kind === "trade") onRouteClick?.(d.route);
     })
     .pathTransitionDuration(0);
 
@@ -412,10 +442,11 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     clearTerritoryOutlines() { world.pathsData([]); if (htmlPins.delete("route")) pushHtml(); },
     // Trade routes ride the same paths layer as territory outlines, but the
     // two are never on together (territory is its own mode), so sharing is safe.
-    // `highlight` (ids from a link) draws those routes thicker, with a name label;
+    // Every route is named. `highlight` (ids from a link, and the route whose card
+    // is open) draws those routes thicker, with their stops and ends named;
     // a highlighted route not in use in `year` is grey, its label giving its dates.
-    // While some are highlighted, the others are dimmed. An open end (a last
-    // waypoint with `open: true`) fades out instead of ending on a place.
+    // While some are highlighted, the others and their names are dimmed. An open end
+    // (a last waypoint with `open: true`) fades out instead of ending on a place.
     setTradeRoutes(routes, { highlight = new Set(), year = null } = {}) {
       const list = routes || [];
       const inUse = r => year == null || ((r.from == null || year >= r.from) && (r.to == null || year <= r.to));
@@ -460,6 +491,13 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
             end: j === 0 || j === r.waypoints.length - 1 });
         });
       });
+      // The other routes: their name only, quieter, and dimmed while some are highlighted.
+      for (const r of list) {
+        if (highlight.has(r.id)) continue;
+        const { lat, lng } = midway(r.points);
+        labels.push({ kind: "pin", style: "route pin-route-quiet" + (highlight.size ? " pin-route-dim" : ""), key: "rq-" + r.id,
+          side: "right", lat, lng, route: r, along: true, quiet: true, dim: highlight.size > 0, color: r.color, label: r.name });
+      }
       htmlPins.set("route", labels);
       pushHtml();
     },

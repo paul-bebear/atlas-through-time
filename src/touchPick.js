@@ -6,7 +6,7 @@
 // lifted: city dots and names first, then event dots within a finger-sized
 // radius, then territory outlines, then border polygons.
 // Mouse and pen input keep globe.gl's own click path, except for the labels
-// of a link's pins and highlighted routes (`labels`), which no layer of
+// of a link's pins and the routes (`labels`), which no layer of
 // globe.gl hit-tests: a click or tap on one goes to onLabel for any input.
 
 const TAP_SLOP = 10;        // px the finger may wander and still count as a tap
@@ -16,7 +16,7 @@ const CITY_RADIUS = 16;     // px around a city dot while names show; the name c
 const DOT_RADIUS = 6;       // zoomed out (names hidden): only a tap on the dot itself
 
 const LABEL_PAD = 6;        // px around a tappable label or pin dot that still counts
-const ROUTE_RADIUS = 12;    // px from a highlighted route's line that counts as a tap on it
+const ROUTE_RADIUS = 12;    // px from a trade route's line that counts as a tap on it
 
 export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity, cities, labels = () => [], onLabel, onRoute }) {
   let lastType = "mouse";
@@ -80,12 +80,12 @@ export function installTouchPick(world, el, { onPoint, onPolygon, onPath, onCity
     if (best) onPolygon(best);          // ocean: nothing is selected
   }
 
-  // A highlighted trade route whose line passes within ROUTE_RADIUS of the finger.
+  // A trade route whose line passes within ROUTE_RADIUS of the finger.
   function routeAt(x, y) {
     const cam = world.camera().position;
     let best = null, bestD = ROUTE_RADIUS;
     for (const p of world.pathsData()) {
-      if (p.kind !== "trade" || !p.hl) continue;
+      if (p.kind !== "trade") continue;
       let prev = null;
       for (const [lat, lng, alt] of p.points) {
         const g = world.getCoords(lat, lng, alt);
