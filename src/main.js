@@ -179,6 +179,7 @@ async function boot() {
     state.lastSig = null;
     globe.clearTerritoryOutlines();
     tradeSig = null;                  // territory just wiped the shared paths layer
+    tradeDrawn = false;
     setSelPins([]);                   // the USA's or a territory's pin goes with the mode
     layersPanel?.refresh();
     return true;
@@ -390,9 +391,21 @@ async function boot() {
   // were actually in use. Shares the globe's paths layer with territory mode,
   // which is fine — the two modes are mutually exclusive.
   let tradeSig = null;
+  let tradeDrawn = false;                        // route lines are on the paths layer now
+  // Takes the route lines off, unless territory mode owns the paths layer
+  // (its outlines are on it then, and leaving the mode clears it anyway).
+  const clearTrade = () => {
+    tradeSig = null;
+    if (state.mode === "us-territorial") return;
+    globe.setTradeRoutes([]);
+    tradeDrawn = false;
+  };
+  // Drawn in every mode but territory, so the lines always match the layer's tick and the year.
   const refreshTrade = y => {
-    if (state.mode !== "discovery") return;      // territory owns the paths layer
-    if (!tradeRoutes || !state.layers.trade.enabled) return;
+    if (state.mode === "us-territorial") return;   // territory owns the paths layer
+    // Unticked: no line may stay drawn, whatever happened in another mode.
+    if (!state.layers.trade.enabled) { if (tradeDrawn) clearTrade(); return; }
+    if (!tradeRoutes) return;
     const inUse = r => (r.from == null || y >= r.from) && (r.to == null || y <= r.to);
     // Routes a link highlights stay drawn outside their years (greyed, with dates).
     const active = tradeRoutes.filter(r => inUse(r) || linkRoutes.has(r.id));
@@ -400,6 +413,7 @@ async function boot() {
     if (sig === tradeSig) return;
     tradeSig = sig;
     globe.setTradeRoutes(active, { highlight: linkRoutes, year: y });
+    tradeDrawn = true;
     state.layers.trade.count = active.length;
     layersPanel?.updateCounts();
   };
@@ -1031,7 +1045,7 @@ async function boot() {
         tradeSig = null;
         if (enabled) refreshTrade(state.year);
         else {
-          if (state.mode === "discovery") globe.setTradeRoutes([]);   // territory owns the paths layer
+          clearTrade();
           state.layers.trade.count = null;
           layersPanel.updateCounts();
         }
@@ -1146,8 +1160,7 @@ async function boot() {
       // The layer was off before the link: off again, as the visitor had it.
       tradeByLink = false;
       state.layers.trade.enabled = false;
-      tradeSig = null;
-      if (state.mode === "discovery") globe.setTradeRoutes([]);   // territory owns the paths layer
+      clearTrade();
       state.layers.trade.count = null;
       layersPanel.refresh();
       layersPanel.updateCounts();
