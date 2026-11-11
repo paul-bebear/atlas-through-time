@@ -5,6 +5,79 @@
 
 import { parseLink, spanLabel, frameFor } from "../src/linkView.js";
 
+// Regression: links read on main at 3f78295, before encoded separators were
+// accepted, with the result that parser gave (generated from it, not edited).
+const BEFORE = [
+  ["#v=2&year=-950&span=-970,-931&qid=Q3185305,Q41642&pins=@33.27,35.20~Tyrus;@29.55,34.98~Ezion-geber;@29.56,34.95~Elath&route=tyre-jerusalem,levant-red-sea",
+   "{\"year\":-950,\"span\":[-970,-931],\"qids\":[\"Q3185305\",\"Q41642\"],\"pins\":[{\"id\":null,\"lat\":33.27,\"lng\":35.2,\"label\":\"Tyrus\"},{\"id\":null,\"lat\":29.55,\"lng\":34.98,\"label\":\"Ezion-geber\"},{\"id\":null,\"lat\":29.56,\"lng\":34.95,\"label\":\"Elath\"}],\"routes\":[\"tyre-jerusalem\",\"levant-red-sea\"],\"scene\":null,\"at\":null}"],
+  ["#v=2&year=-950&span=-970,-931&qid=Q3185305,Q41642&pins=@33.27,35.20~Tyre;@29.56,34.95~Elath;@29.48,34.98~Ezion-Geber&route=levant-red-sea,tyre-jerusalem",
+   "{\"year\":-950,\"span\":[-970,-931],\"qids\":[\"Q3185305\",\"Q41642\"],\"pins\":[{\"id\":null,\"lat\":33.27,\"lng\":35.2,\"label\":\"Tyre\"},{\"id\":null,\"lat\":29.56,\"lng\":34.95,\"label\":\"Elath\"},{\"id\":null,\"lat\":29.48,\"lng\":34.98,\"label\":\"Ezion-Geber\"}],\"routes\":[\"levant-red-sea\",\"tyre-jerusalem\"],\"scene\":null,\"at\":null}"],
+  ["#v=2&year=-950",
+   "{\"year\":-950,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&year=-44&at=41.89,12.49,1.5",
+   "{\"year\":-44,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":{\"lat\":41.89,\"lng\":12.49,\"altitude\":1.5}}"],
+  ["#v=2&span=-30,14&qid=Q2277",
+   "{\"year\":null,\"span\":[-30,14],\"qids\":[\"Q2277\"],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&route=levant-red-sea",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[\"levant-red-sea\"],\"scene\":null,\"at\":null}"],
+  ["#v=2&qid=Q41642",
+   "{\"year\":null,\"span\":null,\"qids\":[\"Q41642\"],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=pleiades:678378@33.27,35.20~Tyrus;atlas:jerusalem@31.78,35.22;wikidata:Q3185305@31.77,35.23~Temple%20Mount",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":\"pleiades:678378\",\"lat\":33.27,\"lng\":35.2,\"label\":\"Tyrus\"},{\"id\":\"atlas:jerusalem\",\"lat\":31.78,\"lng\":35.22,\"label\":null},{\"id\":\"wikidata:Q3185305\",\"lat\":31.77,\"lng\":35.23,\"label\":\"Temple Mount\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@31.78,35.22~Jerusalem%2C%20Old%20City",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":31.78,\"lng\":35.22,\"label\":\"Jerusalem, Old City\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@5,6~a%3Bb%40c%7Ed",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":5,\"lng\":6,\"label\":\"a;b@c~d\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@5,6~a%3Bb",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":5,\"lng\":6,\"label\":\"a;b\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@5,6~a%2Cb",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":5,\"lng\":6,\"label\":\"a,b\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@5,6~a%40b;@7,8~c%7Ed",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":5,\"lng\":6,\"label\":\"a@b\"},{\"id\":null,\"lat\":7,\"lng\":8,\"label\":\"c~d\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@5,6~Ezion+Geber",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":5,\"lng\":6,\"label\":\"Ezion Geber\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@5,6~a,b,c~d@e",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":5,\"lng\":6,\"label\":\"a,b,c~d@e\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@-33.8688,151.2093~Sydney&year=1788",
+   "{\"year\":1788,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":-33.8688,\"lng\":151.2093,\"label\":\"Sydney\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@1,2~%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E;@3,4~xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx;@5,6~a%3Bb%40c%7Ed;@7,8~%E0%A4%A;@9,9~line%0Abreak",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":1,\"lng\":2,\"label\":\"<img src=x onerror=alert(1)>\"},{\"id\":null,\"lat\":3,\"lng\":4,\"label\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"},{\"id\":null,\"lat\":5,\"lng\":6,\"label\":\"a;b@c~d\"},{\"id\":null,\"lat\":7,\"lng\":8,\"label\":null},{\"id\":null,\"lat\":9,\"lng\":9,\"label\":\"line break\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=pleiades:678378@33.27,35.20~Tyrus;atlas:jerusalem@31.78,35.22;foo:1@1,1;pleiades:@1,1;pleiades:a/b@1,1",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":\"pleiades:678378\",\"lat\":33.27,\"lng\":35.2,\"label\":\"Tyrus\"},{\"id\":\"atlas:jerusalem\",\"lat\":31.78,\"lng\":35.22,\"label\":null}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&qid=Q1,X2,Q0,Q3,Q4",
+   "{\"year\":null,\"span\":null,\"qids\":[\"Q1\",\"Q3\"],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&route=a,B!,b,c,d",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[\"a\",\"b\",\"c\"],\"scene\":null,\"at\":null}"],
+  ["#v=2&year=99999&span=-5000,9000&pins=@91,0~x;@0,181~y;@1e3,0;@0,0,0;@-89.9,179.9~ok&at=10,20,99",
+   "{\"year\":2025,\"span\":[-3000,2025],\"qids\":[],\"pins\":[{\"id\":null,\"lat\":-89.9,\"lng\":179.9,\"label\":\"ok\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&span=-900,-950",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&year=-950.5",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&at=31.5,35,1.2",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":{\"lat\":31.5,\"lng\":35,\"altitude\":1.2}}"],
+  ["#v=2&year=100&year=200&foo=bar",
+   "{\"year\":100,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&year=%2D950&span=-970%2C-931&at=31.5%2C35%2C1.2",
+   "{\"year\":-950,\"span\":[-970,-931],\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":{\"lat\":31.5,\"lng\":35,\"altitude\":1.2}}"],
+  ["#v=2&qid=Q1,Q1,Q2&route=a,a,b",
+   "{\"year\":null,\"span\":null,\"qids\":[\"Q1\",\"Q2\"],\"pins\":[],\"routes\":[\"a\",\"b\"],\"scene\":null,\"at\":null}"],
+  ["#v=2&scene=solomon-trade&year=-950",
+   "{\"year\":-950,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":\"solomon-trade\",\"at\":null}"],
+  ["#v=2&pins=@1,2~;@3,4~%20%20;@5,6~",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":1,\"lng\":2,\"label\":null},{\"id\":null,\"lat\":3,\"lng\":4,\"label\":null},{\"id\":null,\"lat\":5,\"lng\":6,\"label\":null}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=;;@1,2;;",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":1,\"lng\":2,\"label\":null}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=@1,2~T%C3%BDros%20%E2%80%94%20%D7%A6%D7%95%D7%A8",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":null,\"lat\":1,\"lng\":2,\"label\":\"Týros — צור\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&qid=&route=&pins=",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=atlas:jerusalem@31.78,35.22~a~b~c",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":\"atlas:jerusalem\",\"lat\":31.78,\"lng\":35.22,\"label\":\"a~b~c\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+  ["#v=2&pins=pleiades%3A678378@33.27,35.20~Tyrus",
+   "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":\"pleiades:678378\",\"lat\":33.27,\"lng\":35.2,\"label\":\"Tyrus\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
+];
+
 let failed = 0;
 const eq = (name, got, want) => {
   const g = JSON.stringify(got), w = JSON.stringify(want);
@@ -50,6 +123,9 @@ eq("encoded separators", markup.pins[2].label, "a;b@c~d");
 eq("bad encoding: label dropped, pin kept", markup.pins[3], { id: null, lat: 7, lng: 8, label: null });
 eq("control characters", markup.pins[4].label, "line break");
 eq("unknown keys ignored, first value wins", parseLink("#v=2&year=100&year=200&foo=bar").year, 100);
+
+const before = BEFORE.filter(([h, w]) => JSON.stringify(parseLink(h)) !== w);
+eq(`regression: ${BEFORE.length} links read as on main`, before.map(([h]) => h), []);
 
 eq("span label BCE", spanLabel([-970, -931]), "c. 970–931 BCE");
 eq("span label across 0", spanLabel([-30, 14]), "c. 30 BCE – 14 CE");
