@@ -319,17 +319,19 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
   position: absolute; top: calc(72px + var(--sat)); right: calc(18px + var(--sar)); z-index: 10;
   width: 320px; max-height: calc(100vh - 200px - var(--sat) - var(--sab)); overflow-y: auto;
   background: var(--panel); border: 1px solid var(--border);
-  border-radius: 14px; padding: 16px; backdrop-filter: blur(8px);
+  border-radius: 14px; padding: 16px 36px 16px 16px; backdrop-filter: blur(8px);
 }
 /* The × sticks to the card's top corner while a long card scrolls. It takes no
    room in the flow (its negative margins add up to zero), so the title sits as before.
-   Sticky offsets count from the card's padding edge, hence the negative top. */
+   Sticky offsets count from the card's padding edge, hence the negative top.
+   The card's right padding keeps a column free for it, so no line of text ever runs
+   under it; the title gives up its own right padding by as much, so it wraps as before. */
 #infoCard .cc-close { position: sticky; top: -12px; z-index: 1;
   display: flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; margin: -12px -12px -18px auto;
+  width: 30px; height: 30px; margin: -12px -32px -18px auto;
   border-radius: 8px; background: var(--panel);
   cursor: pointer; color: var(--muted); font-size: 18px; line-height: 1; }
-#infoCard h2 { margin: 0 6px 2px 0; font-size: 20px; padding-right: 18px; }
+#infoCard h2 { margin: 0 0 2px 0; font-size: 20px; padding-right: 4px; }
 #infoCard .cc-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
 #infoCard .cc-gone { margin: 0 0 10px; padding: 8px 10px; border-radius: 8px; background: rgba(139, 149, 161, 0.16);
   color: var(--text); font-size: 13px; }
@@ -705,11 +707,11 @@ body.quiz-active #search { display: none; }
   /* Country / event card: full width under the search row, globe stays
      visible below it; big close target in the corner */
   #infoCard { top: calc(var(--top) + 104px); left: var(--l); right: var(--r);
-    width: auto; padding: 14px;
+    width: auto; padding: 14px 46px 14px 14px;
     max-height: min(38dvh, calc(100dvh - var(--top) - 380px)); }
-  #infoCard .cc-close { top: -14px; width: 44px; height: 44px; margin: -14px -14px -30px auto; border-radius: 0 13px 0 12px;
+  #infoCard .cc-close { top: -14px; width: 44px; height: 44px; margin: -14px -46px -30px auto; border-radius: 0 13px 0 12px;
     font-size: 24px; }
-  #infoCard h2 { font-size: 18px; padding-right: 34px; }
+  #infoCard h2 { font-size: 18px; padding-right: 8px; }
   #infoCard img.cc-thumb { max-height: 120px; object-fit: cover; }
 
   /* Drawer */
