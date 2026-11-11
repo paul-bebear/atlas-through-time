@@ -51,7 +51,9 @@ const eraEl = document.getElementById("era");
 const contextEl = document.getElementById("context");
 const statusEl = document.getElementById("status");
 
+let contextSeq = 0;               // bumped by every setContext: whose text the top bar shows
 function setContext(text, selected = true) {
+  contextSeq++;
   contextEl.textContent = text;
   contextEl.classList.toggle("sel", selected);
 }
@@ -868,7 +870,7 @@ async function boot() {
   // A link's pin: its own card. Nothing the link brought is dropped.
   openLinkPin = p => {
     if (state.mode === "map-quiz" || !p) return;
-    selection = { names: selection?.names || [], fromLink: selection?.fromLink, render: () => card.openLinkPin(p) };
+    selection = { names: selection?.names || [], fromLink: selection?.fromLink, linkCard: true, render: () => card.openLinkPin(p) };
     selection.render(state.year);
   };
 
@@ -1317,7 +1319,8 @@ async function boot() {
     updateLinkChip();
   };
   // Clear takes away everything the link brought: its pins, route highlights,
-  // era band and fragment, and its polities while they are still the selection.
+  // era band and fragment, and its polities, whatever the visitor did in between.
+  // What the visitor chose themselves stays (a route from the list, a country).
   layersPanel.onClearPins = () => {
     if (!linkOn) return;
     linkOn = false;
@@ -1341,10 +1344,22 @@ async function boot() {
       card.close();
       timeline.clearOverlays();
       setContext(DEFAULT_CONTEXT, false);
-    } else if (ls?.quiet && ls.points.some(p => selPins.includes(p))) {
-      // The link's polities arrived beside the visitor's own pick: drop just them.
-      setSelPins(selPins.filter(p => !ls.points.includes(p)));
-      setSelection(selection?.names?.length ? [{ names: selection.names, side: "A" }] : []);
+    } else {
+      // The visitor has opened something of their own since (a route from the list, a
+      // country, a city), or the link's polities arrived beside it: that stays, and
+      // whatever of the link's polities is still on screen goes (their pins, their
+      // tint, their lane and marks on the timeline, their name in the top bar).
+      if (ls) {
+        const shown = ls.shown || {};
+        setSelPins(selPins.filter(p => !ls.points.includes(p)));
+        if (shown.hl) setSelection(selHighlights.filter(g => !shown.hl.includes(g)));
+        if (shown.lane?.isConnected) timeline.clearOverlays();
+        if (shown.ctx === contextSeq) setContext(DEFAULT_CONTEXT, false);
+        const own = new Set(ls.groups.flatMap(g => g.names));
+        if (selection?.names) selection.names = selection.names.filter(n => !own.has(n));
+      }
+      // A link pin's card describes a pin that has just gone.
+      if (selection?.linkCard) { card.close(); selection.dismissed = true; }
     }
     history.replaceState(null, "", location.pathname + location.search);
     updateLinkChip();
@@ -1363,8 +1378,9 @@ async function boot() {
     }).filter(Boolean);
     linkSel = { groups, points, quiet };
     if (quiet) {
-      setSelection([...(selection?.names?.length ? [{ names: selection.names, side: "A" }] : []),
-        ...groups.map(x => ({ names: x.names, side: "A" }))]);
+      const hl = groups.map(x => ({ names: x.names, side: "A" }));
+      linkSel.shown = { hl };
+      setSelection([...(selection?.names?.length ? [{ names: selection.names, side: "A" }] : []), ...hl]);
       selPins = [...selPins, ...points];
       showSelPins();
     } else reselectLink(groups[0]);
@@ -1374,10 +1390,14 @@ async function boot() {
   // map's own name for it, when a tap on its shape brought it back).
   function reselectLink(g, alias = null) {
     const { groups, points } = linkSel;
-    setSelection(groups.map(x => ({ names: x.names, side: "A" })));
+    const hl = groups.map(x => ({ names: x.names, side: "A" }));
+    setSelection(hl);
     setSelPins(points);
     setContext("🗄 " + groups.map(x => x.p.canonical_name).join(" · "));
     scopeSlider(g.names, g.p.start_year, g.p.end_year ?? 2025, g.p.canonical_name);
+    // What of the link's is on screen, so Clear can take exactly that away later,
+    // whatever the visitor opens in between (by identity: anything newer replaces it).
+    linkSel.shown = { hl, lane: document.querySelector("#trackMarks .tspan-label"), ctx: contextSeq };
     const shown = alias && !sameName(alias, g.p.canonical_name) ? alias : null;
     selection = { names: groups.flatMap(x => x.names), render: y => card.openDbPolity(g.p, null, y, { alias: shown }), fromLink: true };
     selLabel = g.p.canonical_name;
