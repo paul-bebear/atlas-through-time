@@ -1271,7 +1271,10 @@ async function boot() {
   // In Map Quiz (no timeline) and Empire Story (its bar and picker take the chip's
   // place) the chip is put away, not left half-covered; it returns with Discovery or
   // US territorial growth. The layers panel keeps its own Clear meanwhile.
-  const chipAway = () => state.mode === "map-quiz" || state.mode === "empire-story";
+  // On a phone the open layers panel covers the chip's band and holds the link's own
+  // Clear: the chip gives way while it is open, as the routes hint does.
+  const chipAway = () => state.mode === "map-quiz" || state.mode === "empire-story"
+    || (phoneLayout() && !modesEl.classList.contains("collapsed"));
   function updateLinkChip() {
     const has = linkOn && !!(linkPins.length || linkRoutes.size || linkSpanOn || linkSel);
     const note = unreadNote && linkOn && !has;
@@ -1294,7 +1297,7 @@ async function boot() {
     placeChip();
   }
   new ResizeObserver(placeChip).observe(timelineEl);
-  new ResizeObserver(placeChip).observe(modesEl);
+  new ResizeObserver(() => updateLinkChip()).observe(modesEl);   // the panel opening or closing
   new ResizeObserver(placeChip).observe(infoCardEl);
   addEventListener("resize", placeChip);
   // The button is never rebuilt; touch clears on touchend so a re-layout between
