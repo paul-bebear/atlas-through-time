@@ -208,9 +208,11 @@ async function boot() {
     return true;
   };
   const leaveMode = () => {
-    if (state.mode === "map-quiz") quiz.exit();
+    if (state.mode === "map-quiz") quiz.exit();               // exitQuiz re-renders the year
     else if (state.mode === "empire-story") story.exit();
-    else return exitTerritory();
+    // The world's borders, events and routes come back for the year.
+    else if (exitTerritory()) timeline.setYear(timeline.currentYear());
+    else return false;
     return true;
   };
   // Shareable view: the URL always mirrors {year, mode, selection} so any
