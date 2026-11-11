@@ -152,10 +152,10 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   // polities, the link's pins, highlighted route names, a route's open end, the
   // names of the other routes, its stops, city names). Each keeps its own side if
   // that is free, else tries the others. The first four kinds always show: with no
-  // free side they move further out along a short leader line (stacking beside a
-  // neighbour), and only if nothing is free do they keep their own side. The other
-  // routes' names may move out the same way while no route is highlighted, and
-  // otherwise hide; stops and city names give way: they hide.
+  // free side they move to the nearest free spot, joined to their point by a thin
+  // neutral leader, and only if nothing is free within reach do they keep their own
+  // side. The other routes' names may take a free spot a small step away while no
+  // route is highlighted, and otherwise hide; stops and city names give way: they hide.
   // A route drawn shorter than SHORT px on screen gets a ring at its name's
   // anchor, so its name is plainly attached to something on the globe; the ring
   // goes with the name when the name hides.
@@ -184,7 +184,7 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
   }
   function declutter() {
     const box = el.getBoundingClientRect();
-    const items = [], dots = [];
+    const items = [], dots = [], cityDots = [];
     for (const e of pinEls.values()) {
       const d = e.__d;
       if (!d || !e.isConnected || e.style.display === "none" || !e.getClientRects().length) continue;
@@ -213,6 +213,10 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
         const stop = stopCities.get(e.dataset.name);
         e.classList.toggle("city-stop", stop === "mid");
         e.classList.toggle("city-end", stop === "end");
+        if (e.isConnected && e.getClientRects().length) {
+          const c = e.getBoundingClientRect();
+          if (c.width) cityDots.push({ l: c.left, r: c.right, t: c.top, b: c.bottom });
+        }
         if ((far && stop !== "mid") || stop === "end" || !e.isConnected || !e.getClientRects().length) continue;
         const a = e.getBoundingClientRect(), k = e.dataset.name + "|" + fs;
         if (!textW.has(k)) textW.set(k, measure.measureText(e.dataset.name).width);
@@ -229,6 +233,19 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
         : { l: x - 8 - w, r: x - 8, t: y - h / 2, b: y + h / 2 };
     };
     const hit = (p, q) => p.l < q.r && q.l < p.r && p.t < q.b && q.t < p.b;
+    // Whether the segment a→b passes through rectangle q (Liang–Barsky clipping).
+    const cross = ([ax, ay, bx, by], q) => {
+      let t0 = 0, t1 = 1;
+      const dx = bx - ax, dy = by - ay;
+      for (const [p, v] of [[-dx, ax - q.l], [dx, q.r - ax], [-dy, ay - q.t], [dy, q.b - ay]]) {
+        if (p === 0) { if (v < 0) return false; continue; }
+        const r = v / p;
+        if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+        else { if (r < t0) return false; if (r < t1) t1 = r; }
+      }
+      return t1 - t0 > 0.02;
+    };
+    const leaders = [];               // the leaders drawn so far: no label goes over one
     // The page's own panels (card, timeline, chip…) count as taken: a label
     // goes to a side that is not under one, or hides.
     const placed = panels().map(r => ({ l: r.left, r: r.right, t: r.top, b: r.bottom })), out = [];
@@ -236,27 +253,46 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
     const vw = { l: Math.max(box.left, 0) + 2, r: Math.min(box.right, innerWidth) - 2,
       t: Math.max(box.top, 0) + 2, b: Math.min(box.bottom, innerHeight) - 2 };
     items.sort((a, b) => a.rank - b.rank);
-    // Further out for a label that must show: its sides pushed out step by step
-    // (up, down, sideways, and diagonally), nearest to the anchor first.
-    const moved = it => {
-      const out = [];
-      for (let k = 1; k <= 6; k++) {
-        const dy = k * (it.h + 4), dx = k * 24;
-        for (const s of ["up", "down", "right", "left"]) {
-          const r = rects(s)(it);
-          if (s === "up" || s === "down") for (const h of [0, -dx, dx]) {
-            const v = s === "up" ? -dy : dy;
-            out.push({ l: r.l + h, r: r.r + h, t: r.t + v, b: r.b + v });
-          }
-          else for (const v of [0, -dy, dy]) {
-            const h = s === "right" ? dx : -dx;
-            out.push({ l: r.l + h, r: r.r + h, t: r.t + v, b: r.b + v });
-          }
-        }
+    // Moved out (a label that must show, with no free side): the free spot nearest
+    // to its point, from every position on a fine grid around it, never on the point
+    // itself. A label already moved out keeps its spot while that stays free and is
+    // not much further than the nearest one, so a small drag does not make it jump.
+    const reachOf = (it, r) => Math.hypot(Math.max(r.l - it.x, 0, it.x - r.r), Math.max(r.t - it.y, 0, it.y - r.b));
+    // A moved label also keeps clear of every other point (stops, pins, city dots),
+    // so it never sits beside another place's dot and reads as that place's name.
+    const PAD = 9;
+    const moved = (it, free0, maxR) => {
+      const { x, y, w, h } = it, cand = [];
+      const near = (d, q) => q.l < d.r + PAD && d.l - PAD < q.r && q.t < d.b + PAD && d.t - PAD < q.b;
+      // Its leader (from the point to the label's nearest point) crosses no label either.
+      // (its first few px, on the point itself, do not count).
+      const leader = q => {
+        const ex = Math.max(q.l, Math.min(x, q.r)), ey = Math.max(q.t, Math.min(y, q.b));
+        const k = Math.min(1, 5 / (Math.hypot(ex - x, ey - y) || 1));
+        return [x + (ex - x) * k, y + (ey - y) * k, ex, ey];
+      };
+      const loose = q => free0(q) && !dots.some(d => d.e !== it.e && near(d, q))
+        && !cityDots.some(d => near(d, q) && Math.hypot((d.l + d.r) / 2 - x, (d.t + d.b) / 2 - y) > 4);
+      // Better still, where there is room: no leader runs through a label.
+      const free = q => loose(q) && !placed.some(p => cross(leader(q), p)) && !leaders.some(s => cross(s, q));
+      for (let l = x - w - maxR; l <= x + maxR; l += 4) for (let t = y - h - maxR; t <= y + maxR; t += 3) {
+        const q = { l, r: l + w, t, b: t + h }, d = reachOf(it, q);
+        if (d >= 7 && d <= maxR) cand.push([d, q]);
       }
-      const reach = r => Math.hypot(Math.max(r.l - it.x, 0, it.x - r.r), Math.max(r.t - it.y, 0, it.y - r.b));
-      return out.sort((a, b) => reach(a) - reach(b));
+      cand.sort((a, b) => a[0] - b[0]);
+      // A spot with no leader through a label wins unless it is much further out.
+      const tidy = cand.find(c => free(c[1])), any = cand.find(c => loose(c[1]));
+      const best = tidy && (!any || tidy[0] <= any[0] + 14) ? tidy : any;
+      const prev = it.e.__dcOff;
+      if (prev && best) {
+        const q = { l: x + prev.dx, r: x + prev.dx + w, t: y + prev.dy, b: y + prev.dy + h }, d = reachOf(it, q);
+        if (d >= 7 && d <= best[0] + Math.min(14, best[0] * 0.5) && loose(q)) return q;
+      }
+      return best?.[1] ?? null;
     };
+    // How far a label may move out: one that must show up to MOVE_MAX px; a quiet
+    // route name (which need not show) only a small step, else it hides.
+    const MOVE_MAX = 90, MOVE_QUIET = 16;
     for (const it of items) {
       const free = q => q.l >= vw.l && q.r <= vw.r && q.t >= vw.t && q.b <= vw.b
         && !placed.some(p => hit(p, q)) && !dots.some(d => d.e !== it.e && hit(d, q));
@@ -271,19 +307,22 @@ export function createGlobe(el, { onCountryClick, onEventClick, onTerritoryClick
       const side = sides.find(s => free(rects(s)(it)));
       if (side) { placed.push(rects(side)(it)); out.push([it, side === it.side ? "" : side]); continue; }
       if (it.rank > 3 && !it.mayMove) { out.push([it, "hide"]); continue; }
-      const r = moved(it).find(free);
+      const r = moved(it, free, it.mayMove ? MOVE_QUIET : MOVE_MAX);
       if (!r && it.mayMove) { out.push([it, "hide"]); continue; }
       if (!r) { placed.push(rects(it.side)(it)); out.push([it, ""]); continue; }
       placed.push(r);
+      leaders.push([it.x, it.y, Math.max(r.l, Math.min(it.x, r.r)), Math.max(r.t, Math.min(it.y, r.b))]);
       out.push([it, "free", r]);
     }
     for (const [it, v, r] of out) {
       if (it.city) { it.e.classList.toggle("dc-hide", v === "hide"); it.e.classList.toggle("dc-left", v === "left"); continue; }
       if ((it.e.dataset.dc || "") !== v) it.e.dataset.dc = v;
-      if (v !== "free") continue;
+      if (v !== "free") { it.e.__dcOff = null; continue; }
       // The label's corner relative to the anchor, and a leader from the anchor
-      // to the label's nearest point.
+      // to the label's nearest point: a thin neutral hairline with a small ring on
+      // the point, unlike any route's line (main.css .pin-leader).
       const dx = r.l - it.x, dy = r.t - it.y;
+      it.e.__dcOff = { dx, dy };
       const cx = Math.max(dx, Math.min(0, dx + it.w)), cy = Math.max(dy, Math.min(0, dy + it.h));
       it.e.style.setProperty("--dcx", dx.toFixed(1) + "px");
       it.e.style.setProperty("--dcy", dy.toFixed(1) + "px");

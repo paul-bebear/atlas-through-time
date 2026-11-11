@@ -100,13 +100,16 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 .map-pin[data-dc="right"] .pin-stem, .map-pin[data-dc="left"] .pin-stem { display: none; }
 .pin-route[data-dc] .pin-stem, .pin-wpt[data-dc] .pin-stem, .pin-route-end[data-dc] .pin-stem { display: none; }
 .map-pin[data-dc="hide"] .pin-label { visibility: hidden; }
-/* Moved further out (a label that must show, with no free side): placed at its
-   corner offset from the anchor, a thin leader line back to the point. */
-.map-pin .pin-leader { display: none; left: 0; top: -1px; width: var(--ll, 0); height: 2px;
-  background: var(--pin-c, rgba(241, 245, 249, 0.8)); box-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
+/* Moved out (a label that must show, with no free side): placed at its corner
+   offset from the anchor, joined to the point by a leader that cannot be taken for
+   a route: a 1 px neutral hairline (routes are 1.6–3 px and coloured), starting
+   from a small hollow ring on the point. */
+.map-pin .pin-leader { display: none; left: 0; top: -0.5px; width: var(--ll, 0); height: 1px;
+  background: rgba(226, 232, 240, 0.85); box-shadow: 0 0 1.5px rgba(0, 0, 0, 0.95);
   transform-origin: 0 50%; rotate: var(--la, 0rad); }
+.map-pin .pin-leader::before { content: ""; position: absolute; left: -3.5px; top: -3px; width: 5px; height: 5px;
+  border-radius: 50%; border: 1px solid rgba(226, 232, 240, 0.95); box-shadow: 0 0 1.5px rgba(0, 0, 0, 0.95); }
 .map-pin[data-dc="free"] .pin-leader { display: block; }
-.pin-link .pin-leader { background: #a78bfa; }
 .map-pin[data-dc="free"] .pin-label { left: var(--dcx); top: var(--dcy); right: auto; bottom: auto; translate: none; }
 .map-pin[data-dc="free"] .pin-stem { display: none; }
 .city-label.dc-hide::after { visibility: hidden; }
