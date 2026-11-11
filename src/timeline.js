@@ -50,7 +50,19 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
   const clamp01 = v => Math.max(0, Math.min(1, v));
 
   // The link's era band (.tlink) is not an overlay: it stays until clearLinkSpan.
-  function clearOverlays() { marksEl.querySelectorAll(":scope > :not(.tlink)").forEach(n => n.remove()); }
+  function clearOverlays() {
+    marksEl.querySelectorAll(":scope > :not(.tlink)").forEach(n => n.remove());
+    marksEl.classList.remove("has-span");
+  }
+  // The selection's name has its own lane above the event marks, centred on its span
+  // but kept inside the track (cut short with … only if longer than the track).
+  function placeSpanLabel() {
+    const tag = marksEl.querySelector(".tspan-label");
+    if (!tag) return;
+    const W = marksEl.clientWidth, w = tag.offsetWidth;
+    tag.style.left = Math.max(0, Math.min(W - w, +tag.dataset.mid * W - w / 2)) + "px";
+  }
+  if ("ResizeObserver" in window) new ResizeObserver(placeSpanLabel).observe(marksEl);
 
   function setSpan(start, end, label) {
     clearOverlays();
@@ -63,11 +75,15 @@ export function createTimeline({ onChange, onSurprise, initialYear = 1900 }) {
     bar.style.width = `max(8px, ${(b - a) * 100}%)`;
     bar.title = `${label}: ${yearLabel(start)} – ${yearLabel(end)}`;
     bar.onclick = () => setYear(start);
+    marksEl.append(bar);
+    if (!label) return;
     const tag = document.createElement("div");
     tag.className = "tspan-label";
-    tag.style.left = ((a + b) / 2) * 100 + "%";
+    tag.dataset.mid = (a + b) / 2;
     tag.textContent = label;
-    marksEl.append(bar, tag);
+    marksEl.append(tag);
+    marksEl.classList.add("has-span");
+    placeSpanLabel();
   }
 
   // The era band a link carries ("c. 970–931 BCE"), in its own lane under the

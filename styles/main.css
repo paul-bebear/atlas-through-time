@@ -408,22 +408,25 @@ input[type=range]::-webkit-slider-thumb {
   background: #fff; border: 3px solid var(--accent); cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,.4);
 }
-#trackMarks { position: relative; height: 18px; margin-bottom: 2px; }
-.tspan { position: absolute; top: 7px; height: 7px; border-radius: 4px; translate: -50% 0;
+/* Lanes, top to bottom: the selection's name (only while a span is shown, so it never
+   prints over the event marks), the span and the event marks, the link's era band. */
+#trackMarks { --lane: 0px; position: relative; height: calc(18px + var(--lane)); margin-bottom: 2px; }
+#trackMarks.has-span { --lane: 13px; }
+.tspan { position: absolute; top: calc(7px + var(--lane)); height: 7px; border-radius: 4px; translate: -50% 0;
   background: rgba(93,169,255,0.55); border: 1px solid rgba(93,169,255,0.9);
   cursor: pointer; }
 /* The link's era band: violet like the link's pins, in its own lane below the
    selection's span, its label beside it. */
-#trackMarks.has-link { height: 32px; }
+#trackMarks.has-link { height: calc(32px + var(--lane)); }
 .tlink-bar { position: absolute; bottom: 2px; height: 8px; border-radius: 4px; translate: -50% 0;
   background: rgba(167, 139, 250, 0.6); border: 1px solid #a78bfa; cursor: pointer; }
 .tlink-label { position: absolute; bottom: -1px; font-size: 11px; font-weight: 700; color: #c4b5fd;
   white-space: nowrap; pointer-events: none; }
 .tlink-left { translate: -100% 0; }
-.tspan-label { position: absolute; top: -3px; transform: translateX(-50%);
+.tspan-label { position: absolute; top: 0; line-height: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   font-size: 11px; font-weight: 700; color: var(--accent);
   white-space: nowrap; pointer-events: none; }
-.tmark { position: absolute; top: 4px; width: 2px; height: 13px;
+.tmark { position: absolute; top: calc(4px + var(--lane)); width: 2px; height: 13px;
   background: var(--warn); border-radius: 1px; cursor: pointer; }
 .tmark:hover { background: #fff; }
 
@@ -742,8 +745,8 @@ body.quiz-active #search { display: none; }
   /* Two lines, so "Borders shown: c. 1000 BCE" is never cut off. */
   #status { order: 1; flex: 1 1 0; min-width: 0; text-align: right; line-height: 1.25;
     overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-  #trackMarks { height: 16px; }
-  #trackMarks.has-link { height: 30px; }
+  #trackMarks { height: calc(16px + var(--lane)); }
+  #trackMarks.has-link { height: calc(30px + var(--lane)); }
   #slider { display: block; height: 32px; margin: 0; background: transparent; }
   #slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px;
     background: linear-gradient(90deg, var(--accent), var(--accent2)); }
@@ -780,8 +783,8 @@ body.quiz-active #search { display: none; }
   #stepGroup, #status { order: 0; }
   #yearLabel { flex: 0 0 auto; min-width: 96px; font-size: 20px; }
   #stepGroup button { height: 44px; }
-  #trackMarks { height: 14px; }
-  #trackMarks.has-link { height: 26px; }
+  #trackMarks { height: calc(14px + var(--lane)); }
+  #trackMarks.has-link { height: calc(26px + var(--lane)); }
   #slider { height: 26px; }
   #ticks { height: 12px; }
 }
