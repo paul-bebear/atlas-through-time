@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Guard for the link view v2 parser (docs/link-format.md, src/linkView.js):
-// strict ids and ranges, caps, plain-text labels, a bad item dropped on its own.
+// strict ids and ranges, caps, plain-text labels, a bad item dropped on its own,
+// separators literal or percent-encoded, and links read on main read the same.
 //   node tools/check-link-format.mjs
 
 import { parseLink, spanLabel, frameFor } from "../src/linkView.js";
@@ -78,8 +79,9 @@ const BEFORE = [
    "{\"year\":null,\"span\":null,\"qids\":[],\"pins\":[{\"id\":\"pleiades:678378\",\"lat\":33.27,\"lng\":35.2,\"label\":\"Tyrus\"}],\"routes\":[],\"scene\":null,\"at\":null}"],
 ];
 
-let failed = 0;
+let failed = 0, checks = 0;
 const eq = (name, got, want) => {
+  checks++;
   const g = JSON.stringify(got), w = JSON.stringify(want);
   if (g !== w) { failed++; console.log(`FAIL ${name}\n  got  ${g}\n  want ${w}`); }
 };
@@ -124,6 +126,64 @@ eq("bad encoding: label dropped, pin kept", markup.pins[3], { id: null, lat: 7, 
 eq("control characters", markup.pins[4].label, "line break");
 eq("unknown keys ignored, first value wins", parseLink("#v=2&year=100&year=200&foo=bar").year, 100);
 
+// Encoded separators (%2C %3B %40 %7E): read as separators where a value has no
+// literal one of that kind; literal ones win; encoding is undone once only.
+const lit = "#v=2&year=-950&span=-970,-931&qid=Q3185305,Q41642" +
+  "&pins=@33.27,35.20~Tyrus;@29.55,34.98~Ezion-geber;@29.56,34.95~Elath&route=tyre-jerusalem,levant-red-sea";
+const want = parseLink(lit);
+const encAll = s => s.replace(/,/g, "%2C").replace(/;/g, "%3B").replace(/@/g, "%40").replace(/~/g, "%7E");
+const encOnly = (s, ch, code) => s.replace(/&[^&]*/g, part => part.split(ch).join(code));
+eq("literal form", [want.pins.length, want.qids.length, want.routes.length], [3, 2, 2]);
+eq("fully encoded", parseLink(encAll(lit)), want);
+eq("fully encoded, lower-case hex", parseLink(encAll(lit).replace(/%(2C|3B|40|7E)/g, m => m.toLowerCase())), want);
+eq("encodeURIComponent per value", parseLink(lit.replace(/=([^&]*)/g, (_, v) => "=" + encodeURIComponent(v))), want);
+eq("only , encoded", parseLink(encOnly(lit, ",", "%2C")), want);
+eq("only ; encoded", parseLink(encOnly(lit, ";", "%3B")), want);
+eq("only @ encoded", parseLink(encOnly(lit, "@", "%40")), want);
+eq("only ~ encoded", parseLink(encOnly(lit, "~", "%7E")), want);
+eq("encoded id colon", parseLink("#v=2&pins=pleiades%3A678378%4033.27%2C35.20%7ETyrus%3Batlas%3Ajerusalem%4031.78%2C35.22").pins, [
+  { id: "pleiades:678378", lat: 33.27, lng: 35.2, label: "Tyrus" },
+  { id: "atlas:jerusalem", lat: 31.78, lng: 35.22, label: null }]);
+
+// Labels: free text, decoded once; an encoded separator in a label stays text.
+eq("label text, fully encoded link", parseLink("#v=2&pins=%401%2C2%7Ea%3Bb%2Cc%7Ed%40e%3B%403%2C4%7EOld%20City%2C%20north").pins, [
+  { id: null, lat: 1, lng: 2, label: "a;b,c~d@e" },
+  { id: null, lat: 3, lng: 4, label: "Old City, north" }]);
+eq("label text, one pin", parseLink("#v=2&pins=@1,2~a%3Bb%3B%40c%3B@x").pins, [{ id: null, lat: 1, lng: 2, label: "a;b;@c;@x" }]);
+eq("label text: ; then @ without coordinates", parseLink("#v=2&pins=@1,2~A%3B@33").pins, [{ id: null, lat: 1, lng: 2, label: "A;@33" }]);
+eq("label ; followed by a pin: read as two pins", parseLink("#v=2&pins=@1,2~A%3B@3,4~B").pins, [
+  { id: null, lat: 1, lng: 2, label: "A" }, { id: null, lat: 3, lng: 4, label: "B" }]);
+eq("literal ; present: encoded ; is text", parseLink("#v=2&pins=@1,2~A%3B@3,4~B;@5,6").pins, [
+  { id: null, lat: 1, lng: 2, label: "A;@3,4~B" }, { id: null, lat: 5, lng: 6, label: null }]);
+eq("first ~ cuts, later %7E is text", parseLink("#v=2&pins=@1,2%7Ea%7Eb").pins, [{ id: null, lat: 1, lng: 2, label: "a~b" }]);
+eq("first @ cuts, later %40 is text", parseLink("#v=2&pins=%401,2~a%40b").pins, [{ id: null, lat: 1, lng: 2, label: "a@b" }]);
+
+// Mixed within one value: the literal kind counts, the encoded one is text.
+eq("mixed qid: literal , wins", parseLink("#v=2&qid=Q1,Q2%2CQ3").qids, ["Q1"]);
+eq("mixed route: literal , wins", parseLink("#v=2&route=a%2Cb,c").routes, ["c"]);
+eq("mixed coordinates dropped", parseLink("#v=2&pins=@1,2%2C3~x;@4%2C5~y;@6,7%7Ex~z").pins, [
+  { id: null, lat: 4, lng: 5, label: "y" }]);
+eq("each value decides alone", parseLink("#v=2&qid=Q1%2CQ2&route=a,b&pins=@1,2~x%3B%403%2C4").qids, ["Q1", "Q2"]);
+
+// Double encoding is not undone: its separators are not read.
+eq("double-encoded qid dropped", parseLink("#v=2&qid=Q1%252CQ2").qids, []);
+eq("double-encoded pins dropped", parseLink("#v=2&pins=%25401%252C2%257Ex%253B%25403%252C4").pins, []);
+eq("double-encoded label shown once decoded", parseLink("#v=2&pins=@1,2~a%252Cb%2520c").pins[0].label, "a%2Cb%20c");
+const dbl = parseLink(encAll(lit).replace(/%/g, "%25"));
+eq("fully double-encoded: only the year", [dbl.year, dbl.span, dbl.qids, dbl.pins, dbl.routes], [-950, null, [], [], []]);
+
+// Hostile or malformed, encoded: still dropped item by item, labels stay text, caps hold.
+const hostile = parseLink("#v=2&pins=%401%2C2%7E%3Cscript%3Ealert(1)%3C%2Fscript%3E%3B%4091%2C0%7Ex%3B%400%2C181%3B%401e3%2C0%3B" +
+  "foo%3A1%401%2C1%3Bpleiades%3A%401%2C1%3B%40%40%2C%2C%3B%401%2C2%2C3%3B%403%2C4%7E%E0%A4%A%3B%405%2C6%7E" + "y".repeat(60) +
+  "&qid=Q1%2CX2%2CQ0%2CQ3%2CQ4&route=a%2CB!%2Cb%2Cc%2Cd&span=-900%2C-950&at=10%2C20%2C99");
+eq("hostile encoded pins", hostile.pins, [
+  { id: null, lat: 1, lng: 2, label: "<script>alert(1)</script>" },
+  { id: null, lat: 3, lng: 4, label: null },
+  { id: null, lat: 5, lng: 6, label: "y".repeat(40) }]);
+eq("hostile encoded qids, routes, span, at", [hostile.qids, hostile.routes, hostile.span, hostile.at], [["Q1", "Q3"], ["a", "b", "c"], null, null]);
+eq("8 pins max, encoded", parseLink("#v=2&pins=" + encAll(many)).pins.length, 8);
+eq("stray % and empty pieces", parseLink("#v=2&pins=%;%3B;%40;@%2C;~%7E&qid=%2C%2C&route=%2C").pins, []);
+eq("encoded & and = are not keys", parseLink("#v=2&year=-950%26qid%3DQ1").qids, []);
 const before = BEFORE.filter(([h, w]) => JSON.stringify(parseLink(h)) !== w);
 eq(`regression: ${BEFORE.length} links read as on main`, before.map(([h]) => h), []);
 
@@ -135,4 +195,4 @@ const w = frameFor([{ lat: 0, lng: 179 }, { lat: 0, lng: -179 }], 1);
 eq("frame across the antimeridian", Math.abs(w.lng) > 179 && w.altitude < 0.5, true);
 
 if (failed) { console.log(`${failed} check(s) failed`); process.exit(1); }
-console.log("OK: link format parser — ids, ranges, caps, labels, framing");
+console.log(`OK: link format parser — ${checks} checks: ids, ranges, caps, labels, encoded separators, regression, framing`);
