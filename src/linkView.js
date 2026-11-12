@@ -38,7 +38,7 @@ function cut(raw, ch) {
 // An encoded ; ends a pin only where a new pin starts after it
 // (`[src:id]@lat,lng`, any of its separators encoded or not), so a single
 // pin's label keeps an encoded ; as text ("a%3Bb", "a%3B@b").
-const PIN_SEP = /%3B(?=(?:[a-z]+(?::|%3A)[A-Za-z0-9._-]{1,24})?(?:@|%40)-?[0-9]{1,3}(?:\.[0-9]{1,7})?(?:,|%2C)-?[0-9])/i;
+const PIN_SEP = /%3B(?=(?:[a-z]+(?::|%3A)[A-Za-z0-9._-]{1,24})?(?:@|%40)(?:-|%2D)?[0-9]{1,3}(?:(?:\.|%2E)[0-9]{1,7})?(?:,|%2C)(?:-|%2D)?[0-9])/i;
 
 // Plain text, no control characters, at most MAX_LABEL characters.
 function label(raw) {
@@ -50,7 +50,9 @@ function label(raw) {
 
 // `[src:id]@lat,lng[~label]`, split on the raw text so an encoded ; @ ~ in a label survives.
 // The first @ and the first ~ after it cut the pin (literal first, else encoded);
-// the coordinates are only numbers, so their comma may be literal or %2C.
+// the coordinates are only numbers, so their comma may be literal or %2C, and
+// their - and . may be written %2D and %2E (nothing else in them is decoded).
+const coord = s => s.replace(/%2D/gi, "-").replace(/%2E/gi, ".");
 function pin(raw) {
   const head = cut(raw, "@");
   if (!head) return null;
@@ -58,7 +60,7 @@ function pin(raw) {
   const tail = cut(rest, "~");
   const coords = tail ? tail[0] : rest;
   const [latS, lngS, extra] = coords.split(sepOf(coords, ","));
-  const lat = num(latS ?? "", -90, 90), lng = num(lngS ?? "", -180, 180);
+  const lat = num(coord(latS ?? ""), -90, 90), lng = num(coord(lngS ?? ""), -180, 180);
   if (lat == null || lng == null || extra !== undefined) return null;
   let id = null;
   if (idRaw) {

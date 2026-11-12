@@ -184,6 +184,18 @@ eq("hostile encoded qids, routes, span, at", [hostile.qids, hostile.routes, host
 eq("8 pins max, encoded", parseLink("#v=2&pins=" + encAll(many)).pins.length, 8);
 eq("stray % and empty pieces", parseLink("#v=2&pins=%;%3B;%40;@%2C;~%7E&qid=%2C%2C&route=%2C").pins, []);
 eq("encoded & and = are not keys", parseLink("#v=2&year=-950%26qid%3DQ1").qids, []);
+// Minus and decimal point written %2D and %2E (either case) in the numbers of pins, at, span.
+eq("pin %2E", parseLink("#v=2&pins=@33%2E27,35%2E20~Tyrus").pins, [{ id: null, lat: 33.27, lng: 35.2, label: "Tyrus" }]);
+eq("pin %2D and lower-case %2e", parseLink("#v=2&pins=@%2D33%2e8688,151.2093~Sydney").pins, [{ id: null, lat: -33.8688, lng: 151.2093, label: "Sydney" }]);
+eq("pin lower-case %2d, fully encoded", parseLink("#v=2&pins=%40%2d33%2E87%2C%2D70%2e5%7Ex").pins, [{ id: null, lat: -33.87, lng: -70.5, label: "x" }]);
+eq("encodeURIComponent plus %2D %2E", parseLink("#v=2&pins=" + encodeURIComponent("@-33.87,151.21~Sydney;@-34.93,138.6~Adelaide").replace(/-/g, "%2D").replace(/\./g, "%2E")).pins, [
+  { id: null, lat: -33.87, lng: 151.21, label: "Sydney" }, { id: null, lat: -34.93, lng: 138.6, label: "Adelaide" }]);
+eq("encoded ; before a pin with %2D starts a pin", parseLink("#v=2&pins=@1,2~A%3B@%2D3%2E5,4~B").pins, [
+  { id: null, lat: 1, lng: 2, label: "A" }, { id: null, lat: -3.5, lng: 4, label: "B" }]);
+eq("%2D %2E in a label stay as written, decoded once", parseLink("#v=2&pins=@1,2~a%2Db%2Ec").pins[0].label, "a-b.c");
+eq("span and at with %2D %2E", (v => [v.span, v.at])(parseLink("#v=2&span=%2D970,%2d931&at=31%2E5,%2D35,1%2e2")), [[-970, -931], { lat: 31.5, lng: -35, altitude: 1.2 }]);
+eq("nothing else loosened: other escapes in coordinates", parseLink("#v=2&pins=@%333,4;@3%2C4%2C5;@3%2E%2E5,4;@%2D%2D3,4;@3,4%20;@%252D3,4;@3%2F5,4").pins, []);
+eq("year stays an integer", parseLink("#v=2&year=%2D950%2E5").year, null);
 const before = BEFORE.filter(([h, w]) => JSON.stringify(parseLink(h)) !== w);
 eq(`regression: ${BEFORE.length} links read as on main`, before.map(([h]) => h), []);
 

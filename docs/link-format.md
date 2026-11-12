@@ -49,6 +49,10 @@ coordinates; `;` `@` `~` in `pins`) may be written literally or percent-encoded
 - **Double encoding is not undone.** `%252C` is not a separator; the item is dropped. In
   a label it shows decoded once (`%252C` shows as "%2C").
 - `year`, `span`, `at` and `scene` are decoded first, as before.
+- **Minus and decimal point.** In the numbers of `pins`, `at` and `span`, `-` may be written
+  `%2D` and `.` may be written `%2E` (either case), as some URL libraries do:
+  `@%2D33%2E87,151%2E21` is `@-33.87,151.21`. Nothing else in a pin's coordinates is decoded.
+  (`at` and `span` already allowed this, being decoded first.)
 
 ## Keys
 
@@ -160,5 +164,5 @@ pleiades:678378@33.27,35.20~Tyrus
 
 `node tools/check-link-format.mjs` runs the parser against good and malformed links
 (bad ids, 20 pins, markup in a label, out-of-range numbers, separators fully, partly and
-doubly encoded, encoded separators inside labels), when a link counts as unreadable, and against a list of links with the
+doubly encoded, encoded separators inside labels, `%2D` and `%2E` in numbers), when a link counts as unreadable, and against a list of links with the
 result the parser gave before encoded separators were accepted, which must not change.
