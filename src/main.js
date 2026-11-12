@@ -466,13 +466,23 @@ async function boot() {
     globe.setTradeRoutes([]);
     tradeDrawn = false;
   };
+  // The panel's count for the layer: blank while it is off, else this year's.
+  const setTradeCount = n => {
+    if (state.layers.trade.count === n) return;
+    state.layers.trade.count = n;
+    layersPanel?.updateCounts();
+  };
   // Drawn in every mode but territory, so the lines always match the layer's tick and the year.
   const refreshTrade = y => {
-    if (state.mode === "us-territorial") return;   // territory owns the paths layer
-    // Unticked: no line may stay drawn, whatever happened in another mode.
-    if (!state.layers.trade.enabled) { if (tradeDrawn) clearTrade(); return; }
-    if (!tradeRoutes) return;
     const inUse = r => (r.from == null || y >= r.from) && (r.to == null || y <= r.to);
+    // Territory owns the paths layer: no lines there, but the count still tells this year's routes.
+    if (state.mode === "us-territorial") {
+      setTradeCount(state.layers.trade.enabled && tradeRoutes ? tradeRoutes.filter(inUse).length : null);
+      return;
+    }
+    // Unticked: no line may stay drawn, whatever happened in another mode.
+    if (!state.layers.trade.enabled) { if (tradeDrawn) clearTrade(); setTradeCount(null); return; }
+    if (!tradeRoutes) return;
     // Routes a link highlights stay drawn outside their years (greyed, with dates).
     const active = tradeRoutes.filter(r => inUse(r) || linkRoutes.has(r.id));
     // The route whose card is open is highlighted too, while it is drawn.
@@ -483,8 +493,7 @@ async function boot() {
     tradeSig = sig;
     globe.setTradeRoutes(active, { highlight: hl, year: y });
     tradeDrawn = true;
-    state.layers.trade.count = active.length;
-    layersPanel?.updateCounts();
+    setTradeCount(active.length);
     routeHintSoon();
   };
 
@@ -588,6 +597,9 @@ async function boot() {
           globe.setEvents([]);
         }
         refreshCities(year);
+        // No route lines in this mode, but the panel's route list and count follow the year.
+        refreshTrade(year);
+        layersPanel?.updateRoutes();
         try {
           const fc = await territoryForYear(state.modeState.source, year);
           if (state.year !== year || state.mode !== "us-territorial") return;
