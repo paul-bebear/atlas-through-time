@@ -138,14 +138,16 @@ pleiades:678378@33.27,35.20~Tyrus
    growth; the layers panel's Clear stays reachable meanwhile. On a phone the chip also gives
    way while the layers panel is open (the panel covers its place) and comes back when the
    panel closes. Clear removes everything the link put on screen, its polities included,
-   whatever the visitor opened in between; what the visitor chose themselves (a route from
-   the list, a country) stays. The address bar keeps
+   whatever the visitor opened in between (a link pin's card goes with its pin); what the
+   visitor chose themselves stays: a route from the list or tapped on the globe (with its
+   highlight, the trade routes layer kept on for it), a city's card and pin, a searched or
+   tapped country, and one of the link's own polities once the visitor tapped it. The address bar keeps
    the fragment the whole time, also for a link with only `qid`, `year`, `span` or `at`, so it
    can be shared again (the timeline's own `?year=` is written in front of it). **Clear**
    removes the pins, the route highlights, the era band, the fragment, and the link's
    polities while they are still the selection. If the link turned the trade routes layer on,
-   Clear turns it off again; if the visitor had it on, or toggled it themselves after opening
-   the link, it stays as they set it.
+   Clear turns it off again, unless the card of a route the visitor opened is still open; if
+   the visitor had it on, or toggled it themselves after opening the link, it stays as they set it.
 
 ## Rules for anyone building links
 

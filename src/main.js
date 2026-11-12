@@ -858,8 +858,9 @@ async function boot() {
     const host = globe.allFeatures().find(f => featureContains(f, d.lng, d.lat));
     setContext("📍 " + d.name);       // else the header keeps naming the previous country
     // The city card replaces the polity's: the pin moves to the city, and a year
-    // step must not bring the polity's card back over it.
-    if (selection) selection.dismissed = true;
+    // step must not bring the polity's card back over it. It is the visitor's own
+    // card: a link's Clear leaves it (and its pin) and takes only the link's things.
+    selection = { names: selection?.names || [], dismissed: true };
     const c = d.city || d;
     pinSelection(d.name, { lat: d.lat, lng: d.lng }, globe.altitude(), [c.founded ?? null, c.until ?? null]);
     card.openCity(d.name, d.city || d, state.year, host ? featureName(host) : null);
@@ -871,7 +872,8 @@ async function boot() {
   // shows; the route is framed into the part of the globe left free.
   openRoute = (r, fromList = false) => {
     if (state.mode === "map-quiz" || !r) return;
-    selection = { names: selection?.names || [], fromLink: fromList ? false : selection?.fromLink, render: y => card.openRoute(r, y) };
+    // The visitor's own card, whether the route came from the list or a tap: a link's Clear leaves it.
+    selection = { names: selection?.names || [], render: y => card.openRoute(r, y) };
     if (phoneLayout() && card.route() !== r) card.peek();
     selection.render(state.year);
     flyToRoute(r);
@@ -908,7 +910,8 @@ async function boot() {
     // A shape that is one of the link's polities under the map's own name
     // ("Kingdom of David and Solomon" for Q3185305): the registry card and name stay.
     const lp = linkSel?.groups.find(g => g.names.some(n => sameName(n, name)));
-    if (lp) { reselectLink(lp, name); return; }
+    // Chosen by the visitor now: Clear leaves the selection as it shows (linkSel.mine).
+    if (lp) { reselectLink(lp, name); linkSel.mine = true; selection.fromLink = false; return; }
     const entry = card.resolve(name);
     if (entry) { selectCurated(entry); return; }
     if (wasT) timeline.setYear(timeline.currentYear());
@@ -1380,6 +1383,8 @@ async function boot() {
     timeline.clearLinkSpan();
     showLinkPins([]);
     if (linkRoutes.size) showLinkRoutes([]);
+    // A route card the visitor opened keeps the layer on, so its route stays drawn.
+    if (tradeByLink && chosenRoute && card.route() === chosenRoute) tradeByLink = false;
     if (tradeByLink) {
       // The layer was off before the link: off again, as the visitor had it.
       tradeByLink = false;
@@ -1399,7 +1404,7 @@ async function boot() {
       // country, a city), or the link's polities arrived beside it: that stays, and
       // whatever of the link's polities is still on screen goes (their pins, their
       // tint, their lane and marks on the timeline, their name in the top bar).
-      if (ls) {
+      if (ls && !ls.mine) {
         const shown = ls.shown || {};
         setSelPins(selPins.filter(p => !ls.points.includes(p)));
         if (shown.hl) setSelection(selHighlights.filter(g => !shown.hl.includes(g)));
