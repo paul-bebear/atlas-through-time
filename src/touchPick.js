@@ -178,37 +178,3 @@ function nameWidth(c) {
   measure.font = `${cs.fontSize} ${cs.fontFamily}`;
   return measure.measureText(c.dataset.name).width;
 }
-
-// Taps on the page's own controls (buttons, the panel's rows and its title, the
-// boxes, links) act on the finger's lift. Safari otherwise waits to see whether a
-// second tap follows, and two taps closer together than its reply to the first
-// (touch-action: manipulation is applied, but the reply comes too late while the
-// globe keeps the page busy) zoomed the page instead of stepping the year twice.
-// Cancelling the lift ends Safari's double-tap there; the control is then clicked
-// once, by us. A finger that moved (a scroll of the panel or a card) is not a tap.
-// Controls with their own touch handling (search rows, the card's ×, the chip's
-// Clear) cancel the lift first and are left to it; the globe has its own taps above.
-const CONTROL = 'button, a[href], label, input[type="checkbox"], input[type="radio"], .modes-title, [role="button"]';
-export function installControlTaps(root = document) {
-  let start = null;
-  const reset = () => { start = null; };
-  root.addEventListener("touchstart", e => {
-    const t = e.touches[0];
-    const el = e.touches.length === 1 && !e.target.closest?.("#globe") ? e.target.closest?.(CONTROL) : null;
-    start = el && !el.disabled ? { el, x: t.clientX, y: t.clientY, t: e.timeStamp } : null;
-  }, { passive: true });
-  root.addEventListener("touchcancel", reset, { passive: true });
-  root.addEventListener("touchend", e => {
-    const s = start;
-    start = null;
-    if (!s || e.defaultPrevented || e.touches.length) return;
-    const t = e.changedTouches[0];
-    if (Math.hypot(t.clientX - s.x, t.clientY - s.y) > TAP_SLOP || e.timeStamp - s.t > TAP_MS) return;
-    if (!s.el.isConnected || e.target.closest?.(CONTROL) !== s.el) return;
-    e.preventDefault();
-    // A tap elsewhere would have taken focus from a text field (and put the keyboard away).
-    const f = document.activeElement;
-    if (f && f !== s.el && f.matches?.('input:not([type]), input[type="text"], input[type="search"], textarea')) f.blur();
-    s.el.click();
-  }, { passive: false });
-}

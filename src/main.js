@@ -21,9 +21,6 @@ import { createLayersPanel } from "./layersPanel.js";
 import { createQuiz } from "./quiz.js";
 import { sliceByName, sliceByQid, rowForYear } from "./politySlice.js";
 import { parseLink, frameFor, spanLabel, linkUnread } from "./linkView.js";
-import { installControlTaps } from "./touchPick.js";
-
-installControlTaps();   // quick taps on the controls: one action each, no page zoom (touchPick.js)
 
 // "1 event", "2 events".
 const count = (k, one, many) => `${k} ${k === 1 ? one : many}`;
