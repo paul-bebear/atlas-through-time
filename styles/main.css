@@ -357,7 +357,9 @@ html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
 #infoCard .cc-extract + .cc-h { margin-top: 14px; }
 /* A peek (phones, a card opened by a link): the title and one line; a tap opens it. */
 #infoCard.cc-peek { cursor: pointer; padding-bottom: 10px; }
-#infoCard.cc-peek > :not(h2):not(.cc-sub):not(.cc-close) { display: none; }
+/* A peek keeps the line saying the place or route was not there in this year. */
+#infoCard.cc-peek > :not(h2):not(.cc-sub):not(.cc-close):not(.cc-gone) { display: none; }
+#infoCard.cc-peek > .cc-gone { margin: 6px 0 0; }
 #infoCard.cc-peek .cc-sub { margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #infoCard.cc-peek::after { content: "Tap for details ▾"; display: block; margin-top: 4px;
   font-size: 12px; font-weight: 600; color: var(--accent); }

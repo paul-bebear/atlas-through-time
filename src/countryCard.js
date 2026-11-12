@@ -271,7 +271,7 @@ export function createInfoCard({ countries, onDismiss, onRoute }) {
       return `<li>${title}${s.licence ? ` <span class="cc-small">(${esc(s.licence)})</span>` : ""}${s.use ? `<div class="cc-small">${esc(s.use)}</div>` : ""}</li>`;
     };
     shell(esc(r.name), esc(sub),
-      (off ? `<div class="cc-gone">Not in use in ${yr(year)}. Atlas shows it for ${span}.</div>` : "")
+      (off ? `<div class="cc-gone">${esc(r.name)} was not in use in ${yr(year)}. It was in use ${span}.</div>` : "")
       + rows.map(([k, v]) => `<div class="cc-row"><span class="k">${k}</span><span class="v">${esc(v)}</span></div>`).join("")
       + (CERTAINTY[r.certainty] ? `<div class="cc-small">${CERTAINTY[r.certainty]}</div>` : "")
       + (r.summary ? `<div class="cc-extract">${esc(r.summary)}</div>` : "")

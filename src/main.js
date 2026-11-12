@@ -483,9 +483,9 @@ async function boot() {
     // Unticked: no line may stay drawn, whatever happened in another mode.
     if (!state.layers.trade.enabled) { if (tradeDrawn) clearTrade(); setTradeCount(null); return; }
     if (!tradeRoutes) return;
-    // Routes a link highlights stay drawn outside their years (greyed, with dates).
-    const active = tradeRoutes.filter(r => inUse(r) || linkRoutes.has(r.id));
-    // The route whose card is open is highlighted too, while it is drawn.
+    // Routes a link highlights, and the route whose card is open, stay drawn outside
+    // their years (greyed, with dates); the card says the route was not in use then.
+    const active = tradeRoutes.filter(r => inUse(r) || linkRoutes.has(r.id) || r === chosenRoute);
     const hl = new Set(linkRoutes);
     if (chosenRoute && active.includes(chosenRoute)) hl.add(chosenRoute.id);
     const sig = active.map(r => r.id + (inUse(r) ? "" : "~")).join("|") + "#" + [...hl].join("|");
@@ -493,7 +493,7 @@ async function boot() {
     tradeSig = sig;
     globe.setTradeRoutes(active, { highlight: hl, year: y });
     tradeDrawn = true;
-    setTradeCount(active.length);
+    setTradeCount(active.filter(r => inUse(r) || linkRoutes.has(r.id)).length);
     routeHintSoon();
   };
 
