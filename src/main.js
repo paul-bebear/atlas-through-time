@@ -21,6 +21,9 @@ import { createLayersPanel } from "./layersPanel.js";
 import { createQuiz } from "./quiz.js";
 import { sliceByName, sliceByQid, rowForYear } from "./politySlice.js";
 import { parseLink, frameFor, spanLabel, linkUnread } from "./linkView.js";
+import { installControlTaps } from "./touchPick.js";
+
+installControlTaps();   // quick taps on the controls: one action each, no page zoom (touchPick.js)
 
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 

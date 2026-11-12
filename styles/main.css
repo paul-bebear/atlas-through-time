@@ -659,9 +659,11 @@ body.quiz-active #search { display: none; }
   }
   html, body { height: 100%; height: -webkit-fill-available; height: 100dvh; }
   body { position: relative; -webkit-text-size-adjust: 100%; }
-  button, input, label, .cc-close { touch-action: manipulation; }
-  /* Two quick taps just beside a step button land on the panel itself: no page zoom there. */
-  #timeline { touch-action: manipulation; }
+  /* No double-tap page zoom (pinch zoom stays), on the whole page so a quick
+     second tap just beside a control does not zoom either. Safari can act on a
+     very quick second tap before it has read this, so taps on the controls
+     themselves are also handled on the finger's lift (installControlTaps). */
+  html, body, button, input, label, .cc-close, #timeline { touch-action: manipulation; }
 
   /* Row 1 */
   #menuBtn { top: var(--top); left: var(--l); width: 44px; height: 44px;
