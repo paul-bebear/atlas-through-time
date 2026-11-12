@@ -25,6 +25,9 @@ import { installControlTaps } from "./touchPick.js";
 
 installControlTaps();   // quick taps on the controls: one action each, no page zoom (touchPick.js)
 
+// "1 event", "2 events".
+const count = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+
 const DEFAULT_CONTEXT = "Explore history — click a country, war or formation";
 
 // State shape per Architecture.md Phase 2.
@@ -612,7 +615,7 @@ async function boot() {
             state.modeState.sig = sig;
             globe.setTerritoryOutlines(fc.features);
           }
-          timeline.setStatus(`${state.modeState.label} · ${fc.features.length} polities`);
+          timeline.setStatus(`${state.modeState.label} · ${count(fc.features.length, "polity", "polities")}`);
         } catch (e) { timeline.setStatus(e.message); }
         if (selection && !selection.dismissed) selection.render(year);
         return;
@@ -651,7 +654,7 @@ async function boot() {
           bordersWaiters.splice(0).forEach(r => r());
           // Borders come from fixed snapshots: say plainly when the map is not this year's.
           const snap = nearestPeriod(year);
-          timeline.setStatus(`${snap === year ? "Borders" : "Borders shown: c."} ${yearLabel(snap)} · ${vis.length} events`);
+          timeline.setStatus(`${snap === year ? "Borders" : "Borders shown: c."} ${yearLabel(snap)} · ${count(vis.length, "event", "events")}`);
           statusEl.classList.toggle("snapped", snap !== year);
           if (year !== bootYear) scrubbed = true;
           if (scrubbed) prefetchNeighbours(year);
@@ -660,7 +663,7 @@ async function boot() {
             state.lastSig = "off";
             globe.setBorders({ features: [] });
           }
-          timeline.setStatus(`Borders off · ${vis.length} events`);
+          timeline.setStatus(`Borders off · ${count(vis.length, "event", "events")}`);
           statusEl.classList.remove("snapped");
         }
       } catch (e) {
@@ -1330,10 +1333,9 @@ async function boot() {
       placeChip();
       return;
     }
-    const n = (k, one, many) => k ? `${k} ${k === 1 ? one : many}` : "";
     const parts = [
-      linkPins.length && (n(linkPins.length, "pin", "pins") + (state.layers.pins.enabled ? "" : " (hidden)")),
-      linkRoutes.size && (n(linkRoutes.size, "route", "routes") + (state.layers.trade.enabled ? "" : " (layer off)"))
+      linkPins.length && (count(linkPins.length, "pin", "pins") + (state.layers.pins.enabled ? "" : " (hidden)")),
+      linkRoutes.size && (count(linkRoutes.size, "route", "routes") + (state.layers.trade.enabled ? "" : " (layer off)"))
     ].filter(Boolean);
     chipLong = ["From the link you opened", ...parts].join(" · ");
     chipShort = parts.length ? "Link: " + parts.join(" · ") : "From a link";

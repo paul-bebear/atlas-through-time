@@ -73,7 +73,7 @@ export function createSearch({ catalog, onPick }) {
           ? `<span class="sr-exp" data-i="${i}">${expanded.has(h.thread.id) ? "▾" : "▸"}</span>`
           : "";
         return `<div class="sr sr-thread${on}" data-i="${i}">${caret}🧵 ${h.label}` +
-          `<small>thread · ${h.memberCount} stages</small></div>`;
+          `<small>thread · ${h.memberCount} ${h.memberCount === 1 ? "stage" : "stages"}</small></div>`;
       }
       if (h.kind === "thread-member")
         return `<div class="sr sr-member${on}" data-i="${i}">↳ ${h.label}` +

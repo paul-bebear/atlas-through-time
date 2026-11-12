@@ -165,7 +165,7 @@ export function createLayersPanel({ state, onModeChange, onLayerToggle, routes =
           <span class="lp-count" data-count="trade">${countOf("trade")}</span>
         </label>
         <button type="button" class="lp-row lp-browse" aria-expanded="${open}">
-          <span>Browse all ${n} routes</span><span class="lp-chev" aria-hidden="true">▸</span>
+          <span>${n === 1 ? "Browse the route" : `Browse all ${n} routes`}</span><span class="lp-chev" aria-hidden="true">▸</span>
         </button>
         <div class="lp-route-slot"></div>
       </div>` : "";
